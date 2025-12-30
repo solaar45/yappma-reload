@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FormField } from "@/components/ui/form-field";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { AreaChart } from "@/components/charts/AreaChart";
 import { LineChart } from "@/components/charts/LineChart";
 import { BarList } from "@/components/charts/BarList";
@@ -55,157 +56,168 @@ const recentAccounts = [
 
 function App() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-background">
+      <div className="border-b">
+        <div className="flex h-16 items-center px-8">
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold">YAPPMA</h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Account
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Account</DialogTitle>
+                  <DialogDescription>
+                    Create a new account to track your finances. Fields marked with * are required.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <FormField label="Account Name" required>
+                    <Input placeholder="e.g. Girokonto" />
+                  </FormField>
+                  <FormField label="Account Type" required>
+                    <Input placeholder="e.g. checking" />
+                  </FormField>
+                  <FormField 
+                    label="Initial Balance" 
+                    required
+                    description="Enter the current balance of the account"
+                  >
+                    <Input type="number" placeholder="0.00" />
+                  </FormField>
+                  <FormField label="Institution" description="Optional: Bank or financial institution">
+                    <Input placeholder="e.g. Deutsche Bank" />
+                  </FormField>
+                </div>
+                <Button className="w-full">Create Account</Button>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto space-y-8">
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight">YAPPMA Dashboard</h1>
+            <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground">
-              Your personal wealth tracking application
+              Your personal wealth tracking overview
             </p>
           </div>
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Account
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Account</DialogTitle>
-                <DialogDescription>
-                  Create a new account to track your finances.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Account Name</Label>
-                  <Input id="name" placeholder="e.g. Girokonto" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="type">Account Type</Label>
-                  <Input id="type" placeholder="e.g. checking" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="balance">Initial Balance</Label>
-                  <Input id="balance" type="number" placeholder="0.00" />
-                </div>
-              </div>
-              <Button className="w-full">Create Account</Button>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* KPI Cards with Tremor-style */}
-        <div className="grid gap-6 md:grid-cols-3">
-          <KpiCard
-            title="Total Net Worth"
-            value={formatCurrency(142384)}
-            change={20.1}
-            changeLabel="from last month"
-            icon={<Wallet className="h-4 w-4" />}
-          />
-          <KpiCard
-            title="Investments"
-            value={formatCurrency(86420)}
-            change={12.5}
-            changeLabel="this month"
-            icon={<TrendingUp className="h-4 w-4" />}
-          />
-          <KpiCard
-            title="Savings"
-            value={formatCurrency(12500)}
-            change={-5.2}
-            changeLabel="from last month"
-            icon={<PiggyBank className="h-4 w-4" />}
-          />
-        </div>
-
-        {/* Charts Row */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Portfolio Trend - AreaChart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Portfolio Performance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AreaChart
-                data={portfolioData}
-                index="month"
-                categories={["stocks", "bonds", "cash"]}
-                colors={["blue", "emerald", "amber"]}
-                valueFormatter={(value) => formatCurrency(value)}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Asset Allocation - BarList */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Asset Allocation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BarList
-                data={assetAllocation}
-                valueFormatter={(value) => formatCurrency(value)}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Net Worth Trend - LineChart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Net Worth Trend</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LineChart
-              data={portfolioData.map((d) => ({
-                month: d.month,
-                total: d.stocks + d.bonds + d.cash,
-              }))}
-              index="month"
-              categories={["total"]}
-              colors={["violet"]}
-              valueFormatter={(value) => formatCurrency(value)}
-              showLegend={false}
+          {/* KPI Cards */}
+          <div className="grid gap-6 md:grid-cols-3">
+            <KpiCard
+              title="Total Net Worth"
+              value={formatCurrency(142384)}
+              change={20.1}
+              changeLabel="from last month"
+              icon={<Wallet className="h-4 w-4" />}
             />
-          </CardContent>
-        </Card>
+            <KpiCard
+              title="Investments"
+              value={formatCurrency(86420)}
+              change={12.5}
+              changeLabel="this month"
+              icon={<TrendingUp className="h-4 w-4" />}
+            />
+            <KpiCard
+              title="Savings"
+              value={formatCurrency(12500)}
+              change={-5.2}
+              changeLabel="from last month"
+              icon={<PiggyBank className="h-4 w-4" />}
+            />
+          </div>
 
-        {/* Recent Accounts Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Accounts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Account</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentAccounts.map((account) => (
-                  <TableRow key={account.id}>
-                    <TableCell className="font-medium">
-                      {account.account}
-                    </TableCell>
-                    <TableCell>{account.date}</TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(account.amount)}
-                    </TableCell>
+          {/* Charts Row */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Portfolio Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AreaChart
+                  data={portfolioData}
+                  index="month"
+                  categories={["stocks", "bonds", "cash"]}
+                  colors={["blue", "emerald", "amber"]}
+                  valueFormatter={(value) => formatCurrency(value)}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Asset Allocation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BarList
+                  data={assetAllocation}
+                  valueFormatter={(value) => formatCurrency(value)}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Net Worth Trend */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Net Worth Trend</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LineChart
+                data={portfolioData.map((d) => ({
+                  month: d.month,
+                  total: d.stocks + d.bonds + d.cash,
+                }))}
+                index="month"
+                categories={["total"]}
+                colors={["violet"]}
+                valueFormatter={(value) => formatCurrency(value)}
+                showLegend={false}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Recent Accounts Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Accounts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Account</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {recentAccounts.map((account) => (
+                    <TableRow key={account.id}>
+                      <TableCell className="font-medium">
+                        {account.account}
+                      </TableCell>
+                      <TableCell>{account.date}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(account.amount)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
