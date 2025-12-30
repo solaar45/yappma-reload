@@ -7,15 +7,41 @@ defmodule WealthBackendWeb.Router do
 
   scope "/api", WealthBackendWeb do
     pipe_through :api
+
+    # Users
+    resources "/users", UserController, except: [:new, :edit]
+
+    # Institutions (filtered by user_id via query param)
+    get "/institutions", InstitutionController, :index
+    resources "/institutions", InstitutionController, except: [:new, :edit, :index]
+
+    # Accounts (filtered by user_id via query param)
+    get "/accounts", AccountController, :index
+    resources "/accounts", AccountController, except: [:new, :edit, :index]
+
+    # Asset Types
+    resources "/asset_types", AssetTypeController, only: [:index, :show]
+
+    # Assets (filtered by user_id via query param)
+    get "/assets", AssetController, :index
+    resources "/assets", AssetController, except: [:new, :edit, :index]
+
+    # Account Snapshots (filtered by account_id via query param)
+    get "/account_snapshots", AccountSnapshotController, :index
+    resources "/account_snapshots", AccountSnapshotController, except: [:new, :edit, :index]
+
+    # Asset Snapshots (filtered by asset_id via query param)
+    get "/asset_snapshots", AssetSnapshotController, :index
+    resources "/asset_snapshots", AssetSnapshotController, except: [:new, :edit, :index]
+
+    # Dashboard / Analytics
+    get "/dashboard/net_worth", DashboardController, :net_worth
+    get "/dashboard/account_snapshots", DashboardController, :account_snapshots
+    get "/dashboard/asset_snapshots", DashboardController, :asset_snapshots
   end
 
   # Enable LiveDashboard in development
   if Application.compile_env(:wealth_backend, :dev_routes) do
-    # If you want to use the LiveDashboard in production, you should put
-    # it behind authentication and allow only admins to access it.
-    # If your application does not have an admins-only section yet,
-    # you can use Plug.BasicAuth to set up some basic authentication
-    # as long as you are also using SSL (which you should anyway).
     import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
