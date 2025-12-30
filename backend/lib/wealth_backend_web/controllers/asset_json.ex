@@ -50,16 +50,28 @@ defmodule WealthBackendWeb.AssetJSON do
     insurer_name: i.insurer_name,
     policy_number: i.policy_number,
     insurance_type: i.insurance_type,
-    coverage_amount: i.coverage_amount,
-    deductible: i.deductible,
+    coverage_amount: decimal_to_string(i.coverage_amount),
+    deductible: decimal_to_string(i.deductible),
     payment_frequency: i.payment_frequency
   }
 
   defp loan_data(%Ecto.Association.NotLoaded{}), do: nil
   defp loan_data(nil), do: nil
-  defp loan_data(l), do: %{interest_rate: l.interest_rate, payment_frequency: l.payment_frequency, maturity_date: l.maturity_date}
+  defp loan_data(l), do: %{
+    interest_rate: decimal_to_string(l.interest_rate),
+    payment_frequency: l.payment_frequency,
+    maturity_date: l.maturity_date
+  }
 
   defp real_estate_data(%Ecto.Association.NotLoaded{}), do: nil
   defp real_estate_data(nil), do: nil
-  defp real_estate_data(r), do: %{address: r.address, size_m2: r.size_m2, purchase_price: r.purchase_price, purchase_date: r.purchase_date}
+  defp real_estate_data(r), do: %{
+    address: r.address,
+    size_m2: decimal_to_string(r.size_m2),
+    purchase_price: decimal_to_string(r.purchase_price),
+    purchase_date: r.purchase_date
+  }
+
+  defp decimal_to_string(nil), do: nil
+  defp decimal_to_string(decimal), do: to_string(decimal)
 end

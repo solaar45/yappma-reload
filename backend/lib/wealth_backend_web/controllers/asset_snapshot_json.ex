@@ -13,13 +13,16 @@ defmodule WealthBackendWeb.AssetSnapshotJSON do
     %{
       id: snapshot.id,
       snapshot_date: snapshot.snapshot_date,
-      quantity: snapshot.quantity,
-      market_price_per_unit: snapshot.market_price_per_unit,
-      value: snapshot.value,
+      quantity: decimal_to_string(snapshot.quantity),
+      market_price_per_unit: decimal_to_string(snapshot.market_price_per_unit),
+      value: to_string(snapshot.value),
       note: snapshot.note,
       asset_id: snapshot.asset_id,
       inserted_at: snapshot.inserted_at,
       updated_at: snapshot.updated_at
     }
   end
+
+  defp decimal_to_string(nil), do: nil
+  defp decimal_to_string(decimal), do: to_string(decimal)
 end

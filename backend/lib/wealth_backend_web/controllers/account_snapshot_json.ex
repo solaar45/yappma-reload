@@ -13,7 +13,7 @@ defmodule WealthBackendWeb.AccountSnapshotJSON do
     %{
       id: snapshot.id,
       snapshot_date: snapshot.snapshot_date,
-      balance: snapshot.balance,
+      balance: to_string(snapshot.balance),
       currency: snapshot.currency,
       note: snapshot.note,
       account_id: snapshot.account_id,
