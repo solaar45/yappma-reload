@@ -1,7 +1,5 @@
 @import "tailwindcss";
-@plugin "daisyui";
 
-@theme {
-  --color-primary: oklch(0.6 0.3 275);
-  --color-secondary: oklch(0.7 0.3 325);
+@plugin "daisyui" {
+  themes: [light, dark, cupcake, nord, sunset, cyberpunk];
 }
