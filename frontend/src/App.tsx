@@ -1,55 +1,111 @@
-import { Card, Metric, Text, AreaChart, Title, Grid } from "@tremor/react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/utils";
 
-const chartdata = [
-  { date: "Jan 23", SolarPanels: 2890, Inverters: 2338 },
-  { date: "Feb 23", SolarPanels: 2756, Inverters: 2103 },
-  { date: "Mar 23", SolarPanels: 3322, Inverters: 2194 },
-  { date: "Apr 23", SolarPanels: 3470, Inverters: 2108 },
-  { date: "May 23", SolarPanels: 3475, Inverters: 1812 },
-  { date: "Jun 23", SolarPanels: 3129, Inverters: 1726 },
-  { date: "Jul 23", SolarPanels: 3490, Inverters: 1982 },
-  { date: "Aug 23", SolarPanels: 2903, Inverters: 2012 },
-  { date: "Sep 23", SolarPanels: 2643, Inverters: 2342 },
-  { date: "Oct 23", SolarPanels: 2837, Inverters: 2473 },
-  { date: "Nov 23", SolarPanels: 2954, Inverters: 3848 },
-  { date: "Dec 23", SolarPanels: 3239, Inverters: 3736 },
-];
-
-const dataFormatter = (number: number) => {
-  return "€" + Intl.NumberFormat("us").format(number).toString();
-};
-
-export default function App() {
+function App() {
   return (
-    <main className="p-12 bg-slate-50 min-h-screen">
-      <Title className="mb-6">YAPPMA Dashboard Demo</Title>
-      
-      <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6 mb-6">
-        <Card decoration="top" decorationColor="indigo">
-          <Text>Total Net Worth</Text>
-          <Metric>€ 142,384</Metric>
-        </Card>
-        <Card decoration="top" decorationColor="fuchsia">
-          <Text>Investments</Text>
-          <Metric>€ 86,420</Metric>
-        </Card>
-        <Card decoration="top" decorationColor="amber">
-          <Text>Cash</Text>
-          <Metric>€ 12,500</Metric>
-        </Card>
-      </Grid>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight">YAPPMA Dashboard</h1>
+          <p className="text-muted-foreground">
+            Your personal wealth tracking application
+          </p>
+        </div>
 
-      <Card>
-        <Title>Portfolio Performance</Title>
-        <AreaChart
-          className="h-72 mt-4"
-          data={chartdata}
-          index="date"
-          categories={["SolarPanels", "Inverters"]}
-          colors={["indigo", "cyan"]}
-          valueFormatter={dataFormatter}
-        />
-      </Card>
-    </main>
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Net Worth
+              </CardTitle>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                className="h-4 w-4 text-muted-foreground"
+              >
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(142384)}</div>
+              <p className="text-xs text-muted-foreground">
+                +20.1% from last month
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Investments
+              </CardTitle>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                className="h-4 w-4 text-muted-foreground"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(86420)}</div>
+              <p className="text-xs text-muted-foreground">
+                +180 this month
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Cash</CardTitle>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                className="h-4 w-4 text-muted-foreground"
+              >
+                <rect width="20" height="14" x="2" y="5" rx="2" />
+                <path d="M2 10h20" />
+              </svg>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(12500)}</div>
+              <p className="text-xs text-muted-foreground">
+                +19% from last month
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>Portfolio Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Chart will be added here with Tremor Raw components
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
+
+export default App;
