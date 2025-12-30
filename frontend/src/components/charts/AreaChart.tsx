@@ -13,7 +13,6 @@ import {
   AvailableChartColors,
   AvailableChartColorsKeys,
   constructCategoryColors,
-  getColorClassName,
 } from "@/lib/chartUtils";
 
 interface AreaChartProps {
@@ -42,43 +41,38 @@ export const AreaChart = ({
           <CartesianGrid
             strokeDasharray="3 3"
             vertical={false}
-            className="stroke-gray-200 dark:stroke-gray-800"
+            stroke="hsl(var(--border))"
           />
           <XAxis
             dataKey={index}
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
             tickLine={false}
             axisLine={false}
-            className="text-gray-500"
           />
           <YAxis
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
             tickLine={false}
             axisLine={false}
-            className="text-gray-500"
             tickFormatter={valueFormatter}
           />
           <Tooltip
             content={({ active, payload }) => {
               if (!active || !payload || payload.length === 0) return null;
               return (
-                <div className="rounded-lg border bg-background p-2 shadow-md">
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg border bg-card p-3 shadow-md">
+                  <div className="grid gap-2">
                     {payload.map((entry: any, index: number) => (
-                      <div key={index} className="flex items-center gap-2">
+                      <div key={index} className="flex items-center gap-2 text-sm">
                         <div
-                          className={cn(
-                            "h-2 w-2 rounded-full",
-                            getColorClassName(
-                              categoryColors.get(entry.name) || "blue",
-                              "bg"
-                            )
-                          )}
+                          className="h-2.5 w-2.5 rounded-full"
+                          style={{
+                            backgroundColor: `hsl(var(--${categoryColors.get(entry.name) || "chart-1"}))`
+                          }}
                         />
-                        <span className="text-sm font-medium">
+                        <span className="font-medium text-card-foreground">
                           {entry.name}:
                         </span>
-                        <span className="text-sm">
+                        <span className="text-muted-foreground">
                           {valueFormatter(entry.value)}
                         </span>
                       </div>
@@ -88,18 +82,21 @@ export const AreaChart = ({
               );
             }}
           />
-          {categories.map((category) => (
-            <Area
-              key={category}
-              type="monotone"
-              dataKey={category}
-              stroke={`var(--color-${categoryColors.get(category) || "blue"}-500)`}
-              fill={`var(--color-${categoryColors.get(category) || "blue"}-500)`}
-              fillOpacity={0.1}
-              strokeWidth={2}
-              dot={false}
-            />
-          ))}
+          {categories.map((category) => {
+            const color = categoryColors.get(category) || "chart-1";
+            return (
+              <Area
+                key={category}
+                type="monotone"
+                dataKey={category}
+                stroke={`hsl(var(--${color}))`}
+                fill={`hsl(var(--${color}))`}
+                fillOpacity={0.2}
+                strokeWidth={2}
+                dot={false}
+              />
+            );
+          })}
         </RechartsAreaChart>
       </ResponsiveContainer>
     </div>

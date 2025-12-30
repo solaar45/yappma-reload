@@ -42,10 +42,10 @@ const portfolioData = [
 ];
 
 const assetAllocation = [
-  { name: "Stocks", value: 86420, color: "blue" as const },
-  { name: "Bonds", value: 31000, color: "emerald" as const },
-  { name: "Cash", value: 4964, color: "amber" as const },
-  { name: "Real Estate", value: 20000, color: "violet" as const },
+  { name: "Stocks", value: 86420, color: "chart-1" as const },
+  { name: "Bonds", value: 31000, color: "chart-2" as const },
+  { name: "Cash", value: 4964, color: "chart-3" as const },
+  { name: "Real Estate", value: 20000, color: "chart-4" as const },
 ];
 
 const recentAccounts = [
@@ -58,7 +58,7 @@ function App() {
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b">
-        <div className="flex h-16 items-center px-8">
+        <div className="flex h-16 items-center px-6">
           <div className="flex-1">
             <h2 className="text-lg font-semibold">YAPPMA</h2>
           </div>
@@ -66,12 +66,12 @@ function App() {
             <ThemeToggle />
             <Dialog>
               <DialogTrigger asChild>
-                <Button>
+                <Button size="sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Account
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                   <DialogTitle>Add New Account</DialogTitle>
                   <DialogDescription>
@@ -103,17 +103,16 @@ function App() {
         </div>
       </div>
 
-      <div className="p-8">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Your personal wealth tracking overview
+      <div className="p-6">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-sm text-muted-foreground">
+              Overview of your financial portfolio
             </p>
           </div>
 
-          {/* KPI Cards */}
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3">
             <KpiCard
               title="Total Net Worth"
               value={formatCurrency(142384)}
@@ -137,8 +136,7 @@ function App() {
             />
           </div>
 
-          {/* Charts Row */}
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Portfolio Performance</CardTitle>
@@ -148,7 +146,7 @@ function App() {
                   data={portfolioData}
                   index="month"
                   categories={["stocks", "bonds", "cash"]}
-                  colors={["blue", "emerald", "amber"]}
+                  colors={["chart-1", "chart-2", "chart-3"]}
                   valueFormatter={(value) => formatCurrency(value)}
                 />
               </CardContent>
@@ -167,7 +165,6 @@ function App() {
             </Card>
           </div>
 
-          {/* Net Worth Trend */}
           <Card>
             <CardHeader>
               <CardTitle>Net Worth Trend</CardTitle>
@@ -180,14 +177,13 @@ function App() {
                 }))}
                 index="month"
                 categories={["total"]}
-                colors={["violet"]}
+                colors={["chart-1"]}
                 valueFormatter={(value) => formatCurrency(value)}
                 showLegend={false}
               />
             </CardContent>
           </Card>
 
-          {/* Recent Accounts Table */}
           <Card>
             <CardHeader>
               <CardTitle>Recent Accounts</CardTitle>
@@ -207,8 +203,10 @@ function App() {
                       <TableCell className="font-medium">
                         {account.account}
                       </TableCell>
-                      <TableCell>{account.date}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-muted-foreground">
+                        {account.date}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
                         {formatCurrency(account.amount)}
                       </TableCell>
                     </TableRow>

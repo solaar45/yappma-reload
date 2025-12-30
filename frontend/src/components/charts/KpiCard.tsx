@@ -31,18 +31,13 @@ export const KpiCard = ({
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
         {change !== undefined && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             {isPositive ? (
-              <TrendingUp className="h-3 w-3 text-green-500" />
+              <TrendingUp className="h-4 w-4" />
             ) : (
-              <TrendingDown className="h-3 w-3 text-red-500" />
+              <TrendingDown className="h-4 w-4" />
             )}
-            <span
-              className={cn(
-                isPositive ? "text-green-600" : "text-red-600",
-                "font-medium"
-              )}
-            >
+            <span className="font-medium">
               {isPositive ? "+" : ""}
               {change}%
             </span>

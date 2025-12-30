@@ -1,9 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import {
-  AvailableChartColorsKeys,
-  getColorClassName,
-} from "@/lib/chartUtils";
+import { AvailableChartColorsKeys } from "@/lib/chartUtils";
 
 interface BarListItem {
   name: string;
@@ -25,28 +22,28 @@ export const BarList = ({
   const maxValue = Math.max(...data.map((item) => item.value));
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-4", className)}>
       {data.map((item, index) => {
         const percentage = (item.value / maxValue) * 100;
-        const color = item.color || "blue";
+        const color = item.color || "chart-1";
 
         return (
-          <div key={index} className="space-y-1">
+          <div key={index} className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-gray-900 dark:text-gray-100">
+              <span className="font-medium text-foreground">
                 {item.name}
               </span>
-              <span className="text-gray-700 dark:text-gray-300">
+              <span className="text-muted-foreground">
                 {valueFormatter(item.value)}
               </span>
             </div>
-            <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+            <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
               <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-300",
-                  getColorClassName(color, "bg")
-                )}
-                style={{ width: `${percentage}%` }}
+                className="h-full rounded-full transition-all duration-300"
+                style={{ 
+                  width: `${percentage}%`,
+                  backgroundColor: `hsl(var(--${color}))`
+                }}
               />
             </div>
           </div>
