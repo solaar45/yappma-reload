@@ -1,3 +1,7 @@
+<script lang="ts">
+  let modal: HTMLDialogElement;
+</script>
+
 <div class="space-y-12 max-w-6xl mx-auto py-8">
   
   <section>
@@ -171,8 +175,8 @@
   <!-- Modal Demo -->
   <section class="space-y-4">
     <h2 class="text-2xl font-bold">Modal</h2>
-    <button class="btn btn-primary" onclick="my_modal.showModal()">Open Modal</button>
-    <dialog id="my_modal" class="modal">
+    <button class="btn btn-primary" on:click={() => modal?.showModal()}>Open Modal</button>
+    <dialog bind:this={modal} class="modal">
       <div class="modal-box">
         <h3 class="font-bold text-lg">Modal Title</h3>
         <p class="py-4">This is a modal dialog. Press ESC or click the button below to close.</p>
