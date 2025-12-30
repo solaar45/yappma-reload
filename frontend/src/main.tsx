@@ -1,13 +1,13 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import { ThemeProvider } from '@/components/theme-provider'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { ThemeProvider } from "@/components/theme-provider";
+import App from "./App";
+import "./index.css";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ThemeProvider defaultTheme="system" storageKey="yappma-theme">
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
       <App />
     </ThemeProvider>
-  </StrictMode>,
-)
+  </React.StrictMode>
+);

@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FormField } from "@/components/ui/form-field";
+import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AreaChart } from "@/components/charts/AreaChart";
 import { LineChart } from "@/components/charts/LineChart";
@@ -54,14 +54,12 @@ const recentAccounts = [
   { id: 3, account: "Tagesgeld", date: "2025-12-28", amount: 12500.0 },
 ];
 
-function App() {
+export default function App() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b">
+      <header className="border-b">
         <div className="flex h-16 items-center px-6">
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold">YAPPMA</h2>
-          </div>
+          <h2 className="flex-1 text-lg font-semibold">YAPPMA</h2>
           <div className="flex items-center gap-4">
             <ThemeToggle />
             <Dialog>
@@ -75,35 +73,56 @@ function App() {
                 <DialogHeader>
                   <DialogTitle>Add New Account</DialogTitle>
                   <DialogDescription>
-                    Create a new account to track your finances. Fields marked with * are required.
+                    Fields marked with{" "}
+                    <span className="text-destructive">*</span> are required.
                   </DialogDescription>
                 </DialogHeader>
+
                 <div className="grid gap-4 py-4">
-                  <FormField label="Account Name" required>
+                  <div className="space-y-2">
+                    <Label>
+                      Account Name{" "}
+                      <span className="text-destructive">*</span>
+                    </Label>
                     <Input placeholder="e.g. Girokonto" />
-                  </FormField>
-                  <FormField label="Account Type" required>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Account Type{" "}
+                      <span className="text-destructive">*</span>
+                    </Label>
                     <Input placeholder="e.g. checking" />
-                  </FormField>
-                  <FormField 
-                    label="Initial Balance" 
-                    required
-                    description="Enter the current balance of the account"
-                  >
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Initial Balance{" "}
+                      <span className="text-destructive">*</span>
+                    </Label>
                     <Input type="number" placeholder="0.00" />
-                  </FormField>
-                  <FormField label="Institution" description="Optional: Bank or financial institution">
+                    <p className="text-sm text-muted-foreground">
+                      Enter the current balance of the account
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Institution</Label>
                     <Input placeholder="e.g. Deutsche Bank" />
-                  </FormField>
+                    <p className="text-sm text-muted-foreground">
+                      Optional: Bank or financial institution
+                    </p>
+                  </div>
                 </div>
+
                 <Button className="w-full">Create Account</Button>
               </DialogContent>
             </Dialog>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="p-6">
+      <main className="p-6">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -147,7 +166,7 @@ function App() {
                   index="month"
                   categories={["stocks", "bonds", "cash"]}
                   colors={["chart-1", "chart-2", "chart-3"]}
-                  valueFormatter={(value) => formatCurrency(value)}
+                  valueFormatter={formatCurrency}
                 />
               </CardContent>
             </Card>
@@ -159,7 +178,7 @@ function App() {
               <CardContent>
                 <BarList
                   data={assetAllocation}
-                  valueFormatter={(value) => formatCurrency(value)}
+                  valueFormatter={formatCurrency}
                 />
               </CardContent>
             </Card>
@@ -178,7 +197,7 @@ function App() {
                 index="month"
                 categories={["total"]}
                 colors={["chart-1"]}
-                valueFormatter={(value) => formatCurrency(value)}
+                valueFormatter={formatCurrency}
                 showLegend={false}
               />
             </CardContent>
@@ -216,9 +235,7 @@ function App() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
-
-export default App;
