@@ -1,15 +1,90 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
+import { Plus } from "lucide-react";
+
+const recentTransactions = [
+  {
+    id: 1,
+    account: "Girokonto",
+    amount: 5420.5,
+    date: "2025-12-30",
+  },
+  {
+    id: 2,
+    account: "Depot",
+    amount: 86420.0,
+    date: "2025-12-29",
+  },
+  {
+    id: 3,
+    account: "Tagesgeld",
+    amount: 12500.0,
+    date: "2025-12-28",
+  },
+];
 
 function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight">YAPPMA Dashboard</h1>
-          <p className="text-muted-foreground">
-            Your personal wealth tracking application
-          </p>
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold tracking-tight">YAPPMA Dashboard</h1>
+            <p className="text-muted-foreground">
+              Your personal wealth tracking application
+            </p>
+          </div>
+          
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Account
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Account</DialogTitle>
+                <DialogDescription>
+                  Create a new account to track your finances.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Account Name</Label>
+                  <Input id="name" placeholder="e.g. Girokonto" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="type">Account Type</Label>
+                  <Input id="type" placeholder="e.g. checking" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="balance">Initial Balance</Label>
+                  <Input id="balance" type="number" placeholder="0.00" />
+                </div>
+              </div>
+              <Button className="w-full">Create Account</Button>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
@@ -62,7 +137,7 @@ function App() {
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(86420)}</div>
               <p className="text-xs text-muted-foreground">
-                +180 this month
+                +12.5% this month
               </p>
             </CardContent>
           </Card>
@@ -93,14 +168,33 @@ function App() {
           </Card>
         </div>
 
-        <Card className="col-span-3">
+        <Card>
           <CardHeader>
-            <CardTitle>Portfolio Overview</CardTitle>
+            <CardTitle>Recent Accounts</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-              Chart will be added here with Tremor Raw components
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Account</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentTransactions.map((transaction) => (
+                  <TableRow key={transaction.id}>
+                    <TableCell className="font-medium">
+                      {transaction.account}
+                    </TableCell>
+                    <TableCell>{transaction.date}</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(transaction.amount)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
