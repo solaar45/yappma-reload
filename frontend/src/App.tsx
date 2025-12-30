@@ -18,34 +18,46 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AreaChart } from "@/components/charts/AreaChart";
+import { LineChart } from "@/components/charts/LineChart";
+import { BarList } from "@/components/charts/BarList";
+import { KpiCard } from "@/components/charts/KpiCard";
 import { formatCurrency } from "@/lib/utils";
-import { Plus } from "lucide-react";
+import { Plus, TrendingUp, Wallet, PiggyBank } from "lucide-react";
 
-const recentTransactions = [
-  {
-    id: 1,
-    account: "Girokonto",
-    amount: 5420.5,
-    date: "2025-12-30",
-  },
-  {
-    id: 2,
-    account: "Depot",
-    amount: 86420.0,
-    date: "2025-12-29",
-  },
-  {
-    id: 3,
-    account: "Tagesgeld",
-    amount: 12500.0,
-    date: "2025-12-28",
-  },
+const portfolioData = [
+  { month: "Jan", stocks: 45000, bonds: 20000, cash: 10000 },
+  { month: "Feb", stocks: 48000, bonds: 21000, cash: 9500 },
+  { month: "Mar", stocks: 52000, bonds: 22000, cash: 9000 },
+  { month: "Apr", stocks: 49000, bonds: 23000, cash: 8500 },
+  { month: "May", stocks: 55000, bonds: 24000, cash: 8000 },
+  { month: "Jun", stocks: 58000, bonds: 25000, cash: 7500 },
+  { month: "Jul", stocks: 62000, bonds: 26000, cash: 7000 },
+  { month: "Aug", stocks: 65000, bonds: 27000, cash: 6500 },
+  { month: "Sep", stocks: 68000, bonds: 28000, cash: 6000 },
+  { month: "Oct", stocks: 72000, bonds: 29000, cash: 5500 },
+  { month: "Nov", stocks: 78000, bonds: 30000, cash: 5000 },
+  { month: "Dec", stocks: 86420, bonds: 31000, cash: 4964 },
+];
+
+const assetAllocation = [
+  { name: "Stocks", value: 86420, color: "blue" as const },
+  { name: "Bonds", value: 31000, color: "emerald" as const },
+  { name: "Cash", value: 4964, color: "amber" as const },
+  { name: "Real Estate", value: 20000, color: "violet" as const },
+];
+
+const recentAccounts = [
+  { id: 1, account: "Girokonto", date: "2025-12-30", amount: 5420.5 },
+  { id: 2, account: "Depot", date: "2025-12-29", amount: 86420.0 },
+  { id: 3, account: "Tagesgeld", date: "2025-12-28", amount: 12500.0 },
 ];
 
 function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8">
       <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <h1 className="text-4xl font-bold tracking-tight">YAPPMA Dashboard</h1>
@@ -53,7 +65,7 @@ function App() {
               Your personal wealth tracking application
             </p>
           </div>
-          
+
           <Dialog>
             <DialogTrigger asChild>
               <Button>
@@ -87,87 +99,84 @@ function App() {
           </Dialog>
         </div>
 
+        {/* KPI Cards with Tremor-style */}
         <div className="grid gap-6 md:grid-cols-3">
+          <KpiCard
+            title="Total Net Worth"
+            value={formatCurrency(142384)}
+            change={20.1}
+            changeLabel="from last month"
+            icon={<Wallet className="h-4 w-4" />}
+          />
+          <KpiCard
+            title="Investments"
+            value={formatCurrency(86420)}
+            change={12.5}
+            changeLabel="this month"
+            icon={<TrendingUp className="h-4 w-4" />}
+          />
+          <KpiCard
+            title="Savings"
+            value={formatCurrency(12500)}
+            change={-5.2}
+            changeLabel="from last month"
+            icon={<PiggyBank className="h-4 w-4" />}
+          />
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Portfolio Trend - AreaChart */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Net Worth
-              </CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
+            <CardHeader>
+              <CardTitle>Portfolio Performance</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(142384)}</div>
-              <p className="text-xs text-muted-foreground">
-                +20.1% from last month
-              </p>
+              <AreaChart
+                data={portfolioData}
+                index="month"
+                categories={["stocks", "bonds", "cash"]}
+                colors={["blue", "emerald", "amber"]}
+                valueFormatter={(value) => formatCurrency(value)}
+              />
             </CardContent>
           </Card>
 
+          {/* Asset Allocation - BarList */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Investments
-              </CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
+            <CardHeader>
+              <CardTitle>Asset Allocation</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(86420)}</div>
-              <p className="text-xs text-muted-foreground">
-                +12.5% this month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Cash</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                className="h-4 w-4 text-muted-foreground"
-              >
-                <rect width="20" height="14" x="2" y="5" rx="2" />
-                <path d="M2 10h20" />
-              </svg>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(12500)}</div>
-              <p className="text-xs text-muted-foreground">
-                +19% from last month
-              </p>
+              <BarList
+                data={assetAllocation}
+                valueFormatter={(value) => formatCurrency(value)}
+              />
             </CardContent>
           </Card>
         </div>
 
+        {/* Net Worth Trend - LineChart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Net Worth Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LineChart
+              data={portfolioData.map((d) => ({
+                month: d.month,
+                total: d.stocks + d.bonds + d.cash,
+              }))}
+              index="month"
+              categories={["total"]}
+              colors={["violet"]}
+              valueFormatter={(value) => formatCurrency(value)}
+              showLegend={false}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Recent Accounts Table */}
         <Card>
           <CardHeader>
             <CardTitle>Recent Accounts</CardTitle>
@@ -182,14 +191,14 @@ function App() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentTransactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
+                {recentAccounts.map((account) => (
+                  <TableRow key={account.id}>
                     <TableCell className="font-medium">
-                      {transaction.account}
+                      {account.account}
                     </TableCell>
-                    <TableCell>{transaction.date}</TableCell>
+                    <TableCell>{account.date}</TableCell>
                     <TableCell className="text-right">
-                      {formatCurrency(transaction.amount)}
+                      {formatCurrency(account.amount)}
                     </TableCell>
                   </TableRow>
                 ))}
