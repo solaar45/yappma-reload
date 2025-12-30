@@ -1,10 +1,6 @@
-/* Import Tailwind base styles */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-@tailwind variants;
+/* 1. Import Tailwind v4 base - this registers all default variants like 'md', 'lg' etc. */
+@import "tailwindcss";
 
-/* Import Skeleton themes and styles */
-@layer base {
-	/* Register custom fonts if needed */
-}
+/* 2. Import Skeleton themes and styles */
+@import "@skeletonlabs/skeleton/themes/skeleton.css";
+@import "@skeletonlabs/skeleton/styles.css";
