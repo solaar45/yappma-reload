@@ -19,11 +19,11 @@ export default function AssetsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Assets</h1>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <Card key={i}>
               <CardHeader>
@@ -52,7 +52,7 @@ export default function AssetsPage() {
 
   if (!assets || assets.length === 0) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Assets</h1>
           <CreateAssetDialog onSuccess={handleAssetChanged} />
@@ -83,7 +83,7 @@ export default function AssetsPage() {
   }, {} as Record<string, typeof assets>);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Assets</h1>
@@ -104,7 +104,7 @@ export default function AssetsPage() {
             </span>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-3">
             {typeAssets.map((asset) => {
               const latestSnapshot = asset.snapshots?.[0];
               const value = latestSnapshot?.value || '0';
