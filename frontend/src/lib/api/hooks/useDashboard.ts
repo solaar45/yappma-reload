@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../client';
-import type { NetWorth, SnapshotCollection } from '../types';
+import type { NetWorth, DashboardAccountSnapshotsResponse, DashboardAssetSnapshotsResponse } from '../types';
 
 interface UseDashboardOptions {
   userId: number;
@@ -8,8 +8,8 @@ interface UseDashboardOptions {
 
 export function useDashboard({ userId }: UseDashboardOptions) {
   const [netWorth, setNetWorth] = useState<NetWorth | null>(null);
-  const [accountSnapshots, setAccountSnapshots] = useState<SnapshotCollection | null>(null);
-  const [assetSnapshots, setAssetSnapshots] = useState<SnapshotCollection | null>(null);
+  const [accountSnapshots, setAccountSnapshots] = useState<DashboardAccountSnapshotsResponse | null>(null);
+  const [assetSnapshots, setAssetSnapshots] = useState<DashboardAssetSnapshotsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,8 +22,8 @@ export function useDashboard({ userId }: UseDashboardOptions) {
         // Fetch all dashboard data in parallel
         const [netWorthData, accountSnapshotsData, assetSnapshotsData] = await Promise.all([
           apiClient.get<NetWorth>('/dashboard/net_worth', { user_id: userId }),
-          apiClient.get<SnapshotCollection>('/dashboard/account_snapshots', { user_id: userId }),
-          apiClient.get<SnapshotCollection>('/dashboard/asset_snapshots', { user_id: userId }),
+          apiClient.get<DashboardAccountSnapshotsResponse>('/dashboard/account_snapshots', { user_id: userId }),
+          apiClient.get<DashboardAssetSnapshotsResponse>('/dashboard/asset_snapshots', { user_id: userId }),
         ]);
 
         setNetWorth(netWorthData);
