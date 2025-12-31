@@ -1,0 +1,109 @@
+{
+  "common": {
+    "loading": "Lädt...",
+    "error": "Fehler",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "close": "Schließen",
+    "search": "Suchen",
+    "actions": "Aktionen",
+    "date": "Datum",
+    "value": "Wert",
+    "type": "Typ",
+    "name": "Name",
+    "currency": "Währung",
+    "quantity": "Menge"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "accounts": "Konten",
+    "assets": "Vermögenswerte",
+    "snapshots": "Momentaufnahmen",
+    "institutions": "Institutionen",
+    "portfolio": "Portfolio",
+    "settings": "Einstellungen"
+  },
+  "dashboard": {
+    "title": "Übersicht",
+    "netWorth": "Nettovermögen",
+    "totalNetWorth": "Gesamtes Nettovermögen",
+    "totalInAccounts": "Gesamt in Konten",
+    "totalInAssets": "Gesamt in Vermögenswerten",
+    "asOf": "Stand",
+    "accounts": "Konto(en)",
+    "assets": "Vermögenswert(e)",
+    "recentAccounts": "Aktuelle Konten",
+    "recentAssets": "Aktuelle Vermögenswerte",
+    "noAccountSnapshots": "Noch keine Kontoauszüge vorhanden",
+    "noAssetSnapshots": "Noch keine Vermögenswertauszüge vorhanden",
+    "errorLoading": "Fehler beim Laden des Dashboards"
+  },
+  "accounts": {
+    "title": "Konten",
+    "noAccounts": "Keine Konten gefunden",
+    "addFirst": "Fügen Sie Ihr erstes Konto hinzu, um Ihre Finanzen zu verfolgen",
+    "createAccount": "Konto erstellen",
+    "editAccount": "Konto bearbeiten",
+    "deleteAccount": "Konto löschen",
+    "deleteConfirm": "Möchten Sie dieses Konto wirklich löschen?",
+    "accountName": "Kontoname",
+    "institution": "Institution",
+    "accountType": "Kontotyp",
+    "balance": "Saldo",
+    "snapshots": "Momentaufnahme(n)",
+    "errorLoading": "Fehler beim Laden der Konten"
+  },
+  "assets": {
+    "title": "Vermögenswerte",
+    "noAssets": "Keine Vermögenswerte gefunden",
+    "addFirst": "Fügen Sie Ihren ersten Vermögenswert hinzu, um Ihre Investitionen zu verfolgen",
+    "createAsset": "Vermögenswert erstellen",
+    "editAsset": "Vermögenswert bearbeiten",
+    "deleteAsset": "Vermögenswert löschen",
+    "deleteConfirm": "Möchten Sie diesen Vermögenswert wirklich löschen?",
+    "assetName": "Vermögenswertname",
+    "assetType": "Vermögenswerttyp",
+    "isin": "ISIN",
+    "ticker": "Ticker",
+    "units": "Einheiten",
+    "snapshots": "Momentaufnahme(n)",
+    "errorLoading": "Fehler beim Laden der Vermögenswerte"
+  },
+  "institutions": {
+    "title": "Institutionen",
+    "noInstitutions": "Keine Institutionen gefunden",
+    "addFirst": "Fügen Sie Ihre erste Finanzinstitution hinzu, um Ihre Konten zu organisieren",
+    "createInstitution": "Institution erstellen",
+    "editInstitution": "Institution bearbeiten",
+    "deleteInstitution": "Institution löschen",
+    "deleteConfirm": "Möchten Sie diese Institution wirklich löschen?",
+    "institutionName": "Institutionsname",
+    "country": "Land",
+    "types": {
+      "bank": "Bank",
+      "broker": "Broker",
+      "insurance": "Versicherung",
+      "other": "Sonstiges"
+    },
+    "errorLoading": "Fehler beim Laden der Institutionen"
+  },
+  "snapshots": {
+    "title": "Momentaufnahmen",
+    "noSnapshots": "Keine Momentaufnahmen gefunden",
+    "addFirst": "Fügen Sie Ihre erste Momentaufnahme hinzu, um Konto- oder Vermögenswerte im Laufe der Zeit zu verfolgen",
+    "createSnapshot": "Momentaufnahme erstellen",
+    "editSnapshot": "Momentaufnahme bearbeiten",
+    "deleteSnapshot": "Momentaufnahme löschen",
+    "deleteConfirm": "Möchten Sie diese Momentaufnahme wirklich löschen?",
+    "allSnapshots": "Alle Momentaufnahmen",
+    "entity": "Entität",
+    "types": {
+      "account": "Konto",
+      "asset": "Vermögenswert"
+    },
+    "errorLoading": "Fehler beim Laden der Momentaufnahmen"
+  }
+}
