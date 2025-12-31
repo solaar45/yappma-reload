@@ -28,7 +28,7 @@ export default function SnapshotsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Snapshots</h1>
         </div>
@@ -55,7 +55,7 @@ export default function SnapshotsPage() {
 
   if (!snapshots || snapshots.length === 0) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Snapshots</h1>
           <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
@@ -76,7 +76,7 @@ export default function SnapshotsPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Snapshots</h1>
@@ -87,7 +87,56 @@ export default function SnapshotsPage() {
         <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
       </div>
 
-      <Card>
+      {/* Mobile: Card Layout */}
+      <div className="grid gap-4 md:hidden">
+        {snapshots.map((snapshot) => {
+          const isAccount = snapshot.snapshot_type === 'account';
+          const value = isAccount
+            ? (snapshot as any).balance
+            : (snapshot as any).value;
+          const currency = isAccount
+            ? (snapshot as any).currency
+            : 'EUR';
+
+          return (
+            <Card key={`${snapshot.snapshot_type}-${snapshot.id}`}>
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-base">{snapshot.entity_name}</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {formatDate(snapshot.snapshot_date)}
+                    </p>
+                  </div>
+                  <Badge variant={isAccount ? 'default' : 'secondary'}>
+                    {isAccount ? 'Account' : 'Asset'}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(value, currency)}
+                  </div>
+                  <div className="flex gap-1">
+                    <EditSnapshotDialog 
+                      snapshot={snapshot} 
+                      onSuccess={handleSnapshotChanged} 
+                    />
+                    <DeleteSnapshotDialog 
+                      snapshot={snapshot} 
+                      onSuccess={handleSnapshotChanged} 
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Desktop: Table Layout */}
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>All Snapshots</CardTitle>
         </CardHeader>
@@ -110,7 +159,7 @@ export default function SnapshotsPage() {
                   : (snapshot as any).value;
                 const currency = isAccount
                   ? (snapshot as any).currency
-                  : 'EUR'; // Assets might not have currency in snapshot
+                  : 'EUR';
 
                 return (
                   <TableRow key={`${snapshot.snapshot_type}-${snapshot.id}`}>
