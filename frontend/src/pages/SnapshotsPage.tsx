@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSnapshots } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -18,6 +19,7 @@ import {
 import { Calendar } from 'lucide-react';
 
 export default function SnapshotsPage() {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const [refreshKey, setRefreshKey] = useState(0);
   const { snapshots, loading, error } = useSnapshots({ userId: userId!, key: refreshKey });
@@ -30,7 +32,7 @@ export default function SnapshotsPage() {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Snapshots</h1>
+          <h1 className="text-3xl font-bold">{t('snapshots.title')}</h1>
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -48,7 +50,7 @@ export default function SnapshotsPage() {
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-destructive">Error loading snapshots: {error}</div>
+        <div className="text-destructive">{t('snapshots.errorLoading')}: {error}</div>
       </div>
     );
   }
@@ -57,16 +59,16 @@ export default function SnapshotsPage() {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Snapshots</h1>
+          <h1 className="text-3xl font-bold">{t('snapshots.title')}</h1>
           <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
         </div>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
               <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg text-muted-foreground">No snapshots found</p>
+              <p className="text-lg text-muted-foreground">{t('snapshots.noSnapshots')}</p>
               <p className="text-sm text-muted-foreground mt-2">
-                Add your first snapshot to track account or asset values over time
+                {t('snapshots.addFirst')}
               </p>
             </div>
           </CardContent>
@@ -79,9 +81,9 @@ export default function SnapshotsPage() {
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">Snapshots</h1>
+          <h1 className="text-3xl font-bold">{t('snapshots.title')}</h1>
           <div className="text-sm text-muted-foreground">
-            {snapshots.length} snapshot{snapshots.length !== 1 ? 's' : ''}
+            {snapshots.length} {t('snapshots.title').toLowerCase()}
           </div>
         </div>
         <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
@@ -109,7 +111,7 @@ export default function SnapshotsPage() {
                     </p>
                   </div>
                   <Badge variant={isAccount ? 'default' : 'secondary'}>
-                    {isAccount ? 'Account' : 'Asset'}
+                    {t(`snapshots.types.${isAccount ? 'account' : 'asset'}`)}
                   </Badge>
                 </div>
               </CardHeader>
@@ -138,17 +140,17 @@ export default function SnapshotsPage() {
       {/* Desktop: Table Layout */}
       <Card className="hidden md:block">
         <CardHeader>
-          <CardTitle>All Snapshots</CardTitle>
+          <CardTitle>{t('snapshots.allSnapshots')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Entity</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Value</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('common.date')}</TableHead>
+                <TableHead>{t('snapshots.entity')}</TableHead>
+                <TableHead>{t('common.type')}</TableHead>
+                <TableHead className="text-right">{t('common.value')}</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -171,7 +173,7 @@ export default function SnapshotsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={isAccount ? 'default' : 'secondary'}>
-                        {isAccount ? 'Account' : 'Asset'}
+                        {t(`snapshots.types.${isAccount ? 'account' : 'asset'}`)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-medium">
