@@ -3,6 +3,7 @@ defmodule WealthBackendWeb.AssetController do
 
   alias WealthBackend.Portfolio
   alias WealthBackend.Portfolio.Asset
+  alias WealthBackend.Repo
 
   action_fallback WealthBackendWeb.FallbackController
 
@@ -28,16 +29,25 @@ defmodule WealthBackendWeb.AssetController do
   def update(conn, %{"id" => id, "asset" => asset_params}) do
     asset = Portfolio.get_asset!(id)
 
-    with {:ok, %Asset{} = asset} <- Portfolio.update_asset(asset, asset_params) do
+    with {:ok, %Asset{} = asset} <- Portfolio.update_full_asset(asset, asset_params) do
       render(conn, :show, asset: asset)
     end
   end
 
   def delete(conn, %{"id" => id}) do
-    asset = Portfolio.get_asset!(id)
+    # Use Repo.get instead of get_asset! to avoid exception on missing asset
+    case Repo.get(Asset, id) do
+      nil ->
+        # Asset already deleted or doesn't exist
+        conn
+        |> put_status(:not_found)
+        |> put_view(json: WealthBackendWeb.ErrorJSON)
+        |> render(:"404")
 
-    with {:ok, %Asset{}} <- Portfolio.delete_asset(asset) do
-      send_resp(conn, :no_content, "")
+      asset ->
+        with {:ok, %Asset{}} <- Portfolio.delete_asset(asset) do
+          send_resp(conn, :no_content, "")
+        end
     end
   end
 end

@@ -19,5 +19,16 @@ defmodule WealthBackend.Portfolio.RealEstateAsset do
     real_estate_asset
     |> cast(attrs, [:asset_id, :address, :size_m2, :purchase_price, :purchase_date])
     |> validate_required([:asset_id])
+    |> empty_string_to_nil([:address])
+  end
+
+  # Convert empty strings to nil for optional fields
+  defp empty_string_to_nil(changeset, fields) do
+    Enum.reduce(fields, changeset, fn field, acc ->
+      case get_change(acc, field) do
+        "" -> put_change(acc, field, nil)
+        _ -> acc
+      end
+    end)
   end
 end

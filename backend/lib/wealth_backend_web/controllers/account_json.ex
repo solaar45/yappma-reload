@@ -21,6 +21,7 @@ defmodule WealthBackendWeb.AccountJSON do
       user_id: account.user_id,
       institution_id: account.institution_id,
       institution: institution_data(account.institution),
+      snapshots: snapshots_data(account.snapshots),
       inserted_at: account.inserted_at,
       updated_at: account.updated_at
     }
@@ -36,4 +37,26 @@ defmodule WealthBackendWeb.AccountJSON do
       country: institution.country
     }
   end
+
+  defp snapshots_data(%Ecto.Association.NotLoaded{}), do: []
+  defp snapshots_data(snapshots) when is_list(snapshots) do
+    Enum.map(snapshots, &snapshot_data/1)
+  end
+  defp snapshots_data(_), do: []
+
+  defp snapshot_data(snapshot) do
+    %{
+      id: snapshot.id,
+      snapshot_date: snapshot.snapshot_date,
+      balance: decimal_to_string(snapshot.balance),
+      currency: snapshot.currency,
+      note: snapshot.note,
+      account_id: snapshot.account_id
+    }
+  end
+
+  defp decimal_to_string(nil), do: nil
+  defp decimal_to_string(%Decimal{} = decimal), do: Decimal.to_string(decimal)
+  defp decimal_to_string(value) when is_number(value), do: to_string(value)
+  defp decimal_to_string(value), do: value
 end
