@@ -1,0 +1,109 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "search": "Search",
+    "actions": "Actions",
+    "date": "Date",
+    "value": "Value",
+    "type": "Type",
+    "name": "Name",
+    "currency": "Currency",
+    "quantity": "Quantity"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "accounts": "Accounts",
+    "assets": "Assets",
+    "snapshots": "Snapshots",
+    "institutions": "Institutions",
+    "portfolio": "Portfolio",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Overview",
+    "netWorth": "Net Worth",
+    "totalNetWorth": "Total Net Worth",
+    "totalInAccounts": "Total in Accounts",
+    "totalInAssets": "Total in Assets",
+    "asOf": "as of",
+    "accounts": "account(s)",
+    "assets": "asset(s)",
+    "recentAccounts": "Recent Accounts",
+    "recentAssets": "Recent Assets",
+    "noAccountSnapshots": "No account snapshots yet",
+    "noAssetSnapshots": "No asset snapshots yet",
+    "errorLoading": "Error loading dashboard"
+  },
+  "accounts": {
+    "title": "Accounts",
+    "noAccounts": "No accounts found",
+    "addFirst": "Add your first account to start tracking your finances",
+    "createAccount": "Create Account",
+    "editAccount": "Edit Account",
+    "deleteAccount": "Delete Account",
+    "deleteConfirm": "Are you sure you want to delete this account?",
+    "accountName": "Account Name",
+    "institution": "Institution",
+    "accountType": "Account Type",
+    "balance": "Balance",
+    "snapshots": "snapshot(s)",
+    "errorLoading": "Error loading accounts"
+  },
+  "assets": {
+    "title": "Assets",
+    "noAssets": "No assets found",
+    "addFirst": "Add your first asset to start tracking your investments",
+    "createAsset": "Create Asset",
+    "editAsset": "Edit Asset",
+    "deleteAsset": "Delete Asset",
+    "deleteConfirm": "Are you sure you want to delete this asset?",
+    "assetName": "Asset Name",
+    "assetType": "Asset Type",
+    "isin": "ISIN",
+    "ticker": "Ticker",
+    "units": "units",
+    "snapshots": "snapshot(s)",
+    "errorLoading": "Error loading assets"
+  },
+  "institutions": {
+    "title": "Institutions",
+    "noInstitutions": "No institutions found",
+    "addFirst": "Add your first financial institution to organize your accounts",
+    "createInstitution": "Create Institution",
+    "editInstitution": "Edit Institution",
+    "deleteInstitution": "Delete Institution",
+    "deleteConfirm": "Are you sure you want to delete this institution?",
+    "institutionName": "Institution Name",
+    "country": "Country",
+    "types": {
+      "bank": "Bank",
+      "broker": "Broker",
+      "insurance": "Insurance",
+      "other": "Other"
+    },
+    "errorLoading": "Error loading institutions"
+  },
+  "snapshots": {
+    "title": "Snapshots",
+    "noSnapshots": "No snapshots found",
+    "addFirst": "Add your first snapshot to track account or asset values over time",
+    "createSnapshot": "Create Snapshot",
+    "editSnapshot": "Edit Snapshot",
+    "deleteSnapshot": "Delete Snapshot",
+    "deleteConfirm": "Are you sure you want to delete this snapshot?",
+    "allSnapshots": "All Snapshots",
+    "entity": "Entity",
+    "types": {
+      "account": "Account",
+      "asset": "Asset"
+    },
+    "errorLoading": "Error loading snapshots"
+  }
+}
