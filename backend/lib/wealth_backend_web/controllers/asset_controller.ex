@@ -28,7 +28,7 @@ defmodule WealthBackendWeb.AssetController do
   def update(conn, %{"id" => id, "asset" => asset_params}) do
     asset = Portfolio.get_asset!(id)
 
-    with {:ok, %Asset{} = asset} <- Portfolio.update_asset(asset, asset_params) do
+    with {:ok, %Asset{} = asset} <- Portfolio.update_full_asset(asset, asset_params) do
       render(conn, :show, asset: asset)
     end
   end
