@@ -48,10 +48,15 @@ defmodule WealthBackendWeb.AccountJSON do
     %{
       id: snapshot.id,
       snapshot_date: snapshot.snapshot_date,
-      balance: snapshot.balance,
+      balance: decimal_to_string(snapshot.balance),
       currency: snapshot.currency,
       notes: snapshot.notes,
       account_id: snapshot.account_id
     }
   end
+
+  defp decimal_to_string(nil), do: nil
+  defp decimal_to_string(%Decimal{} = decimal), do: Decimal.to_string(decimal)
+  defp decimal_to_string(value) when is_number(value), do: to_string(value)
+  defp decimal_to_string(value), do: value
 end
