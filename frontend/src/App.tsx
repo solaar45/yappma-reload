@@ -19,6 +19,7 @@ import { useLocation, Link } from 'react-router-dom';
 import DashboardPage from '@/pages/DashboardPage';
 import AccountsPage from '@/pages/AccountsPage';
 import AssetsPage from '@/pages/AssetsPage';
+import InstitutionsPage from '@/pages/InstitutionsPage';
 import './App.css';
 
 function getBreadcrumbs(pathname: string) {
@@ -30,6 +31,9 @@ function getBreadcrumbs(pathname: string) {
   }
   if (pathname === '/assets') {
     return { main: 'Portfolio', sub: 'Assets' };
+  }
+  if (pathname === '/institutions') {
+    return { main: 'Settings', sub: 'Institutions' };
   }
   return { main: 'Dashboard', sub: 'Overview' };
 }
@@ -68,6 +72,7 @@ function AppContent() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/accounts" element={<AccountsPage />} />
           <Route path="/assets" element={<AssetsPage />} />
+          <Route path="/institutions" element={<InstitutionsPage />} />
         </Routes>
       </SidebarInset>
     </SidebarProvider>
