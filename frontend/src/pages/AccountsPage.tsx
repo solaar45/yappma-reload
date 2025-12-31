@@ -19,7 +19,7 @@ export default function AccountsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 px-6 py-4">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Accounts</h1>
         </div>
@@ -52,7 +52,7 @@ export default function AccountsPage() {
 
   if (!accounts || accounts.length === 0) {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 px-6 py-4">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Accounts</h1>
           <CreateAccountDialog onSuccess={handleAccountChanged} />
@@ -83,7 +83,7 @@ export default function AccountsPage() {
   }, {} as Record<string, typeof accounts>);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <div className="flex flex-1 flex-col gap-4 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">Accounts</h1>
