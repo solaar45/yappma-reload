@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAssets } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
@@ -12,12 +11,7 @@ import { PiggyBank, TrendingUp, Package } from 'lucide-react';
 export default function AssetsPage() {
   const { t } = useTranslation();
   const { userId } = useUser();
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { assets, loading, error } = useAssets({ userId: userId!, key: refreshKey });
-
-  const handleAssetChanged = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
+  const { assets, loading, error, refetch } = useAssets({ userId: userId! });
 
   if (loading) {
     return (
@@ -47,7 +41,7 @@ export default function AssetsPage() {
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-destructive">{t('assets.errorLoading')}: {error}</div>
+        <div className="text-destructive">{t('assets.errorLoading')}: {error.message}</div>
       </div>
     );
   }
@@ -57,7 +51,7 @@ export default function AssetsPage() {
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">{t('assets.title')}</h1>
-          <CreateAssetDialog onSuccess={handleAssetChanged} />
+          <CreateAssetDialog onSuccess={refetch} />
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -90,10 +84,10 @@ export default function AssetsPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">{t('assets.title')}</h1>
           <div className="text-sm text-muted-foreground">
-            {assets.length} {t('assets.snapshots')}
+            {assets.length} {assets.length === 1 ? t('common.asset') : t('assets.title')}
           </div>
         </div>
-        <CreateAssetDialog onSuccess={handleAssetChanged} />
+        <CreateAssetDialog onSuccess={refetch} />
       </div>
 
       {Object.entries(assetsByType).map(([typeName, typeAssets]) => (
@@ -121,8 +115,8 @@ export default function AssetsPage() {
                       {asset.name}
                     </CardTitle>
                     <div className="flex items-center gap-1">
-                      <EditAssetDialog asset={asset} onSuccess={handleAssetChanged} />
-                      <DeleteAssetDialog asset={asset} onSuccess={handleAssetChanged} />
+                      <EditAssetDialog asset={asset} onSuccess={refetch} />
+                      <DeleteAssetDialog asset={asset} onSuccess={refetch} />
                     </div>
                   </CardHeader>
                   <CardContent>
