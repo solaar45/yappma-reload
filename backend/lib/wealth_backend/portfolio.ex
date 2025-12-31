@@ -122,6 +122,125 @@ defmodule WealthBackend.Portfolio do
     end
   end
 
+  @doc """
+  Updates an asset with type-specific details.
+  Handles updating both the base asset and related type-specific data (e.g., security_asset).
+  Uses a transaction to ensure data consistency.
+  """
+  def update_full_asset(%Asset{} = asset, attrs) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.update(:asset, Asset.changeset(asset, attrs))
+    |> Ecto.Multi.run(:type_specific, fn repo, %{asset: updated_asset} ->
+      update_type_specific_asset(repo, updated_asset, attrs)
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{asset: asset}} -> {:ok, get_asset!(asset.id)}
+      {:error, :asset, changeset, _} -> {:error, changeset}
+      {:error, :type_specific, changeset, _} -> {:error, changeset}
+    end
+  end
+
+  defp update_type_specific_asset(repo, asset, attrs) do
+    asset_type = repo.get!(AssetType, asset.asset_type_id)
+
+    case asset_type.code do
+      "security" ->
+        security_attrs = get_nested_attrs(attrs, "security_asset")
+        
+        if map_size(security_attrs) > 0 do
+          case repo.get(SecurityAsset, asset.id) do
+            nil ->
+              # Create new security_asset if it doesn't exist
+              security_attrs
+              |> stringify_keys()
+              |> Map.put("asset_id", asset.id)
+              |> then(&SecurityAsset.changeset(%SecurityAsset{}, &1))
+              |> repo.insert()
+
+            security_asset ->
+              # Update existing security_asset
+              security_attrs
+              |> stringify_keys()
+              |> then(&SecurityAsset.changeset(security_asset, &1))
+              |> repo.update()
+          end
+        else
+          {:ok, nil}
+        end
+
+      "insurance" ->
+        insurance_attrs = get_nested_attrs(attrs, "insurance_asset")
+        
+        if map_size(insurance_attrs) > 0 do
+          case repo.get(InsuranceAsset, asset.id) do
+            nil ->
+              insurance_attrs
+              |> stringify_keys()
+              |> Map.put("asset_id", asset.id)
+              |> then(&InsuranceAsset.changeset(%InsuranceAsset{}, &1))
+              |> repo.insert()
+
+            insurance_asset ->
+              insurance_attrs
+              |> stringify_keys()
+              |> then(&InsuranceAsset.changeset(insurance_asset, &1))
+              |> repo.update()
+          end
+        else
+          {:ok, nil}
+        end
+
+      "loan" ->
+        loan_attrs = get_nested_attrs(attrs, "loan_asset")
+        
+        if map_size(loan_attrs) > 0 do
+          case repo.get(LoanAsset, asset.id) do
+            nil ->
+              loan_attrs
+              |> stringify_keys()
+              |> Map.put("asset_id", asset.id)
+              |> then(&LoanAsset.changeset(%LoanAsset{}, &1))
+              |> repo.insert()
+
+            loan_asset ->
+              loan_attrs
+              |> stringify_keys()
+              |> then(&LoanAsset.changeset(loan_asset, &1))
+              |> repo.update()
+          end
+        else
+          {:ok, nil}
+        end
+
+      "real_estate" ->
+        re_attrs = get_nested_attrs(attrs, "real_estate_asset")
+        
+        if map_size(re_attrs) > 0 do
+          case repo.get(RealEstateAsset, asset.id) do
+            nil ->
+              re_attrs
+              |> stringify_keys()
+              |> Map.put("asset_id", asset.id)
+              |> then(&RealEstateAsset.changeset(%RealEstateAsset{}, &1))
+              |> repo.insert()
+
+            real_estate_asset ->
+              re_attrs
+              |> stringify_keys()
+              |> then(&RealEstateAsset.changeset(real_estate_asset, &1))
+              |> repo.update()
+          end
+        else
+          {:ok, nil}
+        end
+
+      _ ->
+        # For cash and other types without specific fields
+        {:ok, nil}
+    end
+  end
+
   # Helper to get nested attrs, supporting both string and atom keys
   defp get_nested_attrs(attrs, key) when is_binary(key) do
     Map.get(attrs, key, Map.get(attrs, String.to_atom(key), %{}))
@@ -135,6 +254,10 @@ defmodule WealthBackend.Portfolio do
     end)
   end
 
+  @doc """
+  Updates an asset (simple version, without type-specific updates).
+  For updating assets with type-specific data, use update_full_asset/2 instead.
+  """
   def update_asset(%Asset{} = asset, attrs) do
     asset
     |> Asset.changeset(attrs)
