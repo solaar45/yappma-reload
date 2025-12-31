@@ -4,6 +4,8 @@ import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateAssetDialog } from '@/components/CreateAssetDialog';
+import { EditAssetDialog } from '@/components/EditAssetDialog';
+import { DeleteAssetDialog } from '@/components/DeleteAssetDialog';
 import { PiggyBank, TrendingUp, Package } from 'lucide-react';
 
 export default function AssetsPage() {
@@ -11,7 +13,7 @@ export default function AssetsPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const { assets, loading, error } = useAssets({ userId: userId!, key: refreshKey });
 
-  const handleAssetCreated = () => {
+  const handleAssetChanged = () => {
     setRefreshKey((prev) => prev + 1);
   };
 
@@ -53,7 +55,7 @@ export default function AssetsPage() {
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Assets</h1>
-          <CreateAssetDialog onSuccess={handleAssetCreated} />
+          <CreateAssetDialog onSuccess={handleAssetChanged} />
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -89,7 +91,7 @@ export default function AssetsPage() {
             {assets.length} asset{assets.length !== 1 ? 's' : ''}
           </div>
         </div>
-        <CreateAssetDialog onSuccess={handleAssetCreated} />
+        <CreateAssetDialog onSuccess={handleAssetChanged} />
       </div>
 
       {Object.entries(assetsByType).map(([typeName, typeAssets]) => (
@@ -116,7 +118,10 @@ export default function AssetsPage() {
                     <CardTitle className="text-sm font-medium">
                       {asset.name}
                     </CardTitle>
-                    <PiggyBank className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-1">
+                      <EditAssetDialog asset={asset} onSuccess={handleAssetChanged} />
+                      <DeleteAssetDialog asset={asset} onSuccess={handleAssetChanged} />
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
@@ -140,16 +145,16 @@ export default function AssetsPage() {
                         </div>
                       )}
 
-                      {asset.isin && (
+                      {asset.security_asset?.isin && (
                         <div className="text-xs text-muted-foreground font-mono">
-                          ISIN: {asset.isin}
+                          ISIN: {asset.security_asset.isin}
                         </div>
                       )}
 
-                      {asset.ticker && (
+                      {asset.security_asset?.ticker && (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <TrendingUp className="h-3 w-3" />
-                          <span>{asset.ticker}</span>
+                          <span>{asset.security_asset.ticker}</span>
                         </div>
                       )}
 
