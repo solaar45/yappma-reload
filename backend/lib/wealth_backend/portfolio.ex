@@ -274,7 +274,7 @@ defmodule WealthBackend.Portfolio do
 
   # Normalize security_asset attrs: set missing optional fields to nil
   defp normalize_security_attrs(attrs) do
-    optional_fields = [:wkn, :ticker, :exchange, :sector, "wkn", "ticker", "exchange", "sector"]
+    optional_fields = [:isin, :wkn, :ticker, :exchange, :sector, "isin", "wkn", "ticker", "exchange", "sector"]
     
     Enum.reduce(optional_fields, attrs, fn field, acc ->
       if Map.has_key?(attrs, field) do
@@ -287,7 +287,7 @@ defmodule WealthBackend.Portfolio do
 
   # Normalize insurance_asset attrs: set missing optional fields to nil
   defp normalize_insurance_attrs(attrs) do
-    optional_fields = [:policy_number, :insurance_type, :payment_frequency, "policy_number", "insurance_type", "payment_frequency"]
+    optional_fields = [:insurer_name, :policy_number, :insurance_type, :payment_frequency, "insurer_name", "policy_number", "insurance_type", "payment_frequency"]
     
     Enum.reduce(optional_fields, attrs, fn field, acc ->
       if Map.has_key?(attrs, field) do
@@ -300,7 +300,7 @@ defmodule WealthBackend.Portfolio do
 
   # Normalize loan_asset attrs: set missing optional fields to nil
   defp normalize_loan_attrs(attrs) do
-    optional_fields = [:payment_frequency, :maturity_date, "payment_frequency", "maturity_date"]
+    optional_fields = [:interest_rate, :payment_frequency, :maturity_date, "interest_rate", "payment_frequency", "maturity_date"]
     
     Enum.reduce(optional_fields, attrs, fn field, acc ->
       if Map.has_key?(attrs, field) do
@@ -313,7 +313,7 @@ defmodule WealthBackend.Portfolio do
 
   # Normalize real_estate_asset attrs: set missing optional fields to nil
   defp normalize_real_estate_attrs(attrs) do
-    optional_fields = [:size_m2, :purchase_price, :purchase_date, "size_m2", "purchase_price", "purchase_date"]
+    optional_fields = [:address, :size_m2, :purchase_price, :purchase_date, "address", "size_m2", "purchase_price", "purchase_date"]
     
     Enum.reduce(optional_fields, attrs, fn field, acc ->
       if Map.has_key?(attrs, field) do
