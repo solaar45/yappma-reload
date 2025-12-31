@@ -19,6 +19,29 @@ export interface Institution {
   updated_at: string;
 }
 
+export interface AccountSnapshot {
+  id: number;
+  snapshot_date: string;
+  balance: string;
+  currency: string;
+  note: string | null;
+  account_id: number;
+  inserted_at?: string;
+  updated_at?: string;
+}
+
+export interface AssetSnapshot {
+  id: number;
+  snapshot_date: string;
+  quantity: string | null;
+  market_price_per_unit: string | null;
+  value: string;
+  note: string | null;
+  asset_id: number;
+  inserted_at?: string;
+  updated_at?: string;
+}
+
 export interface Account {
   id: number;
   name: string;
@@ -30,6 +53,7 @@ export interface Account {
   user_id: number;
   institution_id: number;
   institution?: Institution;
+  snapshots?: AccountSnapshot[];
   inserted_at: string;
   updated_at: string;
 }
@@ -67,6 +91,8 @@ export interface Asset {
   id: number;
   name: string;
   symbol: string | null;
+  isin?: string | null;
+  ticker?: string | null;
   currency: string;
   is_active: boolean;
   created_at_date: string | null;
@@ -79,31 +105,7 @@ export interface Asset {
   security_asset?: SecurityAsset | null;
   insurance_asset?: InsuranceAsset | null;
   real_estate_asset?: RealEstateAsset | null;
-  inserted_at: string;
-  updated_at: string;
-}
-
-export interface AccountSnapshot {
-  id: number;
-  snapshot_date: string;
-  balance: string;
-  currency: string;
-  note: string | null;
-  account_id: number;
-  account?: Account;
-  inserted_at: string;
-  updated_at: string;
-}
-
-export interface AssetSnapshot {
-  id: number;
-  snapshot_date: string;
-  quantity: string | null;
-  market_price_per_unit: string | null;
-  value: string;
-  note: string | null;
-  asset_id: number;
-  asset?: Asset;
+  snapshots?: AssetSnapshot[];
   inserted_at: string;
   updated_at: string;
 }
@@ -133,3 +135,6 @@ export interface ApiResponse<T> {
 export interface ApiError {
   errors: Record<string, string[]> | { detail: string };
 }
+
+export type NetWorth = NetWorthResponse;
+export type SnapshotCollection = DashboardAccountSnapshotsResponse | DashboardAssetSnapshotsResponse;
