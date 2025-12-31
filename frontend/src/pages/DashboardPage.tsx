@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useDashboard } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -5,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Wallet, PiggyBank } from 'lucide-react';
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const { netWorth, accountSnapshots, assetSnapshots, loading, error } = useDashboard({
     userId: userId!,
@@ -13,7 +15,7 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-destructive">Error loading dashboard: {error}</div>
+        <div className="text-destructive">{t('dashboard.errorLoading')}: {error}</div>
       </div>
     );
   }
@@ -25,7 +27,7 @@ export default function DashboardPage() {
         {/* Net Worth Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Net Worth</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.totalNetWorth')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -37,7 +39,7 @@ export default function DashboardPage() {
                   {netWorth ? formatCurrency(netWorth.total) : '€0.00'}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  as of {netWorth ? formatDate(netWorth.date) : 'today'}
+                  {t('dashboard.asOf')} {netWorth ? formatDate(netWorth.date) : t('common.date')}
                 </p>
               </>
             )}
@@ -47,7 +49,7 @@ export default function DashboardPage() {
         {/* Accounts Total Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total in Accounts</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.totalInAccounts')}</CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -59,7 +61,7 @@ export default function DashboardPage() {
                   {netWorth ? formatCurrency(netWorth.accounts) : '€0.00'}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {accountSnapshots?.snapshots.length || 0} account(s)
+                  {accountSnapshots?.snapshots.length || 0} {t('dashboard.accounts')}
                 </p>
               </>
             )}
@@ -69,7 +71,7 @@ export default function DashboardPage() {
         {/* Assets Total Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total in Assets</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.totalInAssets')}</CardTitle>
             <PiggyBank className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -81,7 +83,7 @@ export default function DashboardPage() {
                   {netWorth ? formatCurrency(netWorth.assets) : '€0.00'}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {assetSnapshots?.snapshots.length || 0} asset(s)
+                  {assetSnapshots?.snapshots.length || 0} {t('dashboard.assets')}
                 </p>
               </>
             )}
@@ -94,7 +96,7 @@ export default function DashboardPage() {
         {/* Recent Accounts */}
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle>Recent Accounts</CardTitle>
+            <CardTitle>{t('dashboard.recentAccounts')}</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
             {loading ? (
@@ -128,7 +130,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                No account snapshots yet
+                {t('dashboard.noAccountSnapshots')}
               </div>
             )}
           </CardContent>
@@ -137,7 +139,7 @@ export default function DashboardPage() {
         {/* Recent Assets */}
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle>Recent Assets</CardTitle>
+            <CardTitle>{t('dashboard.recentAssets')}</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
             {loading ? (
@@ -157,7 +159,7 @@ export default function DashboardPage() {
                       <p className="text-xs text-muted-foreground">
                         {snapshot.asset?.asset_type?.description || 'No type'}
                         {snapshot.quantity && (
-                          <> · {parseFloat(snapshot.quantity).toFixed(2)} units</>
+                          <> · {parseFloat(snapshot.quantity).toFixed(2)} {t('assets.units')}</>
                         )}
                       </p>
                     </div>
@@ -177,7 +179,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                No asset snapshots yet
+                {t('dashboard.noAssetSnapshots')}
               </div>
             )}
           </CardContent>
