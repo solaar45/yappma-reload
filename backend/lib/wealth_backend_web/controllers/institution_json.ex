@@ -1,10 +1,16 @@
 defmodule WealthBackendWeb.InstitutionJSON do
-  alias WealthBackend.Accounts.Institution
+  alias WealthBackend.Institutions.Institution
 
+  @doc """
+  Renders a list of institutions.
+  """
   def index(%{institutions: institutions}) do
     %{data: for(institution <- institutions, do: data(institution))}
   end
 
+  @doc """
+  Renders a single institution.
+  """
   def show(%{institution: institution}) do
     %{data: data(institution)}
   end
