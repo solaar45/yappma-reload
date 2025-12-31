@@ -49,5 +49,13 @@ defmodule WealthBackendWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
+
+  # CORS support for frontend development
+  plug CORSPlug,
+    origin: ["http://localhost:5173"],
+    max_age: 86400,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    headers: ["Authorization", "Content-Type", "Accept", "Origin"]
+
   plug WealthBackendWeb.Router
 end
