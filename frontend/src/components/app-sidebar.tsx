@@ -6,6 +6,8 @@ import {
   Wallet,
   PiggyBank,
   TrendingUp,
+  Settings,
+  Building2,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -48,6 +50,17 @@ const data = {
         },
       ],
     },
+    {
+      title: "Settings",
+      url: "#",
+      icon: Settings,
+      items: [
+        {
+          title: "Institutions",
+          url: "/institutions",
+        },
+      ],
+    },
   ],
   quickAccess: [
     {
@@ -59,6 +72,11 @@ const data = {
       name: "Assets",
       url: "/assets",
       icon: PiggyBank,
+    },
+    {
+      name: "Institutions",
+      url: "/institutions",
+      icon: Building2,
     },
   ],
 }
