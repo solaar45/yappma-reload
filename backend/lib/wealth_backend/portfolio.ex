@@ -5,7 +5,7 @@ defmodule WealthBackend.Portfolio do
 
   import Ecto.Query, warn: false
   alias WealthBackend.Repo
-  alias WealthBackend.Portfolio.{Asset, AssetType, SecurityAsset, InsuranceAsset, LoanAsset, RealEstateAsset}
+  alias WealthBackend.Portfolio.{Asset, AssetType, AssetSnapshot, SecurityAsset, InsuranceAsset, LoanAsset, RealEstateAsset}
 
   ## Asset Types
 
@@ -30,13 +30,13 @@ defmodule WealthBackend.Portfolio do
   def list_assets(user_id) do
     Asset
     |> where([a], a.user_id == ^user_id)
-    |> preload([:account, :asset_type, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset])
+    |> preload([:account, :asset_type, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset, snapshots: from(s in AssetSnapshot, order_by: [desc: s.snapshot_date])])
     |> Repo.all()
   end
 
   def get_asset!(id) do
     Asset
-    |> preload([:account, :asset_type, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset])
+    |> preload([:account, :asset_type, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset, snapshots: from(s in AssetSnapshot, order_by: [desc: s.snapshot_date])])
     |> Repo.get!(id)
   end
 
