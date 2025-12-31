@@ -22,6 +22,19 @@ const AlertDialog = ({ open, onOpenChange, children }: AlertDialogProps) => {
   );
 };
 
+interface AlertDialogTriggerProps extends React.HTMLAttributes<HTMLElement> {
+  asChild?: boolean;
+  children: React.ReactNode;
+}
+
+const AlertDialogTrigger = ({ asChild = false, children, ...props }: AlertDialogTriggerProps) => {
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, props as any);
+  }
+  return <div {...props}>{children}</div>;
+};
+AlertDialogTrigger.displayName = "AlertDialogTrigger";
+
 const AlertDialogContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -112,6 +125,7 @@ AlertDialogCancel.displayName = "AlertDialogCancel";
 
 export {
   AlertDialog,
+  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
