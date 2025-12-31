@@ -3,9 +3,11 @@ import {
   Bell,
   ChevronsUpDown,
   CreditCard,
+  Languages,
   LogOut,
   Sparkles,
 } from "lucide-react"
+import { useTranslation } from 'react-i18next';
 
 import {
   Avatar,
@@ -19,6 +21,9 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -27,6 +32,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+
+const languages = [
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+];
 
 export function NavUser({
   user,
@@ -37,7 +47,14 @@ export function NavUser({
     avatar: string
   }
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile } = useSidebar();
+  const { i18n } = useTranslation();
+
+  const changeLanguage = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+  };
+
+  const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
 
   return (
     <SidebarMenu>
@@ -98,6 +115,26 @@ export function NavUser({
                 <Bell />
                 Notifications
               </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Languages />
+                  <span>Language</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {languages.map((language) => (
+                    <DropdownMenuItem
+                      key={language.code}
+                      onClick={() => changeLanguage(language.code)}
+                    >
+                      <span>{language.flag}</span>
+                      <span>{language.name}</span>
+                      {language.code === i18n.language && (
+                        <span className="ml-auto text-xs">✓</span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
