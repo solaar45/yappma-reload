@@ -2,14 +2,10 @@
 
 import * as React from "react"
 import {
-  AudioWaveform,
-  Command,
-  GalleryVerticalEnd,
   LayoutDashboard,
   Wallet,
   PiggyBank,
   TrendingUp,
-  Settings2,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -24,32 +20,18 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-// YAPPMA data
 const data = {
   user: {
     name: "Demo User",
     email: "demo@yappma.local",
     avatar: "/avatars/user.jpg",
   },
-  teams: [
-    {
-      name: "YAPPMA",
-      logo: GalleryVerticalEnd,
-      plan: "Personal",
-    },
-  ],
   navMain: [
     {
       title: "Dashboard",
       url: "/",
       icon: LayoutDashboard,
       isActive: true,
-      items: [
-        {
-          title: "Overview",
-          url: "/",
-        },
-      ],
     },
     {
       title: "Portfolio",
@@ -66,23 +48,8 @@ const data = {
         },
       ],
     },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Profile",
-          url: "#",
-        },
-      ],
-    },
   ],
-  projects: [
+  quickAccess: [
     {
       name: "Accounts",
       url: "/accounts",
@@ -100,11 +67,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher teams={[{ name: "YAPPMA", logo: LayoutDashboard, plan: "Personal" }]} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavProjects projects={data.quickAccess} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
