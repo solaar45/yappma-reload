@@ -117,13 +117,33 @@ export interface NetWorthResponse {
   date: string;
 }
 
+// Dashboard-specific snapshot types with nested relations
+export interface DashboardAccountSnapshot extends AccountSnapshot {
+  account?: {
+    name: string;
+    institution?: {
+      name: string;
+    };
+  };
+}
+
+export interface DashboardAssetSnapshot extends AssetSnapshot {
+  asset?: {
+    name: string;
+    currency?: string;
+    asset_type?: {
+      description: string;
+    };
+  };
+}
+
 export interface DashboardAccountSnapshotsResponse {
-  snapshots: AccountSnapshot[];
+  snapshots: DashboardAccountSnapshot[];
   date: string;
 }
 
 export interface DashboardAssetSnapshotsResponse {
-  snapshots: AssetSnapshot[];
+  snapshots: DashboardAssetSnapshot[];
   date: string;
 }
 
