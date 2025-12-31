@@ -21,9 +21,7 @@ defmodule WealthBackendWeb.AccountJSON do
       iban: account.iban,
       user_id: account.user_id,
       institution_id: account.institution_id,
-      account_type_id: account.account_type_id,
       institution: institution_data(account.institution),
-      account_type: account_type_data(account.account_type),
       snapshots: snapshots_data(account.snapshots),
       inserted_at: account.inserted_at,
       updated_at: account.updated_at
@@ -38,16 +36,6 @@ defmodule WealthBackendWeb.AccountJSON do
       name: institution.name,
       type: institution.type,
       country: institution.country
-    }
-  end
-
-  defp account_type_data(%Ecto.Association.NotLoaded{}), do: nil
-  defp account_type_data(nil), do: nil
-  defp account_type_data(account_type) do
-    %{
-      id: account_type.id,
-      code: account_type.code,
-      description: account_type.description
     }
   end
 
