@@ -28,15 +28,19 @@ defmodule WealthBackend.Portfolio do
   ## Assets
 
   def list_assets(user_id) do
+    snapshots_query = from s in AssetSnapshot, order_by: [desc: s.snapshot_date]
+
     Asset
     |> where([a], a.user_id == ^user_id)
-    |> preload([:account, :asset_type, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset, snapshots: from(s in AssetSnapshot, order_by: [desc: s.snapshot_date])])
+    |> preload([:account, :asset_type, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset, snapshots: ^snapshots_query])
     |> Repo.all()
   end
 
   def get_asset!(id) do
+    snapshots_query = from s in AssetSnapshot, order_by: [desc: s.snapshot_date]
+
     Asset
-    |> preload([:account, :asset_type, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset, snapshots: from(s in AssetSnapshot, order_by: [desc: s.snapshot_date])])
+    |> preload([:account, :asset_type, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset, snapshots: ^snapshots_query])
     |> Repo.get!(id)
   end
 
