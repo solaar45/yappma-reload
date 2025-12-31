@@ -27,11 +27,15 @@ export function useCreateAsset() {
     setError(null);
 
     try {
+      // Set symbol to ISIN if available (for quick display access)
+      const assetData = {
+        ...data,
+        symbol: data.security_asset?.isin || data.symbol,
+        currency: data.currency || 'EUR',
+      };
+
       const asset = await apiClient.post<Asset>('/assets', {
-        asset: {
-          ...data,
-          currency: data.currency || 'EUR',
-        },
+        asset: assetData,
       });
       return asset;
     } catch (err) {
