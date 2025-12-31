@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { apiClient } from '@/lib/api/client';
+import { logger } from '@/lib/logger';
 import type { Asset } from '@/lib/api/types';
 import {
   AlertDialog,
@@ -29,21 +30,34 @@ export function DeleteAssetDialog({ asset, onSuccess }: DeleteAssetDialogProps) 
     setError(null);
 
     try {
-      await apiClient.delete(`/assets/${asset.id}`);
+      logger.info('Deleting asset', { assetId: asset.id, name: asset.name });
+      
+      await apiClient.delete(`assets/${asset.id}`);
+      
+      logger.info('Asset deleted successfully', { assetId: asset.id });
+      
+      // Close dialog first
       setOpen(false);
-      onSuccess?.();
+      
+      // Then trigger refetch
+      if (onSuccess) {
+        logger.debug('Triggering refetch after asset delete');
+        onSuccess();
+      }
     } catch (err: any) {
-      console.error('Failed to delete asset:', err);
+      logger.error('Failed to delete asset', { error: err, assetId: asset.id });
       
       // If asset doesn't exist (404), treat as success since it's already deleted
-      if (err?.response?.status === 404) {
-        console.log('Asset already deleted, refreshing list');
+      if (err?.status === 404) {
+        logger.info('Asset already deleted (404), treating as success');
         setOpen(false);
         onSuccess?.();
-      } else {
-        // Show error message for other errors
-        setError(err?.response?.data?.error || 'Failed to delete asset. Please try again.');
+        return;
       }
+      
+      // Show error message for other errors
+      const errorMessage = err?.data?.error || err?.message || 'Failed to delete asset. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -77,9 +91,14 @@ export function DeleteAssetDialog({ asset, onSuccess }: DeleteAssetDialogProps) 
           )}
           
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setOpen(false)} disabled={loading}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
               disabled={loading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
