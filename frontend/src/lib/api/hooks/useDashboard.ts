@@ -33,5 +33,11 @@ export function useDashboard({ userId }: UseDashboardOptions) {
     }
   }, [userId]);
 
-  return { data, loading, error };
+  return {
+    netWorth: data?.net_worth || null,
+    accountSnapshots: data?.account_snapshots || null,
+    assetSnapshots: data?.asset_snapshots || null,
+    loading,
+    error,
+  };
 }
