@@ -14,7 +14,6 @@ defmodule WealthBackend.Accounts.Account do
 
     belongs_to :user, WealthBackend.Accounts.User
     belongs_to :institution, WealthBackend.Accounts.Institution
-    belongs_to :account_type, WealthBackend.Accounts.AccountType
     has_many :snapshots, WealthBackend.Analytics.AccountSnapshot
 
     timestamps(type: :utc_datetime)
@@ -23,10 +22,9 @@ defmodule WealthBackend.Accounts.Account do
   @doc false
   def changeset(account, attrs) do
     account
-    |> cast(attrs, [:name, :type, :currency, :is_active, :opened_at, :closed_at, :iban, :user_id, :institution_id, :account_type_id])
+    |> cast(attrs, [:name, :type, :currency, :is_active, :opened_at, :closed_at, :iban, :user_id, :institution_id])
     |> validate_required([:name, :user_id])
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:institution_id)
-    |> foreign_key_constraint(:account_type_id)
   end
 end
