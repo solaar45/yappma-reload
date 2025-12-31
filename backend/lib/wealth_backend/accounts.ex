@@ -62,13 +62,13 @@ defmodule WealthBackend.Accounts do
   def list_accounts(user_id) do
     Account
     |> where([a], a.user_id == ^user_id)
-    |> preload(:institution)
+    |> preload([:institution, :account_type, snapshots: from(s in WealthBackend.Portfolio.AccountSnapshot, order_by: [desc: s.snapshot_date])])
     |> Repo.all()
   end
 
   def get_account!(id) do
     Account
-    |> preload(:institution)
+    |> preload([:institution, :account_type, snapshots: from(s in WealthBackend.Portfolio.AccountSnapshot, order_by: [desc: s.snapshot_date])])
     |> Repo.get!(id)
   end
 
