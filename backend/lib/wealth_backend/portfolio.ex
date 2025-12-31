@@ -72,7 +72,8 @@ defmodule WealthBackend.Portfolio do
         security_attrs = get_nested_attrs(attrs, "security_asset")
         if map_size(security_attrs) > 0 do
           security_attrs
-          |> Map.put(:asset_id, asset.id)
+          |> stringify_keys()
+          |> Map.put("asset_id", asset.id)
           |> then(&SecurityAsset.changeset(%SecurityAsset{}, &1))
           |> repo.insert()
         else
@@ -83,7 +84,8 @@ defmodule WealthBackend.Portfolio do
         insurance_attrs = get_nested_attrs(attrs, "insurance_asset")
         if map_size(insurance_attrs) > 0 do
           insurance_attrs
-          |> Map.put(:asset_id, asset.id)
+          |> stringify_keys()
+          |> Map.put("asset_id", asset.id)
           |> then(&InsuranceAsset.changeset(%InsuranceAsset{}, &1))
           |> repo.insert()
         else
@@ -94,7 +96,8 @@ defmodule WealthBackend.Portfolio do
         loan_attrs = get_nested_attrs(attrs, "loan_asset")
         if map_size(loan_attrs) > 0 do
           loan_attrs
-          |> Map.put(:asset_id, asset.id)
+          |> stringify_keys()
+          |> Map.put("asset_id", asset.id)
           |> then(&LoanAsset.changeset(%LoanAsset{}, &1))
           |> repo.insert()
         else
@@ -105,7 +108,8 @@ defmodule WealthBackend.Portfolio do
         re_attrs = get_nested_attrs(attrs, "real_estate_asset")
         if map_size(re_attrs) > 0 do
           re_attrs
-          |> Map.put(:asset_id, asset.id)
+          |> stringify_keys()
+          |> Map.put("asset_id", asset.id)
           |> then(&RealEstateAsset.changeset(%RealEstateAsset{}, &1))
           |> repo.insert()
         else
@@ -121,6 +125,14 @@ defmodule WealthBackend.Portfolio do
   # Helper to get nested attrs, supporting both string and atom keys
   defp get_nested_attrs(attrs, key) when is_binary(key) do
     Map.get(attrs, key, Map.get(attrs, String.to_atom(key), %{}))
+  end
+
+  # Convert all map keys to strings
+  defp stringify_keys(map) when is_map(map) do
+    Map.new(map, fn
+      {k, v} when is_atom(k) -> {Atom.to_string(k), v}
+      {k, v} -> {k, v}
+    end)
   end
 
   def update_asset(%Asset{} = asset, attrs) do
