@@ -1,17 +1,26 @@
+import { useState } from 'react';
 import { useAccounts } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CreateAccountDialog } from '@/components/CreateAccountDialog';
 import { Wallet, Building2, TrendingUp } from 'lucide-react';
 
 export default function AccountsPage() {
   const { userId } = useUser();
-  const { accounts, loading, error } = useAccounts({ userId: userId! });
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { accounts, loading, error } = useAccounts({ userId: userId!, key: refreshKey });
+
+  const handleAccountCreated = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
 
   if (loading) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4">
-        <h1 className="text-3xl font-bold">Accounts</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Accounts</h1>
+        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <Card key={i}>
@@ -42,7 +51,10 @@ export default function AccountsPage() {
   if (!accounts || accounts.length === 0) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4">
-        <h1 className="text-3xl font-bold">Accounts</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Accounts</h1>
+          <CreateAccountDialog onSuccess={handleAccountCreated} />
+        </div>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
@@ -71,10 +83,13 @@ export default function AccountsPage() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Accounts</h1>
-        <div className="text-sm text-muted-foreground">
-          {accounts.length} account{accounts.length !== 1 ? 's' : ''}
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold">Accounts</h1>
+          <div className="text-sm text-muted-foreground">
+            {accounts.length} account{accounts.length !== 1 ? 's' : ''}
+          </div>
         </div>
+        <CreateAccountDialog onSuccess={handleAccountCreated} />
       </div>
 
       {Object.entries(accountsByInstitution).map(([institutionName, institutionAccounts]) => (
