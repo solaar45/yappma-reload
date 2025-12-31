@@ -10,10 +10,19 @@ defmodule WealthBackendWeb.AssetJSON do
   end
 
   defp data(%Asset{} = asset) do
+    # Get isin and ticker from security_asset if available
+    {isin, ticker} = case asset.security_asset do
+      %Ecto.Association.NotLoaded{} -> {nil, nil}
+      nil -> {nil, nil}
+      security -> {security.isin, security.ticker}
+    end
+
     %{
       id: asset.id,
       name: asset.name,
       symbol: asset.symbol,
+      isin: isin,
+      ticker: ticker,
       currency: asset.currency,
       is_active: asset.is_active,
       created_at_date: asset.created_at_date,
@@ -27,6 +36,7 @@ defmodule WealthBackendWeb.AssetJSON do
       insurance_asset: insurance_data(asset.insurance_asset),
       loan_asset: loan_data(asset.loan_asset),
       real_estate_asset: real_estate_data(asset.real_estate_asset),
+      snapshots: snapshots_data(asset.snapshots),
       inserted_at: asset.inserted_at,
       updated_at: asset.updated_at
     }
@@ -71,6 +81,24 @@ defmodule WealthBackendWeb.AssetJSON do
     purchase_price: decimal_to_string(r.purchase_price),
     purchase_date: r.purchase_date
   }
+
+  defp snapshots_data(%Ecto.Association.NotLoaded{}), do: []
+  defp snapshots_data(snapshots) when is_list(snapshots) do
+    Enum.map(snapshots, &snapshot_data/1)
+  end
+  defp snapshots_data(_), do: []
+
+  defp snapshot_data(snapshot) do
+    %{
+      id: snapshot.id,
+      snapshot_date: snapshot.snapshot_date,
+      value: snapshot.value,
+      quantity: decimal_to_string(snapshot.quantity),
+      unit_price: decimal_to_string(snapshot.unit_price),
+      notes: snapshot.notes,
+      asset_id: snapshot.asset_id
+    }
+  end
 
   defp decimal_to_string(nil), do: nil
   defp decimal_to_string(decimal), do: to_string(decimal)
