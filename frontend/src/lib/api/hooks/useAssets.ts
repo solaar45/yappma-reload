@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react';
 import { apiClient } from '../client';
 import type { Asset } from '../types';
 
-export function useAssets(userId: number) {
+interface UseAssetsOptions {
+  userId: number;
+  key?: number;
+}
+
+export function useAssets({ userId, key }: UseAssetsOptions) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,8 +29,10 @@ export function useAssets(userId: number) {
       }
     };
 
-    fetchAssets();
-  }, [userId]);
+    if (userId) {
+      fetchAssets();
+    }
+  }, [userId, key]);
 
   return { assets, loading, error };
 }
