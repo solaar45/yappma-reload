@@ -21,7 +21,6 @@ import AccountsPage from '@/pages/AccountsPage';
 import AssetsPage from '@/pages/AssetsPage';
 import InstitutionsPage from '@/pages/InstitutionsPage';
 import SnapshotsPage from '@/pages/SnapshotsPage';
-import './App.css';
 
 function getBreadcrumbs(pathname: string) {
   if (pathname === '/') {
