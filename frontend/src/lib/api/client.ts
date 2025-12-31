@@ -1,83 +1,257 @@
-// API Client for YAPPMA Backend
+import { logger } from '@/lib/logger';
+import { sanitizeEndpoint, rateLimiter } from './sanitizer';
 
-import type { ApiResponse, ApiError } from './types';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
-
-export class ApiClient {
-  private baseURL: string;
-
-  constructor(baseURL: string = API_BASE_URL) {
-    this.baseURL = baseURL;
-  }
-
-  private async request<T>(
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
-
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options?.headers,
-        },
-      });
-
-      if (!response.ok) {
-        // Try to parse error response
-        try {
-          const errorData: ApiError = await response.json();
-          throw new Error(JSON.stringify(errorData.errors));
-        } catch (jsonError) {
-          // If JSON parsing fails, throw generic error
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-      }
-
-      // Handle 204 No Content - no body to parse
-      if (response.status === 204) {
-        return null as T;
-      }
-
-      const data: ApiResponse<T> = await response.json();
-      return data.data;
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
-  }
-
-  async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
-    const queryString = params
-      ? '?' + new URLSearchParams(params).toString()
-      : '';
-    return this.request<T>(`${endpoint}${queryString}`, {
-      method: 'GET',
-    });
-  }
-
-  async post<T>(endpoint: string, data: any): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async put<T>(endpoint: string, data: any): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'DELETE',
-    });
+/**
+ * API Error Class
+ */
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public statusText: string,
+    public data?: unknown
+  ) {
+    super(`API Error ${status}: ${statusText}`);
+    this.name = 'ApiError';
   }
 }
 
+/**
+ * API Client with request cancellation, rate limiting, and sanitization
+ */
+class ApiClient {
+  private baseURL: string;
+  private activeRequests = new Map<string, AbortController>();
+  private defaultHeaders: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  constructor() {
+    this.baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
+    logger.info('ApiClient initialized', { baseURL: this.baseURL });
+  }
+
+  /**
+   * Get CSRF token from meta tag or cookie
+   */
+  private getCsrfToken(): string | null {
+    // Try meta tag first
+    const metaTag = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]');
+    if (metaTag?.content) {
+      return metaTag.content;
+    }
+
+    // Try cookie as fallback
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'csrf_token') {
+        return value;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Core request method with all safety features
+   */
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit & { dedupe?: boolean; skipRateLimit?: boolean } = {}
+  ): Promise<T> {
+    // Sanitize endpoint to prevent injection
+    const sanitizedEndpoint = sanitizeEndpoint(endpoint);
+    const url = `${this.baseURL}/${sanitizedEndpoint}`;
+    const requestKey = `${options.method || 'GET'}-${url}`;
+
+    // Rate limiting
+    if (!options.skipRateLimit && !rateLimiter.canMakeRequest(requestKey)) {
+      const remaining = rateLimiter.getRemainingRequests(requestKey);
+      logger.warn('Rate limit exceeded', { endpoint: sanitizedEndpoint, remaining });
+      throw new ApiError(429, 'Too Many Requests', {
+        message: 'Rate limit exceeded. Please try again later.',
+        remainingRequests: remaining,
+      });
+    }
+
+    // Request deduplication for GET requests
+    if (options.dedupe && options.method === 'GET') {
+      if (this.activeRequests.has(requestKey)) {
+        logger.debug('Request deduplicated', { endpoint: sanitizedEndpoint });
+        // Return a promise that rejects when the original request completes
+        return new Promise((_, reject) => {
+          const controller = this.activeRequests.get(requestKey)!;
+          controller.signal.addEventListener('abort', () => {
+            reject(new ApiError(0, 'Request Deduplicated'));
+          });
+        });
+      }
+    }
+
+    // Create AbortController for this request
+    const controller = new AbortController();
+    this.activeRequests.set(requestKey, controller);
+
+    // Add CSRF token for state-changing requests
+    const csrfToken = this.getCsrfToken();
+    const headers: HeadersInit = {
+      ...this.defaultHeaders,
+      ...options.headers,
+    };
+
+    if (csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method || '')) {
+      (headers as Record<string, string>)['X-CSRF-Token'] = csrfToken;
+    }
+
+    try {
+      logger.debug('API Request', {
+        method: options.method || 'GET',
+        endpoint: sanitizedEndpoint,
+      });
+
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers,
+        credentials: 'include', // Include cookies
+      });
+
+      // Handle HTTP errors
+      if (!response.ok) {
+        let errorData: unknown;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: response.statusText };
+        }
+
+        logger.error('API Error', {
+          status: response.status,
+          endpoint: sanitizedEndpoint,
+          error: errorData,
+        });
+
+        throw new ApiError(response.status, response.statusText, errorData);
+      }
+
+      // Parse JSON response
+      const data = await response.json();
+      logger.debug('API Response', { endpoint: sanitizedEndpoint, data });
+      return data as T;
+    } catch (error) {
+      // Don't log AbortError (expected when cancelling)
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.debug('Request cancelled', { endpoint: sanitizedEndpoint });
+        throw error;
+      }
+
+      // Re-throw ApiError
+      if (error instanceof ApiError) {
+        throw error;
+      }
+
+      // Network errors
+      logger.error('Network Error', { endpoint: sanitizedEndpoint, error });
+      throw new ApiError(0, 'Network Error', error);
+    } finally {
+      this.activeRequests.delete(requestKey);
+    }
+  }
+
+  /**
+   * GET request
+   */
+  async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'GET',
+      dedupe: true,
+    });
+  }
+
+  /**
+   * POST request
+   */
+  async post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  /**
+   * PUT request
+   */
+  async put<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  /**
+   * PATCH request
+   */
+  async patch<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  /**
+   * DELETE request
+   */
+  async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'DELETE',
+    });
+  }
+
+  /**
+   * Cancel a specific request
+   */
+  cancel(method: string, endpoint: string): void {
+    const sanitizedEndpoint = sanitizeEndpoint(endpoint);
+    const url = `${this.baseURL}/${sanitizedEndpoint}`;
+    const requestKey = `${method}-${url}`;
+    const controller = this.activeRequests.get(requestKey);
+    if (controller) {
+      controller.abort();
+      this.activeRequests.delete(requestKey);
+      logger.debug('Request cancelled manually', { method, endpoint: sanitizedEndpoint });
+    }
+  }
+
+  /**
+   * Cancel all active requests
+   */
+  cancelAll(): void {
+    logger.info('Cancelling all active requests', {
+      count: this.activeRequests.size,
+    });
+    this.activeRequests.forEach((controller) => controller.abort());
+    this.activeRequests.clear();
+  }
+
+  /**
+   * Get number of active requests
+   */
+  getActiveRequestCount(): number {
+    return this.activeRequests.size;
+  }
+}
+
+// Export singleton instance
 export const apiClient = new ApiClient();
+
+// Cleanup on page unload
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    apiClient.cancelAll();
+  });
+}
