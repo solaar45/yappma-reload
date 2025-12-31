@@ -6,7 +6,7 @@ defmodule WealthBackend.Accounts do
   import Ecto.Query, warn: false
   alias WealthBackend.Repo
   alias WealthBackend.Accounts.{User, Institution, Account}
-  alias WealthBackend.Portfolio.AccountSnapshot
+  alias WealthBackend.Analytics.AccountSnapshot
 
   ## Users
 

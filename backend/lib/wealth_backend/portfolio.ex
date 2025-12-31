@@ -5,7 +5,8 @@ defmodule WealthBackend.Portfolio do
 
   import Ecto.Query, warn: false
   alias WealthBackend.Repo
-  alias WealthBackend.Portfolio.{Asset, AssetType, AssetSnapshot, SecurityAsset, InsuranceAsset, LoanAsset, RealEstateAsset}
+  alias WealthBackend.Portfolio.{Asset, AssetType, SecurityAsset, InsuranceAsset, LoanAsset, RealEstateAsset}
+  alias WealthBackend.Analytics.AssetSnapshot
 
   ## Asset Types
 

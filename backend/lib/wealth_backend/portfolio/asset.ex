@@ -19,7 +19,7 @@ defmodule WealthBackend.Portfolio.Asset do
     has_one :insurance_asset, WealthBackend.Portfolio.InsuranceAsset
     has_one :loan_asset, WealthBackend.Portfolio.LoanAsset
     has_one :real_estate_asset, WealthBackend.Portfolio.RealEstateAsset
-    has_many :snapshots, WealthBackend.Portfolio.AssetSnapshot
+    has_many :snapshots, WealthBackend.Analytics.AssetSnapshot
 
     timestamps(type: :utc_datetime)
   end
