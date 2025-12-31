@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useInstitutions } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,14 +9,8 @@ import { DeleteInstitutionDialog } from '@/components/DeleteInstitutionDialog';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Landmark } from 'lucide-react';
 
-const INSTITUTION_TYPE_LABELS: Record<string, string> = {
-  bank: 'Bank',
-  broker: 'Broker',
-  insurance: 'Insurance',
-  other: 'Other',
-};
-
 export default function InstitutionsPage() {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const [refreshKey, setRefreshKey] = useState(0);
   const { institutions, loading, error } = useInstitutions({ userId: userId!, key: refreshKey });
@@ -24,11 +19,16 @@ export default function InstitutionsPage() {
     setRefreshKey((prev) => prev + 1);
   };
 
+  // Use translated type labels
+  const getTypeLabel = (type: string) => {
+    return t(`institutions.types.${type}`);
+  };
+
   if (loading) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Institutions</h1>
+          <h1 className="text-3xl font-bold">{t('institutions.title')}</h1>
         </div>
         <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3].map((i) => (
@@ -52,7 +52,7 @@ export default function InstitutionsPage() {
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-destructive">Error loading institutions: {error}</div>
+        <div className="text-destructive">{t('institutions.errorLoading')}: {error}</div>
       </div>
     );
   }
@@ -61,16 +61,16 @@ export default function InstitutionsPage() {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Institutions</h1>
+          <h1 className="text-3xl font-bold">{t('institutions.title')}</h1>
           <CreateInstitutionDialog onSuccess={handleInstitutionChanged} />
         </div>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
               <Landmark className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg text-muted-foreground">No institutions found</p>
+              <p className="text-lg text-muted-foreground">{t('institutions.noInstitutions')}</p>
               <p className="text-sm text-muted-foreground mt-2">
-                Add your first financial institution to organize your accounts
+                {t('institutions.addFirst')}
               </p>
             </div>
           </CardContent>
@@ -81,7 +81,7 @@ export default function InstitutionsPage() {
 
   // Group institutions by type
   const institutionsByType = institutions.reduce((acc, institution) => {
-    const typeName = INSTITUTION_TYPE_LABELS[institution.type] || 'Other';
+    const typeName = getTypeLabel(institution.type);
     if (!acc[typeName]) {
       acc[typeName] = [];
     }
@@ -93,9 +93,9 @@ export default function InstitutionsPage() {
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">Institutions</h1>
+          <h1 className="text-3xl font-bold">{t('institutions.title')}</h1>
           <div className="text-sm text-muted-foreground">
-            {institutions.length} institution{institutions.length !== 1 ? 's' : ''}
+            {institutions.length} {t('institutions.title').toLowerCase()}
           </div>
         </div>
         <CreateInstitutionDialog onSuccess={handleInstitutionChanged} />
@@ -132,7 +132,7 @@ export default function InstitutionsPage() {
                 <CardContent>
                   <div className="flex gap-2">
                     <Badge variant="secondary" className="text-xs">
-                      {INSTITUTION_TYPE_LABELS[institution.type]}
+                      {getTypeLabel(institution.type)}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
                       {institution.country}
