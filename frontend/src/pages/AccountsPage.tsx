@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAccounts } from '@/lib/api/hooks';
-import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateAccountDialog } from '@/components/CreateAccountDialog';
@@ -11,13 +9,7 @@ import { Wallet, Building2, TrendingUp } from 'lucide-react';
 
 export default function AccountsPage() {
   const { t } = useTranslation();
-  const { userId } = useUser();
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { accounts, loading, error } = useAccounts({ userId: userId!, key: refreshKey });
-
-  const handleAccountChanged = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
+  const { accounts, isLoading: loading, error, refetch } = useAccounts();
 
   if (loading) {
     return (
@@ -47,7 +39,7 @@ export default function AccountsPage() {
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-destructive">{t('accounts.errorLoading')}: {error}</div>
+        <div className="text-destructive">{t('accounts.errorLoading')}: {error.message}</div>
       </div>
     );
   }
@@ -57,7 +49,7 @@ export default function AccountsPage() {
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">{t('accounts.title')}</h1>
-          <CreateAccountDialog onSuccess={handleAccountChanged} />
+          <CreateAccountDialog onSuccess={refetch} />
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -90,10 +82,10 @@ export default function AccountsPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">{t('accounts.title')}</h1>
           <div className="text-sm text-muted-foreground">
-            {accounts.length} {t('accounts.snapshots')}
+            {accounts.length} {accounts.length === 1 ? t('common.account') : t('accounts.title')}
           </div>
         </div>
-        <CreateAccountDialog onSuccess={handleAccountChanged} />
+        <CreateAccountDialog onSuccess={refetch} />
       </div>
 
       {Object.entries(accountsByInstitution).map(([institutionName, institutionAccounts]) => (
@@ -122,11 +114,11 @@ export default function AccountsPage() {
                     <div className="flex items-center gap-1">
                       <EditAccountDialog 
                         account={account} 
-                        onSuccess={handleAccountChanged} 
+                        onSuccess={refetch} 
                       />
                       <DeleteAccountDialog 
                         account={account} 
-                        onSuccess={handleAccountChanged} 
+                        onSuccess={refetch} 
                       />
                     </div>
                   </CardHeader>

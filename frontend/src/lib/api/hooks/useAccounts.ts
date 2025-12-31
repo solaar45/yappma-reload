@@ -3,6 +3,11 @@ import { apiClient, ApiError, DeduplicationError } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import type { Account } from '@/lib/api/types';
 
+interface UseAccountsOptions {
+  userId?: number;
+  key?: number;
+}
+
 interface UseAccountsResult {
   accounts: Account[];
   isLoading: boolean;
@@ -13,7 +18,8 @@ interface UseAccountsResult {
 /**
  * Hook to fetch accounts with proper cleanup and error handling
  */
-export function useAccounts(): UseAccountsResult {
+export function useAccounts(options: UseAccountsOptions = {}): UseAccountsResult {
+  const { userId, key } = options;
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -64,9 +70,10 @@ export function useAccounts(): UseAccountsResult {
       isMounted = false;
       controller.abort();
     };
-  }, [refetchTrigger]);
+  }, [userId, key, refetchTrigger]);
 
   const refetch = () => {
+    logger.debug('Manual refetch triggered');
     setRefetchTrigger(prev => prev + 1);
   };
 
