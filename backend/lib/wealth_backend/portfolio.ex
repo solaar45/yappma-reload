@@ -126,6 +126,7 @@ defmodule WealthBackend.Portfolio do
   Updates an asset with type-specific details.
   Handles updating both the base asset and related type-specific data (e.g., security_asset).
   Uses a transaction to ensure data consistency.
+  Allows clearing optional fields by sending empty strings or nil.
   """
   def update_full_asset(%Asset{} = asset, attrs) do
     Ecto.Multi.new()
@@ -146,20 +147,25 @@ defmodule WealthBackend.Portfolio do
 
     case asset_type.code do
       "security" ->
-        security_attrs = get_nested_attrs(attrs, "security_asset")
-        
-        if map_size(security_attrs) > 0 do
+        # Check if security_asset key exists in attrs (even if empty)
+        if has_nested_attrs?(attrs, "security_asset") do
+          security_attrs = get_nested_attrs(attrs, "security_asset")
+          
           case repo.get(SecurityAsset, asset.id) do
             nil ->
-              # Create new security_asset if it doesn't exist
-              security_attrs
-              |> stringify_keys()
-              |> Map.put("asset_id", asset.id)
-              |> then(&SecurityAsset.changeset(%SecurityAsset{}, &1))
-              |> repo.insert()
+              # Create new security_asset if it doesn't exist and has data
+              if map_size(security_attrs) > 0 do
+                security_attrs
+                |> stringify_keys()
+                |> Map.put("asset_id", asset.id)
+                |> then(&SecurityAsset.changeset(%SecurityAsset{}, &1))
+                |> repo.insert()
+              else
+                {:ok, nil}
+              end
 
             security_asset ->
-              # Update existing security_asset
+              # Update existing security_asset (including clearing fields)
               security_attrs
               |> stringify_keys()
               |> then(&SecurityAsset.changeset(security_asset, &1))
@@ -170,16 +176,20 @@ defmodule WealthBackend.Portfolio do
         end
 
       "insurance" ->
-        insurance_attrs = get_nested_attrs(attrs, "insurance_asset")
-        
-        if map_size(insurance_attrs) > 0 do
+        if has_nested_attrs?(attrs, "insurance_asset") do
+          insurance_attrs = get_nested_attrs(attrs, "insurance_asset")
+          
           case repo.get(InsuranceAsset, asset.id) do
             nil ->
-              insurance_attrs
-              |> stringify_keys()
-              |> Map.put("asset_id", asset.id)
-              |> then(&InsuranceAsset.changeset(%InsuranceAsset{}, &1))
-              |> repo.insert()
+              if map_size(insurance_attrs) > 0 do
+                insurance_attrs
+                |> stringify_keys()
+                |> Map.put("asset_id", asset.id)
+                |> then(&InsuranceAsset.changeset(%InsuranceAsset{}, &1))
+                |> repo.insert()
+              else
+                {:ok, nil}
+              end
 
             insurance_asset ->
               insurance_attrs
@@ -192,16 +202,20 @@ defmodule WealthBackend.Portfolio do
         end
 
       "loan" ->
-        loan_attrs = get_nested_attrs(attrs, "loan_asset")
-        
-        if map_size(loan_attrs) > 0 do
+        if has_nested_attrs?(attrs, "loan_asset") do
+          loan_attrs = get_nested_attrs(attrs, "loan_asset")
+          
           case repo.get(LoanAsset, asset.id) do
             nil ->
-              loan_attrs
-              |> stringify_keys()
-              |> Map.put("asset_id", asset.id)
-              |> then(&LoanAsset.changeset(%LoanAsset{}, &1))
-              |> repo.insert()
+              if map_size(loan_attrs) > 0 do
+                loan_attrs
+                |> stringify_keys()
+                |> Map.put("asset_id", asset.id)
+                |> then(&LoanAsset.changeset(%LoanAsset{}, &1))
+                |> repo.insert()
+              else
+                {:ok, nil}
+              end
 
             loan_asset ->
               loan_attrs
@@ -214,16 +228,20 @@ defmodule WealthBackend.Portfolio do
         end
 
       "real_estate" ->
-        re_attrs = get_nested_attrs(attrs, "real_estate_asset")
-        
-        if map_size(re_attrs) > 0 do
+        if has_nested_attrs?(attrs, "real_estate_asset") do
+          re_attrs = get_nested_attrs(attrs, "real_estate_asset")
+          
           case repo.get(RealEstateAsset, asset.id) do
             nil ->
-              re_attrs
-              |> stringify_keys()
-              |> Map.put("asset_id", asset.id)
-              |> then(&RealEstateAsset.changeset(%RealEstateAsset{}, &1))
-              |> repo.insert()
+              if map_size(re_attrs) > 0 do
+                re_attrs
+                |> stringify_keys()
+                |> Map.put("asset_id", asset.id)
+                |> then(&RealEstateAsset.changeset(%RealEstateAsset{}, &1))
+                |> repo.insert()
+              else
+                {:ok, nil}
+              end
 
             real_estate_asset ->
               re_attrs
@@ -239,6 +257,11 @@ defmodule WealthBackend.Portfolio do
         # For cash and other types without specific fields
         {:ok, nil}
     end
+  end
+
+  # Check if nested attrs key exists (even if the map is empty)
+  defp has_nested_attrs?(attrs, key) when is_binary(key) do
+    Map.has_key?(attrs, key) or Map.has_key?(attrs, String.to_atom(key))
   end
 
   # Helper to get nested attrs, supporting both string and atom keys
