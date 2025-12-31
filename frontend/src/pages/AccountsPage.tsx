@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAccounts } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -9,6 +10,7 @@ import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 import { Wallet, Building2, TrendingUp } from 'lucide-react';
 
 export default function AccountsPage() {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const [refreshKey, setRefreshKey] = useState(0);
   const { accounts, loading, error } = useAccounts({ userId: userId!, key: refreshKey });
@@ -21,7 +23,7 @@ export default function AccountsPage() {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Accounts</h1>
+          <h1 className="text-3xl font-bold">{t('accounts.title')}</h1>
         </div>
         <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3].map((i) => (
@@ -45,7 +47,7 @@ export default function AccountsPage() {
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-destructive">Error loading accounts: {error}</div>
+        <div className="text-destructive">{t('accounts.errorLoading')}: {error}</div>
       </div>
     );
   }
@@ -54,16 +56,16 @@ export default function AccountsPage() {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Accounts</h1>
+          <h1 className="text-3xl font-bold">{t('accounts.title')}</h1>
           <CreateAccountDialog onSuccess={handleAccountChanged} />
         </div>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
               <Wallet className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg text-muted-foreground">No accounts found</p>
+              <p className="text-lg text-muted-foreground">{t('accounts.noAccounts')}</p>
               <p className="text-sm text-muted-foreground mt-2">
-                Add your first account to start tracking your wealth
+                {t('accounts.addFirst')}
               </p>
             </div>
           </CardContent>
@@ -86,9 +88,9 @@ export default function AccountsPage() {
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">Accounts</h1>
+          <h1 className="text-3xl font-bold">{t('accounts.title')}</h1>
           <div className="text-sm text-muted-foreground">
-            {accounts.length} account{accounts.length !== 1 ? 's' : ''}
+            {accounts.length} {t('accounts.snapshots')}
           </div>
         </div>
         <CreateAccountDialog onSuccess={handleAccountChanged} />
@@ -136,7 +138,7 @@ export default function AccountsPage() {
                         </div>
                         {snapshotDate && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            as of {formatDate(snapshotDate)}
+                            {t('dashboard.asOf')} {formatDate(snapshotDate)}
                           </p>
                         )}
                       </div>
@@ -148,7 +150,7 @@ export default function AccountsPage() {
 
                       {account.snapshots && account.snapshots.length > 0 && (
                         <div className="text-xs text-muted-foreground">
-                          {account.snapshots.length} snapshot{account.snapshots.length !== 1 ? 's' : ''}
+                          {account.snapshots.length} {t('accounts.snapshots')}
                         </div>
                       )}
                     </div>
