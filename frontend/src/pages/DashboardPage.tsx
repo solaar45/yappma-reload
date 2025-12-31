@@ -4,7 +4,8 @@ import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Wallet, PiggyBank } from 'lucide-react';
-import { PortfolioHoldingsTable, PortfolioHolding } from '@/components/portfolio/PortfolioHoldingsTable';
+import { PortfolioHoldingsTable } from '@/components/portfolio/PortfolioHoldingsTable';
+import type { PortfolioHolding } from '@/components/portfolio/PortfolioHoldingsTable';
 
 // Mock data for demo - will be replaced with real API data
 const mockPortfolioHoldings: PortfolioHolding[] = [
