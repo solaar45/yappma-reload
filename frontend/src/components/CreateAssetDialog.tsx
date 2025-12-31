@@ -15,7 +15,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Plus } from 'lucide-react';
 
 interface CreateAssetDialogProps {
@@ -40,8 +46,11 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
     const fetchAssetTypes = async () => {
       setLoadingTypes(true);
       try {
-        const types = await apiClient.get<AssetType[]>('/asset_types');
+        const response = await apiClient.get<{ data: AssetType[] }>('asset_types');
+        // Handle both response formats
+        const types = Array.isArray(response) ? response : (response.data || []);
         setAssetTypes(types);
+        
         // Set default to 'security' if available
         const securityType = types.find((t) => t.code === 'security');
         if (securityType) {
@@ -114,20 +123,22 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             <div className="grid gap-2">
               <Label htmlFor="asset_type">Asset Type *</Label>
               <Select
-                id="asset_type"
                 value={formData.asset_type_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, asset_type_id: e.target.value })
+                onValueChange={(value) =>
+                  setFormData({ ...formData, asset_type_id: value })
                 }
                 disabled={loadingTypes}
-                required
               >
-                <option value="">Select asset type</option>
-                {assetTypes.map((type) => (
-                  <option key={type.id} value={type.id.toString()}>
-                    {type.description || type.code}
-                  </option>
-                ))}
+                <SelectTrigger id="asset_type">
+                  <SelectValue placeholder="Select asset type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {assetTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id.toString()}>
+                      {type.description || type.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
