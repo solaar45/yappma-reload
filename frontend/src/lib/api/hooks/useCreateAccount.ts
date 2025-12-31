@@ -2,31 +2,35 @@ import { useState } from 'react';
 import { apiClient } from '../client';
 import type { Account } from '../types';
 
-interface CreateAccountParams {
+interface CreateAccountData {
   user_id: number;
-  institution_id?: number;
-  account_type_id?: number;
   name: string;
+  type?: string;
+  currency?: string;
   iban?: string;
+  institution_id?: number;
 }
 
 export function useCreateAccount() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createAccount = async (params: CreateAccountParams): Promise<Account | null> => {
+  const createAccount = async (data: CreateAccountData): Promise<Account | null> => {
     setLoading(true);
     setError(null);
 
     try {
-      const data = await apiClient<Account>('/accounts', {
-        method: 'POST',
-        body: JSON.stringify(params),
+      const account = await apiClient.post<Account>('/accounts', {
+        account: {
+          ...data,
+          type: data.type || 'checking',
+          currency: data.currency || 'EUR',
+        },
       });
-      return data;
+      return account;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create account';
-      setError(message);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create account';
+      setError(errorMessage);
       return null;
     } finally {
       setLoading(false);
