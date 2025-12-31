@@ -52,7 +52,6 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
     name: '',
     type: 'checking',
     currency: 'EUR',
-    iban: '',
     institution_id: '',
   });
 
@@ -65,7 +64,6 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
       name: formData.name,
       type: formData.type,
       currency: formData.currency,
-      iban: formData.iban || undefined,
       institution_id: parseInt(formData.institution_id),
     });
 
@@ -75,7 +73,6 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
         name: '', 
         type: 'checking',
         currency: 'EUR',
-        iban: '',
         institution_id: '',
       });
       onSuccess?.();
@@ -162,15 +159,6 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="iban">IBAN (optional)</Label>
-              <Input
-                id="iban"
-                placeholder="DE89 3704 0044 0532 0130 00"
-                value={formData.iban}
-                onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
-              />
             </div>
             {error && (
               <div className="text-sm text-destructive">{error}</div>
