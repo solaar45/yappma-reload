@@ -7,7 +7,6 @@ interface CreateAccountData {
   name: string;
   type?: string;
   currency?: string;
-  iban?: string;
   institution_id?: number;
 }
 
