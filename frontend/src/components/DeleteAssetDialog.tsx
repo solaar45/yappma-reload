@@ -22,16 +22,28 @@ interface DeleteAssetDialogProps {
 export function DeleteAssetDialog({ asset, onSuccess }: DeleteAssetDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async () => {
     setLoading(true);
+    setError(null);
 
     try {
       await apiClient.delete(`/assets/${asset.id}`);
       setOpen(false);
       onSuccess?.();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to delete asset:', err);
+      
+      // If asset doesn't exist (404), treat as success since it's already deleted
+      if (err?.response?.status === 404) {
+        console.log('Asset already deleted, refreshing list');
+        setOpen(false);
+        onSuccess?.();
+      } else {
+        // Show error message for other errors
+        setError(err?.response?.data?.error || 'Failed to delete asset. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -57,6 +69,13 @@ export function DeleteAssetDialog({ asset, onSuccess }: DeleteAssetDialogProps) 
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          {error && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+          
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>
             <AlertDialogAction
