@@ -9,14 +9,6 @@ defmodule WealthBackendWeb.FallbackController do
     |> render(:error, changeset: changeset)
   end
 
-  # This clause handles Ecto.NoResultsError (e.g., when using Repo.get!)
-  def call(conn, {:error, %Ecto.NoResultsError{}}) do
-    conn
-    |> put_status(:not_found)
-    |> put_view(json: WealthBackendWeb.ErrorJSON)
-    |> render(:"404")
-  end
-
   # This clause is an example of how to handle resources that cannot be found.
   def call(conn, {:error, :not_found}) do
     conn
