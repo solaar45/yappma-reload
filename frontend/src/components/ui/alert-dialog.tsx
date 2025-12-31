@@ -9,16 +9,27 @@ interface AlertDialogProps {
 }
 
 const AlertDialog = ({ open, onOpenChange, children }: AlertDialogProps) => {
-  if (!open) return null;
+  const childArray = React.Children.toArray(children);
+  const trigger = childArray.find(
+    (child) => React.isValidElement(child) && child.type === AlertDialogTrigger
+  );
+  const content = childArray.filter(
+    (child) => React.isValidElement(child) && child.type !== AlertDialogTrigger
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="fixed inset-0 bg-black/50"
-        onClick={() => onOpenChange?.(false)}
-      />
-      <div className="relative z-50">{children}</div>
-    </div>
+    <>
+      {trigger}
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => onOpenChange?.(false)}
+          />
+          <div className="relative z-50">{content}</div>
+        </div>
+      )}
+    </>
   );
 };
 
