@@ -129,6 +129,7 @@ defmodule WealthBackend.Portfolio do
   Allows clearing optional fields by sending empty strings or nil.
   If optional fields are not sent, they will be set to nil (cleared).
   If no type-specific object is sent at all, all fields will be cleared.
+  For security assets, ensures assets.symbol stays synced with security_assets.isin.
   """
   def update_full_asset(%Asset{} = asset, attrs) do
     Ecto.Multi.new()
@@ -136,11 +137,15 @@ defmodule WealthBackend.Portfolio do
     |> Ecto.Multi.run(:type_specific, fn repo, %{asset: updated_asset} ->
       update_type_specific_asset(repo, updated_asset, attrs)
     end)
+    |> Ecto.Multi.run(:sync_symbol, fn repo, %{asset: updated_asset, type_specific: type_specific_result} ->
+      sync_asset_symbol_with_isin(repo, updated_asset, type_specific_result)
+    end)
     |> Repo.transaction()
     |> case do
-      {:ok, %{asset: asset}} -> {:ok, get_asset!(asset.id)}
+      {:ok, %{sync_symbol: asset}} -> {:ok, get_asset!(asset.id)}
       {:error, :asset, changeset, _} -> {:error, changeset}
       {:error, :type_specific, changeset, _} -> {:error, changeset}
+      {:error, :sync_symbol, changeset, _} -> {:error, changeset}
     end
   end
 
@@ -271,6 +276,39 @@ defmodule WealthBackend.Portfolio do
       _ ->
         # For cash and other types without specific fields
         {:ok, nil}
+    end
+  end
+
+  # Sync assets.symbol with security_assets.isin after update
+  defp sync_asset_symbol_with_isin(repo, asset, type_specific_result) do
+    asset_type = repo.get!(AssetType, asset.asset_type_id)
+    
+    if asset_type.code == "security" do
+      # Get the updated security_asset to read the current isin value
+      case type_specific_result do
+        {:ok, %SecurityAsset{isin: isin}} ->
+          # Update asset.symbol to match isin
+          asset
+          |> Asset.changeset(%{"symbol" => isin})
+          |> repo.update()
+        
+        _ ->
+          # If security_asset was deleted or is nil, clear symbol
+          case repo.get(SecurityAsset, asset.id) do
+            %SecurityAsset{isin: isin} ->
+              asset
+              |> Asset.changeset(%{"symbol" => isin})
+              |> repo.update()
+            
+            nil ->
+              asset
+              |> Asset.changeset(%{"symbol" => nil})
+              |> repo.update()
+          end
+      end
+    else
+      # For non-security assets, just return the asset unchanged
+      {:ok, asset}
     end
   end
 
