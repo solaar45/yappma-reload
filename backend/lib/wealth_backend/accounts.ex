@@ -65,7 +65,7 @@ defmodule WealthBackend.Accounts do
 
     Account
     |> where([a], a.user_id == ^user_id)
-    |> preload([:institution, :account_type, snapshots: ^snapshots_query])
+    |> preload([:institution, snapshots: ^snapshots_query])
     |> Repo.all()
   end
 
@@ -73,7 +73,7 @@ defmodule WealthBackend.Accounts do
     snapshots_query = from s in AccountSnapshot, order_by: [desc: s.snapshot_date]
 
     Account
-    |> preload([:institution, :account_type, snapshots: ^snapshots_query])
+    |> preload([:institution, snapshots: ^snapshots_query])
     |> Repo.get!(id)
   end
 
