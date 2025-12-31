@@ -19,9 +19,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 px-6 py-4">
+    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       {/* Metric Cards Grid */}
-      <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:gap-6 xl:grid-cols-3">
         {/* Net Worth Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -90,13 +90,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-2 xl:grid-cols-2">
         {/* Recent Accounts */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>Recent Accounts</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1">
             {loading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
@@ -135,11 +135,11 @@ export default function DashboardPage() {
         </Card>
 
         {/* Recent Assets */}
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>Recent Assets</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1">
             {loading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
