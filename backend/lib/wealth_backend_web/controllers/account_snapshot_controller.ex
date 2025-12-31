@@ -19,6 +19,15 @@ defmodule WealthBackendWeb.AccountSnapshotController do
     end
   end
 
+  # Accept direct params (from frontend)
+  def create(conn, params) when is_map(params) do
+    with {:ok, %AccountSnapshot{} = snapshot} <- Analytics.create_account_snapshot(params) do
+      conn
+      |> put_status(:created)
+      |> render(:show, snapshot: snapshot)
+    end
+  end
+
   def show(conn, %{"id" => id}) do
     snapshot = Analytics.get_account_snapshot!(id)
     render(conn, :show, snapshot: snapshot)
@@ -26,6 +35,16 @@ defmodule WealthBackendWeb.AccountSnapshotController do
 
   def update(conn, %{"id" => id, "snapshot" => snapshot_params}) do
     snapshot = Analytics.get_account_snapshot!(id)
+
+    with {:ok, %AccountSnapshot{} = snapshot} <- Analytics.update_account_snapshot(snapshot, snapshot_params) do
+      render(conn, :show, snapshot: snapshot)
+    end
+  end
+
+  # Accept direct params (from frontend)
+  def update(conn, %{"id" => id} = params) do
+    snapshot = Analytics.get_account_snapshot!(id)
+    snapshot_params = Map.drop(params, ["id"])
 
     with {:ok, %AccountSnapshot{} = snapshot} <- Analytics.update_account_snapshot(snapshot, snapshot_params) do
       render(conn, :show, snapshot: snapshot)
