@@ -1,17 +1,26 @@
+import { useState } from 'react';
 import { useAssets } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CreateAssetDialog } from '@/components/CreateAssetDialog';
 import { PiggyBank, TrendingUp, Package } from 'lucide-react';
 
 export default function AssetsPage() {
   const { userId } = useUser();
-  const { assets, loading, error } = useAssets({ userId: userId! });
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { assets, loading, error } = useAssets({ userId: userId!, key: refreshKey });
+
+  const handleAssetCreated = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
 
   if (loading) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4">
-        <h1 className="text-3xl font-bold">Assets</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Assets</h1>
+        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <Card key={i}>
@@ -42,7 +51,10 @@ export default function AssetsPage() {
   if (!assets || assets.length === 0) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4">
-        <h1 className="text-3xl font-bold">Assets</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Assets</h1>
+          <CreateAssetDialog onSuccess={handleAssetCreated} />
+        </div>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
@@ -71,10 +83,13 @@ export default function AssetsPage() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Assets</h1>
-        <div className="text-sm text-muted-foreground">
-          {assets.length} asset{assets.length !== 1 ? 's' : ''}
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold">Assets</h1>
+          <div className="text-sm text-muted-foreground">
+            {assets.length} asset{assets.length !== 1 ? 's' : ''}
+          </div>
         </div>
+        <CreateAssetDialog onSuccess={handleAssetCreated} />
       </div>
 
       {Object.entries(assetsByType).map(([typeName, typeAssets]) => (
