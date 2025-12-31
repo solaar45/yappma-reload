@@ -69,37 +69,58 @@ defmodule WealthBackend.Portfolio do
 
     case asset_type.code do
       "security" ->
-        attrs
-        |> Map.get(:security_asset, %{})
-        |> Map.put(:asset_id, asset.id)
-        |> then(&SecurityAsset.changeset(%SecurityAsset{}, &1))
-        |> repo.insert()
+        security_attrs = get_nested_attrs(attrs, "security_asset")
+        if map_size(security_attrs) > 0 do
+          security_attrs
+          |> Map.put(:asset_id, asset.id)
+          |> then(&SecurityAsset.changeset(%SecurityAsset{}, &1))
+          |> repo.insert()
+        else
+          {:ok, nil}
+        end
 
       "insurance" ->
-        attrs
-        |> Map.get(:insurance_asset, %{})
-        |> Map.put(:asset_id, asset.id)
-        |> then(&InsuranceAsset.changeset(%InsuranceAsset{}, &1))
-        |> repo.insert()
+        insurance_attrs = get_nested_attrs(attrs, "insurance_asset")
+        if map_size(insurance_attrs) > 0 do
+          insurance_attrs
+          |> Map.put(:asset_id, asset.id)
+          |> then(&InsuranceAsset.changeset(%InsuranceAsset{}, &1))
+          |> repo.insert()
+        else
+          {:ok, nil}
+        end
 
       "loan" ->
-        attrs
-        |> Map.get(:loan_asset, %{})
-        |> Map.put(:asset_id, asset.id)
-        |> then(&LoanAsset.changeset(%LoanAsset{}, &1))
-        |> repo.insert()
+        loan_attrs = get_nested_attrs(attrs, "loan_asset")
+        if map_size(loan_attrs) > 0 do
+          loan_attrs
+          |> Map.put(:asset_id, asset.id)
+          |> then(&LoanAsset.changeset(%LoanAsset{}, &1))
+          |> repo.insert()
+        else
+          {:ok, nil}
+        end
 
       "real_estate" ->
-        attrs
-        |> Map.get(:real_estate_asset, %{})
-        |> Map.put(:asset_id, asset.id)
-        |> then(&RealEstateAsset.changeset(%RealEstateAsset{}, &1))
-        |> repo.insert()
+        re_attrs = get_nested_attrs(attrs, "real_estate_asset")
+        if map_size(re_attrs) > 0 do
+          re_attrs
+          |> Map.put(:asset_id, asset.id)
+          |> then(&RealEstateAsset.changeset(%RealEstateAsset{}, &1))
+          |> repo.insert()
+        else
+          {:ok, nil}
+        end
 
       _ ->
         # For cash and other types without specific fields
         {:ok, nil}
     end
+  end
+
+  # Helper to get nested attrs, supporting both string and atom keys
+  defp get_nested_attrs(attrs, key) when is_binary(key) do
+    Map.get(attrs, key, Map.get(attrs, String.to_atom(key), %{}))
   end
 
   def update_asset(%Asset{} = asset, attrs) do
