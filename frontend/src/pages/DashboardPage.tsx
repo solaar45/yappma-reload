@@ -5,9 +5,11 @@ import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Wallet, PiggyBank } from 'lucide-react';
 import { PortfolioHoldingsTable } from '@/components/portfolio/PortfolioHoldingsTable';
+import { PortfolioPositionsTable } from '@/components/portfolio/PortfolioPositionsTable';
 import type { PortfolioHolding } from '@/components/portfolio/PortfolioHoldingsTable';
+import type { PortfolioPosition } from '@/components/portfolio/PortfolioPositionsTable';
 
-// Mock data for demo - will be replaced with real API data
+// Mock data for holdings demo
 const mockPortfolioHoldings: PortfolioHolding[] = [
   {
     id: '1',
@@ -86,6 +88,104 @@ const mockPortfolioHoldings: PortfolioHolding[] = [
     totalGainLossPercent: 4.32,
     dayChange: 198.20,
     dayChangePercent: 2.04,
+  },
+];
+
+// Mock data for positions demo
+const mockPortfolioPositions: PortfolioPosition[] = [
+  {
+    id: '1',
+    type: 'Asset',
+    name: 'Apple Inc.',
+    institution: 'Trade Republic',
+    assetClass: 'Equity',
+    riskScore: 3,
+    currentValue: 15450.00,
+    portfolioShare: 12.5,
+    performance: 8.5,
+    performanceHistory: [100, 102, 101, 105, 107, 108, 109],
+    savingsPlan: 250,
+    fsaAllocated: 1000,
+    fsaTotal: 1000,
+    fsaUsedYTD: 227.50,
+  },
+  {
+    id: '2',
+    type: 'Account',
+    name: 'Girokonto DKB',
+    institution: 'Deutsche Bank',
+    assetClass: 'Cash',
+    riskScore: 1,
+    currentValue: 8720.00,
+    portfolioShare: 7.1,
+    performance: 0.0,
+    performanceHistory: [100, 100, 100, 100, 100, 100, 100],
+    fsaAllocated: 0,
+    fsaTotal: 1000,
+    fsaUsedYTD: 0,
+  },
+  {
+    id: '3',
+    type: 'Asset',
+    name: 'Vanguard FTSE All-World',
+    institution: 'Scalable Capital',
+    assetClass: 'Equity',
+    riskScore: 4,
+    currentValue: 32100.00,
+    portfolioShare: 26.0,
+    performance: 12.3,
+    performanceHistory: [100, 98, 103, 108, 110, 112, 112],
+    savingsPlan: 500,
+    fsaAllocated: 500,
+    fsaTotal: 1000,
+    fsaUsedYTD: 325.00,
+  },
+  {
+    id: '4',
+    type: 'Asset',
+    name: 'iShares Core Global Aggregate Bond',
+    institution: 'ING',
+    assetClass: 'Bond',
+    riskScore: 2,
+    currentValue: 18900.00,
+    portfolioShare: 15.3,
+    performance: 3.2,
+    performanceHistory: [100, 101, 102, 102, 103, 103, 103],
+    savingsPlan: 300,
+    fsaAllocated: 350,
+    fsaTotal: 1000,
+    fsaUsedYTD: 115.80,
+  },
+  {
+    id: '5',
+    type: 'Asset',
+    name: 'Bitcoin',
+    institution: 'Bitpanda',
+    assetClass: 'Crypto',
+    riskScore: 5,
+    currentValue: 6500.00,
+    portfolioShare: 5.3,
+    performance: -15.7,
+    performanceHistory: [100, 95, 92, 88, 85, 84, 84],
+    fsaAllocated: 0,
+    fsaTotal: 1000,
+    fsaUsedYTD: 0,
+  },
+  {
+    id: '6',
+    type: 'Asset',
+    name: 'REITs Portfolio',
+    institution: 'Consorsbank',
+    assetClass: 'Real Estate',
+    riskScore: 3,
+    currentValue: 24300.00,
+    portfolioShare: 19.7,
+    performance: 6.8,
+    performanceHistory: [100, 102, 104, 105, 106, 107, 107],
+    savingsPlan: 400,
+    fsaAllocated: 150,
+    fsaTotal: 1000,
+    fsaUsedYTD: 98.50,
   },
 ];
 
@@ -173,13 +273,23 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Portfolio Holdings Table - Full Width */}
+      {/* Portfolio Holdings Table */}
       <Card>
         <CardHeader>
           <CardTitle>Portfolio Holdings</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <PortfolioHoldingsTable holdings={mockPortfolioHoldings} />
+        </CardContent>
+      </Card>
+
+      {/* Portfolio Positions Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Portfolio Positionen</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <PortfolioPositionsTable positions={mockPortfolioPositions} />
         </CardContent>
       </Card>
 
