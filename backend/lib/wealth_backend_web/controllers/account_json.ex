@@ -18,7 +18,6 @@ defmodule WealthBackendWeb.AccountJSON do
       is_active: account.is_active,
       opened_at: account.opened_at,
       closed_at: account.closed_at,
-      iban: account.iban,
       user_id: account.user_id,
       institution_id: account.institution_id,
       institution: institution_data(account.institution),
