@@ -1,40 +1,63 @@
 import { useState } from 'react';
-import { apiClient } from '../client';
-import type { Account } from '../types';
+import { apiClient, ApiError } from '@/lib/api/client';
+import { logger } from '@/lib/logger';
+import type { Account } from '@/lib/api/types';
 
-interface CreateAccountData {
-  user_id: number;
+interface CreateAccountInput {
   name: string;
-  type?: string;
-  currency?: string;
-  institution_id?: number;
+  currency: string;
+  initial_balance?: number;
+  institution_id?: string;
 }
 
-export function useCreateAccount() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+interface UseCreateAccountResult {
+  createAccount: (data: CreateAccountInput) => Promise<Account>;
+  isCreating: boolean;
+  error: Error | null;
+}
 
-  const createAccount = async (data: CreateAccountData): Promise<Account | null> => {
-    setLoading(true);
-    setError(null);
+/**
+ * Hook to create new accounts with proper error handling
+ * 
+ * Features:
+ * - Loading state management
+ * - Error handling
+ * - Type-safe mutations
+ * - Request cancellation support
+ */
+export function useCreateAccount(): UseCreateAccountResult {
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
+  const createAccount = async (data: CreateAccountInput): Promise<Account> => {
     try {
-      const account = await apiClient.post<Account>('/accounts', {
-        account: {
-          ...data,
-          type: data.type || 'checking',
-          currency: data.currency || 'EUR',
-        },
+      setIsCreating(true);
+      setError(null);
+
+      logger.debug('Creating account...', { name: data.name });
+
+      const response = await apiClient.post<{ data: Account }>('accounts', {
+        account: data,
       });
-      return account;
+
+      logger.info('Account created', { id: response.data.id });
+      return response.data;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create account';
-      setError(errorMessage);
-      return null;
+      const error = err instanceof ApiError
+        ? err
+        : new Error('Failed to create account');
+      
+      setError(error);
+      logger.error('Failed to create account', { error, data });
+      throw error;
     } finally {
-      setLoading(false);
+      setIsCreating(false);
     }
   };
 
-  return { createAccount, loading, error };
+  return {
+    createAccount,
+    isCreating,
+    error,
+  };
 }

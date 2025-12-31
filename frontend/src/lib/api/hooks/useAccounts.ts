@@ -1,38 +1,88 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../client';
-import type { Account } from '../types';
+import { apiClient, ApiError } from '@/lib/api/client';
+import { logger } from '@/lib/logger';
+import type { Account } from '@/lib/api/types';
 
-interface UseAccountsOptions {
-  userId: number;
-  key?: number;
+interface UseAccountsResult {
+  accounts: Account[];
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
 }
 
-export function useAccounts({ userId, key }: UseAccountsOptions) {
+/**
+ * Hook to fetch accounts with proper cleanup and error handling
+ * 
+ * Features:
+ * - Automatic request cancellation on unmount
+ * - Loading and error states
+ * - Manual refetch capability
+ * - Type-safe API responses
+ */
+export function useAccounts(): UseAccountsResult {
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
-    const fetchAccounts = async () => {
-      setLoading(true);
-      setError(null);
+    const controller = new AbortController();
+    let isMounted = true;
 
+    async function fetchAccounts() {
       try {
-        const data = await apiClient.get<Account[]>('/accounts', {
-          user_id: userId,
+        setIsLoading(true);
+        setError(null);
+
+        logger.debug('Fetching accounts...');
+        
+        const response = await apiClient.get<{ data: Account[] }>('accounts', {
+          signal: controller.signal,
         });
-        setAccounts(data);
+
+        // Only update state if component is still mounted
+        if (isMounted) {
+          setAccounts(response.data);
+          logger.info('Accounts loaded', { count: response.data.length });
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch accounts');
+        // Don't set error state if request was cancelled
+        if (err instanceof Error && err.name === 'AbortError') {
+          logger.debug('Accounts fetch cancelled');
+          return;
+        }
+
+        if (isMounted) {
+          const error = err instanceof ApiError 
+            ? err 
+            : new Error('Failed to fetch accounts');
+          setError(error);
+          logger.error('Failed to fetch accounts', { error });
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-    };
-
-    if (userId) {
-      fetchAccounts();
     }
-  }, [userId, key]);
 
-  return { accounts, loading, error };
+    fetchAccounts();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [refetchTrigger]);
+
+  const refetch = () => {
+    setRefetchTrigger(prev => prev + 1);
+  };
+
+  return {
+    accounts,
+    isLoading,
+    error,
+    refetch,
+  };
 }

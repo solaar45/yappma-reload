@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { UserProvider } from '@/contexts/UserContext';
 import { AppSidebar } from '@/components/app-sidebar';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { logger } from '@/lib/logger';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -71,13 +73,25 @@ function AppContent() {
             </Breadcrumb>
           </div>
         </header>
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/accounts" element={<AccountsPage />} />
-          <Route path="/assets" element={<AssetsPage />} />
-          <Route path="/snapshots" element={<SnapshotsPage />} />
-          <Route path="/institutions" element={<InstitutionsPage />} />
-        </Routes>
+        
+        {/* Wrap Routes with ErrorBoundary */}
+        <ErrorBoundary
+          onError={(error, errorInfo) => {
+            // Log error for debugging
+            logger.error('Route Error Caught', { error, errorInfo });
+            
+            // TODO: Send to error tracking service
+            // Example: sendToErrorTracking(error, errorInfo);
+          }}
+        >
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/accounts" element={<AccountsPage />} />
+            <Route path="/assets" element={<AssetsPage />} />
+            <Route path="/snapshots" element={<SnapshotsPage />} />
+            <Route path="/institutions" element={<InstitutionsPage />} />
+          </Routes>
+        </ErrorBoundary>
       </SidebarInset>
     </SidebarProvider>
   );
@@ -85,10 +99,16 @@ function AppContent() {
 
 export default function App() {
   return (
-    <UserProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </UserProvider>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        logger.error('App Error Caught', { error, errorInfo });
+      }}
+    >
+      <UserProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </UserProvider>
+    </ErrorBoundary>
   );
 }
