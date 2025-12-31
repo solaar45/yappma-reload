@@ -19,7 +19,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <div className="flex flex-1 flex-col gap-4 px-6 py-4">
       {/* Metric Cards Grid */}
       <div className="grid auto-rows-min gap-4 md:grid-cols-3">
         {/* Net Worth Card */}
