@@ -9,10 +9,17 @@ import {
   type SortingState,
   type ColumnFiltersState,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Edit, FileText, Camera, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowUpDown, Edit, FileText, Camera, MoreVertical, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -301,9 +308,8 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           </Button>
         ),
         cell: ({ row }) => (
-          <div className="text-right text-sm">
-            <span className="font-mono font-medium">{formatCurrency(row.original.fsaAllocated)}</span>
-            <span className="text-muted-foreground"> von {formatCurrency(row.original.fsaTotal)}</span>
+          <div className="text-right font-mono font-medium">
+            {formatCurrency(row.original.fsaAllocated)}
           </div>
         ),
       }),
@@ -337,17 +343,32 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
         id: 'actions',
         header: 'Aktionen',
         cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <FileText className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Camera className="h-4 w-4" />
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <Edit className="mr-2 h-4 w-4" />
+                <span>Edit</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <FileText className="mr-2 h-4 w-4" />
+                <span>Details</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Camera className="mr-2 h-4 w-4" />
+                <span>Snapshot</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Delete</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ),
       }),
     ],
