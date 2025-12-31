@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react';
 import { apiClient } from '../client';
 import type { Account } from '../types';
 
-export function useAccounts(userId: number) {
+interface UseAccountsOptions {
+  userId: number;
+  key?: number;
+}
+
+export function useAccounts({ userId, key }: UseAccountsOptions) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,8 +29,10 @@ export function useAccounts(userId: number) {
       }
     };
 
-    fetchAccounts();
-  }, [userId]);
+    if (userId) {
+      fetchAccounts();
+    }
+  }, [userId, key]);
 
   return { accounts, loading, error };
 }
