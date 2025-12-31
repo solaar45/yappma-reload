@@ -6,6 +6,7 @@ defmodule WealthBackend.Accounts do
   import Ecto.Query, warn: false
   alias WealthBackend.Repo
   alias WealthBackend.Accounts.{User, Institution, Account}
+  alias WealthBackend.Portfolio.AccountSnapshot
 
   ## Users
 
@@ -60,15 +61,19 @@ defmodule WealthBackend.Accounts do
   ## Accounts
 
   def list_accounts(user_id) do
+    snapshots_query = from s in AccountSnapshot, order_by: [desc: s.snapshot_date]
+
     Account
     |> where([a], a.user_id == ^user_id)
-    |> preload([:institution, :account_type, snapshots: from(s in WealthBackend.Portfolio.AccountSnapshot, order_by: [desc: s.snapshot_date])])
+    |> preload([:institution, :account_type, snapshots: ^snapshots_query])
     |> Repo.all()
   end
 
   def get_account!(id) do
+    snapshots_query = from s in AccountSnapshot, order_by: [desc: s.snapshot_date]
+
     Account
-    |> preload([:institution, :account_type, snapshots: from(s in WealthBackend.Portfolio.AccountSnapshot, order_by: [desc: s.snapshot_date])])
+    |> preload([:institution, :account_type, snapshots: ^snapshots_query])
     |> Repo.get!(id)
   end
 
