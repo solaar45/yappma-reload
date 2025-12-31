@@ -158,8 +158,33 @@ class ApiClient {
         throw new ApiError(response.status, response.statusText, errorData);
       }
 
+      // Handle 204 No Content (DELETE responses)
+      if (response.status === 204 || response.headers.get('content-length') === '0') {
+        logger.debug('API Response (No Content)', { endpoint: sanitizedEndpoint, status: 204 });
+        return null as T;
+      }
+
+      // Check if response has content
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        // Non-JSON response, return text
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+          logger.debug('API Response (Empty)', { endpoint: sanitizedEndpoint });
+          return null as T;
+        }
+        logger.debug('API Response (Text)', { endpoint: sanitizedEndpoint, text });
+        return text as T;
+      }
+
       // Parse JSON response
-      const data = await response.json();
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        logger.debug('API Response (Empty JSON)', { endpoint: sanitizedEndpoint });
+        return null as T;
+      }
+
+      const data = JSON.parse(text);
       logger.debug('API Response', { endpoint: sanitizedEndpoint, data });
       return data as T;
     } catch (error) {
