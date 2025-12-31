@@ -40,10 +40,22 @@ export function useAccounts(): UseAccountsResult {
           signal: controller.signal,
         });
 
+        logger.debug('Raw response received', { response });
+
         // Only update state if component is still mounted
         if (isMounted) {
-          setAccounts(response.data);
-          logger.info('Accounts loaded', { count: response.data.length });
+          // Extract data array from response
+          const accountsData = Array.isArray(response) ? response : (response?.data || []);
+          logger.debug('Extracted accounts data', { 
+            isArray: Array.isArray(response),
+            hasData: !!response?.data,
+            count: accountsData?.length 
+          });
+          
+          setAccounts(accountsData);
+          logger.info('Accounts loaded', { count: accountsData?.length || 0 });
+        } else {
+          logger.warn('Component unmounted, skipping state update');
         }
       } catch (err) {
         // Don't set error state if request was cancelled
@@ -61,7 +73,10 @@ export function useAccounts(): UseAccountsResult {
         }
       } finally {
         if (isMounted) {
+          logger.debug('Setting isLoading to false');
           setIsLoading(false);
+        } else {
+          logger.warn('Component unmounted, not setting loading to false');
         }
       }
     }
@@ -70,6 +85,7 @@ export function useAccounts(): UseAccountsResult {
 
     // Cleanup function
     return () => {
+      logger.debug('useAccounts cleanup - setting isMounted = false');
       isMounted = false;
       controller.abort();
     };
@@ -78,6 +94,8 @@ export function useAccounts(): UseAccountsResult {
   const refetch = () => {
     setRefetchTrigger(prev => prev + 1);
   };
+
+  logger.debug('useAccounts render', { isLoading, accountsCount: accounts.length, hasError: !!error });
 
   return {
     accounts,
