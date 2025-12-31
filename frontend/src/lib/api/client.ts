@@ -27,8 +27,19 @@ export class ApiClient {
       });
 
       if (!response.ok) {
-        const errorData: ApiError = await response.json();
-        throw new Error(JSON.stringify(errorData.errors));
+        // Try to parse error response
+        try {
+          const errorData: ApiError = await response.json();
+          throw new Error(JSON.stringify(errorData.errors));
+        } catch (jsonError) {
+          // If JSON parsing fails, throw generic error
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      }
+
+      // Handle 204 No Content - no body to parse
+      if (response.status === 204) {
+        return null as T;
       }
 
       const data: ApiResponse<T> = await response.json();
