@@ -16,6 +16,17 @@ export class ApiError extends Error {
 }
 
 /**
+ * Request Deduplication Error
+ * This is not a real error, just a signal that the request was deduplicated
+ */
+export class DeduplicationError extends Error {
+  constructor() {
+    super('Request was deduplicated');
+    this.name = 'DeduplicationError';
+  }
+}
+
+/**
  * API Client with request cancellation, rate limiting, and sanitization
  */
 class ApiClient {
@@ -78,12 +89,25 @@ class ApiClient {
     if (options.dedupe && options.method === 'GET') {
       if (this.activeRequests.has(requestKey)) {
         logger.debug('Request deduplicated', { endpoint: sanitizedEndpoint });
-        // Return a promise that rejects when the original request completes
-        return new Promise((_, reject) => {
-          const controller = this.activeRequests.get(requestKey)!;
-          controller.signal.addEventListener('abort', () => {
-            reject(new ApiError(0, 'Request Deduplicated'));
-          });
+        // Return existing promise instead of rejecting
+        // Wait for the original request to complete
+        const controller = this.activeRequests.get(requestKey)!;
+        return new Promise((resolve, reject) => {
+          const checkInterval = setInterval(() => {
+            if (!this.activeRequests.has(requestKey)) {
+              clearInterval(checkInterval);
+              // Original request completed, retry this one
+              this.request<T>(endpoint, { ...options, dedupe: false })
+                .then(resolve)
+                .catch(reject);
+            }
+          }, 50);
+          
+          // Cleanup after 5 seconds
+          setTimeout(() => {
+            clearInterval(checkInterval);
+            reject(new DeduplicationError());
+          }, 5000);
         });
       }
     }

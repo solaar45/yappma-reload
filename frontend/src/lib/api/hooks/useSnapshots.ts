@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiClient, ApiError } from '@/lib/api/client';
+import { apiClient, ApiError, DeduplicationError } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import type { AccountSnapshot, AssetSnapshot, Account, Asset } from '../types';
 
@@ -19,15 +19,6 @@ interface UseSnapshotsResult {
   refetch: () => void;
 }
 
-/**
- * Hook to fetch all snapshots (accounts + assets) with proper cleanup
- * 
- * Features:
- * - Automatic request cancellation on unmount
- * - Combines account and asset snapshots
- * - Sorted by date (newest first)
- * - Type-safe API responses
- */
 export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapshotsResult {
   const [snapshots, setSnapshots] = useState<CombinedSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,28 +36,16 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
 
         logger.debug('Fetching snapshots...', { userId });
 
-        // Fetch accounts with snapshots
-        const accountsResponse = await apiClient.get<{ data: Account[] }>('accounts', {
-          signal: controller.signal,
-        });
+        const [accountsResponse, assetsResponse] = await Promise.all([
+          apiClient.get<{ data: Account[] }>('accounts', { signal: controller.signal }),
+          apiClient.get<{ data: Asset[] }>('assets', { signal: controller.signal }),
+        ]);
 
-        // Fetch assets with snapshots
-        const assetsResponse = await apiClient.get<{ data: Asset[] }>('assets', {
-          signal: controller.signal,
-        });
-
-        // Only process if component is still mounted
         if (!isMounted) return;
 
-        // Extract data arrays from response (handle both formats)
-        const accounts = Array.isArray(accountsResponse) 
-          ? accountsResponse 
-          : accountsResponse.data || [];
-        const assets = Array.isArray(assetsResponse) 
-          ? assetsResponse 
-          : assetsResponse.data || [];
+        const accounts = Array.isArray(accountsResponse) ? accountsResponse : accountsResponse.data || [];
+        const assets = Array.isArray(assetsResponse) ? assetsResponse : assetsResponse.data || [];
 
-        // Extract and combine all snapshots
         const accountSnapshots: CombinedSnapshot[] = accounts.flatMap(
           (account) =>
             (account.snapshots || []).map((snapshot: AccountSnapshot) => ({
@@ -85,7 +64,6 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
             }))
         );
 
-        // Combine and sort by date (newest first)
         const combined = [...accountSnapshots, ...assetSnapshots].sort(
           (a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime()
         );
@@ -99,16 +77,13 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
           });
         }
       } catch (err) {
-        // Don't set error state if request was cancelled
-        if (err instanceof Error && err.name === 'AbortError') {
-          logger.debug('Snapshots fetch cancelled');
+        if (err instanceof Error && (err.name === 'AbortError' || err instanceof DeduplicationError)) {
+          logger.debug('Snapshots fetch cancelled/deduplicated');
           return;
         }
 
         if (isMounted) {
-          const error = err instanceof ApiError
-            ? err
-            : new Error('Failed to fetch snapshots');
+          const error = err instanceof ApiError ? err : new Error('Failed to fetch snapshots');
           setError(error);
           logger.error('Failed to fetch snapshots', { error, userId });
         }
@@ -125,7 +100,6 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
       setLoading(false);
     }
 
-    // Cleanup function
     return () => {
       isMounted = false;
       controller.abort();

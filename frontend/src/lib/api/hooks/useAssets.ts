@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiClient, ApiError } from '@/lib/api/client';
+import { apiClient, ApiError, DeduplicationError } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import type { Asset } from '../types';
 
@@ -15,15 +15,6 @@ interface UseAssetsResult {
   refetch: () => void;
 }
 
-/**
- * Hook to fetch assets with proper cleanup and error handling
- * 
- * Features:
- * - Automatic request cancellation on unmount
- * - Loading and error states
- * - Manual refetch capability
- * - Type-safe API responses
- */
 export function useAssets({ userId, key }: UseAssetsOptions): UseAssetsResult {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,29 +32,23 @@ export function useAssets({ userId, key }: UseAssetsOptions): UseAssetsResult {
 
         logger.debug('Fetching assets...', { userId });
         
-        // Backend returns { data: [...] }
         const response = await apiClient.get<{ data: Asset[] }>('assets', {
           signal: controller.signal,
         });
 
-        // Only update state if component is still mounted
         if (isMounted) {
-          // Extract data array from response
           const assetsData = Array.isArray(response) ? response : response.data;
           setAssets(assetsData || []);
           logger.info('Assets loaded', { count: assetsData?.length || 0 });
         }
       } catch (err) {
-        // Don't set error state if request was cancelled
-        if (err instanceof Error && err.name === 'AbortError') {
-          logger.debug('Assets fetch cancelled');
+        if (err instanceof Error && (err.name === 'AbortError' || err instanceof DeduplicationError)) {
+          logger.debug('Assets fetch cancelled/deduplicated');
           return;
         }
 
         if (isMounted) {
-          const error = err instanceof ApiError 
-            ? err 
-            : new Error('Failed to fetch assets');
+          const error = err instanceof ApiError ? err : new Error('Failed to fetch assets');
           setError(error);
           logger.error('Failed to fetch assets', { error, userId });
         }
@@ -80,7 +65,6 @@ export function useAssets({ userId, key }: UseAssetsOptions): UseAssetsResult {
       setLoading(false);
     }
 
-    // Cleanup function
     return () => {
       isMounted = false;
       controller.abort();
@@ -91,10 +75,5 @@ export function useAssets({ userId, key }: UseAssetsOptions): UseAssetsResult {
     setRefetchTrigger(prev => prev + 1);
   };
 
-  return {
-    assets,
-    loading,
-    error,
-    refetch,
-  };
+  return { assets, loading, error, refetch };
 }

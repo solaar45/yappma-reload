@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiClient, ApiError } from '@/lib/api/client';
+import { apiClient, ApiError, DeduplicationError } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import type { Account, Asset } from '../types';
 
@@ -23,15 +23,6 @@ interface UseDashboardResult {
   refetch: () => void;
 }
 
-/**
- * Hook to fetch dashboard data (accounts + assets) with proper cleanup
- * 
- * Features:
- * - Automatic request cancellation on unmount
- * - Calculates total portfolio value
- * - Parallel fetching for performance
- * - Type-safe API responses
- */
 export function useDashboard({ userId, key = 0 }: UseDashboardParams): UseDashboardResult {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,28 +40,16 @@ export function useDashboard({ userId, key = 0 }: UseDashboardParams): UseDashbo
 
         logger.debug('Fetching dashboard data...', { userId });
 
-        // Fetch accounts and assets in parallel
         const [accountsResponse, assetsResponse] = await Promise.all([
-          apiClient.get<{ data: Account[] }>('accounts', {
-            signal: controller.signal,
-          }),
-          apiClient.get<{ data: Asset[] }>('assets', {
-            signal: controller.signal,
-          }),
+          apiClient.get<{ data: Account[] }>('accounts', { signal: controller.signal }),
+          apiClient.get<{ data: Asset[] }>('assets', { signal: controller.signal }),
         ]);
 
-        // Only process if component is still mounted
         if (!isMounted) return;
 
-        // Extract data arrays from response (handle both formats)
-        const accounts = Array.isArray(accountsResponse)
-          ? accountsResponse
-          : accountsResponse.data || [];
-        const assets = Array.isArray(assetsResponse)
-          ? assetsResponse
-          : assetsResponse.data || [];
+        const accounts = Array.isArray(accountsResponse) ? accountsResponse : accountsResponse.data || [];
+        const assets = Array.isArray(assetsResponse) ? assetsResponse : assetsResponse.data || [];
 
-        // Calculate total values from latest snapshots
         const accountsValue = accounts.reduce((sum, account) => {
           const latestSnapshot = account.snapshots?.[0];
           const value = latestSnapshot?.balance ? parseFloat(latestSnapshot.balance) : 0;
@@ -100,16 +79,13 @@ export function useDashboard({ userId, key = 0 }: UseDashboardParams): UseDashbo
           });
         }
       } catch (err) {
-        // Don't set error state if request was cancelled
-        if (err instanceof Error && err.name === 'AbortError') {
-          logger.debug('Dashboard fetch cancelled');
+        if (err instanceof Error && (err.name === 'AbortError' || err instanceof DeduplicationError)) {
+          logger.debug('Dashboard fetch cancelled/deduplicated');
           return;
         }
 
         if (isMounted) {
-          const error = err instanceof ApiError
-            ? err
-            : new Error('Failed to fetch dashboard data');
+          const error = err instanceof ApiError ? err : new Error('Failed to fetch dashboard data');
           setError(error);
           logger.error('Failed to fetch dashboard data', { error, userId });
         }
@@ -126,7 +102,6 @@ export function useDashboard({ userId, key = 0 }: UseDashboardParams): UseDashbo
       setLoading(false);
     }
 
-    // Cleanup function
     return () => {
       isMounted = false;
       controller.abort();
