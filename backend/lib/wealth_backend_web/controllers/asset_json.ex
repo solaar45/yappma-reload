@@ -92,7 +92,7 @@ defmodule WealthBackendWeb.AssetJSON do
     %{
       id: snapshot.id,
       snapshot_date: snapshot.snapshot_date,
-      value: snapshot.value,
+      value: decimal_to_string(snapshot.value),
       quantity: decimal_to_string(snapshot.quantity),
       market_price_per_unit: decimal_to_string(snapshot.market_price_per_unit),
       note: snapshot.note,
@@ -101,5 +101,7 @@ defmodule WealthBackendWeb.AssetJSON do
   end
 
   defp decimal_to_string(nil), do: nil
-  defp decimal_to_string(decimal), do: to_string(decimal)
+  defp decimal_to_string(%Decimal{} = decimal), do: Decimal.to_string(decimal)
+  defp decimal_to_string(value) when is_number(value), do: to_string(value)
+  defp decimal_to_string(value), do: value
 end
