@@ -21,5 +21,16 @@ defmodule WealthBackend.Portfolio.InsuranceAsset do
     insurance_asset
     |> cast(attrs, [:asset_id, :insurer_name, :policy_number, :insurance_type, :coverage_amount, :deductible, :payment_frequency])
     |> validate_required([:asset_id])
+    |> empty_string_to_nil([:insurer_name, :policy_number, :insurance_type, :payment_frequency])
+  end
+
+  # Convert empty strings to nil for optional fields
+  defp empty_string_to_nil(changeset, fields) do
+    Enum.reduce(fields, changeset, fn field, acc ->
+      case get_change(acc, field) do
+        "" -> put_change(acc, field, nil)
+        _ -> acc
+      end
+    end)
   end
 end
