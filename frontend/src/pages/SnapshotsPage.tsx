@@ -4,7 +4,9 @@ import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { CreateSnapshotDialog } from '@/components/CreateSnapshotDialog';
+import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
+import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
 import {
   Table,
   TableBody,
@@ -13,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Calendar, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 
 export default function SnapshotsPage() {
   const { userId } = useUser();
@@ -56,10 +58,7 @@ export default function SnapshotsPage() {
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Snapshots</h1>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Snapshot
-          </Button>
+          <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -85,10 +84,7 @@ export default function SnapshotsPage() {
             {snapshots.length} snapshot{snapshots.length !== 1 ? 's' : ''}
           </div>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Snapshot
-        </Button>
+        <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
       </div>
 
       <Card>
@@ -134,17 +130,14 @@ export default function SnapshotsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" disabled>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <EditSnapshotDialog 
+                          snapshot={snapshot} 
+                          onSuccess={handleSnapshotChanged} 
+                        />
+                        <DeleteSnapshotDialog 
+                          snapshot={snapshot} 
+                          onSuccess={handleSnapshotChanged} 
+                        />
                       </div>
                     </TableCell>
                   </TableRow>
