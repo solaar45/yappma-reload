@@ -34,6 +34,19 @@ defmodule WealthBackendWeb.Router do
     get "/asset_snapshots", AssetSnapshotController, :index
     resources "/asset_snapshots", AssetSnapshotController, except: [:new, :edit, :index]
 
+    # Snapshots API (frontend-friendly routes)
+    scope "/snapshots" do
+      # Account snapshots
+      post "/accounts", AccountSnapshotController, :create
+      put "/accounts/:id", AccountSnapshotController, :update
+      delete "/accounts/:id", AccountSnapshotController, :delete
+
+      # Asset snapshots  
+      post "/assets", AssetSnapshotController, :create
+      put "/assets/:id", AssetSnapshotController, :update
+      delete "/assets/:id", AssetSnapshotController, :delete
+    end
+
     # Dashboard / Analytics
     get "/dashboard/net_worth", DashboardController, :net_worth
     get "/dashboard/account_snapshots", DashboardController, :account_snapshots
