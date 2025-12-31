@@ -94,8 +94,8 @@ defmodule WealthBackendWeb.AssetJSON do
       snapshot_date: snapshot.snapshot_date,
       value: snapshot.value,
       quantity: decimal_to_string(snapshot.quantity),
-      unit_price: decimal_to_string(snapshot.unit_price),
-      notes: snapshot.notes,
+      market_price_per_unit: decimal_to_string(snapshot.market_price_per_unit),
+      note: snapshot.note,
       asset_id: snapshot.asset_id
     }
   end
