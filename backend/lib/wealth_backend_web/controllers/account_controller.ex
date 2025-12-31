@@ -6,12 +6,20 @@ defmodule WealthBackendWeb.AccountController do
 
   action_fallback WealthBackendWeb.FallbackController
 
-  def index(conn, %{"user_id" => user_id}) do
+  # TODO: Get user_id from authenticated session/JWT token
+  # For now, use a default test user_id
+  @default_user_id 1
+
+  def index(conn, params) do
+    user_id = Map.get(params, "user_id", @default_user_id)
     accounts = Accounts.list_accounts(user_id)
     render(conn, :index, accounts: accounts)
   end
 
-  def create(conn, %{"account" => account_params}) do
+  def create(conn, %{"account" => account_params} = params) do
+    # Add default user_id if not provided
+    account_params = Map.put_new(account_params, "user_id", Map.get(params, "user_id", @default_user_id))
+    
     with {:ok, %Account{} = account} <- Accounts.create_account(account_params) do
       conn
       |> put_status(:created)
