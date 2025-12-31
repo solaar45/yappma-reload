@@ -108,7 +108,7 @@ export default function AccountsPage() {
             {institutionAccounts.map((account) => {
               const latestSnapshot = account.snapshots?.[0];
               const balance = latestSnapshot?.balance || '0';
-              const currency = latestSnapshot?.currency || 'EUR';
+              const currency = latestSnapshot?.currency || account.currency || 'EUR';
               const snapshotDate = latestSnapshot?.snapshot_date;
 
               return (
@@ -141,18 +141,10 @@ export default function AccountsPage() {
                         )}
                       </div>
 
-                      {account.account_type && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <TrendingUp className="h-3 w-3" />
-                          <span>{account.account_type.description}</span>
-                        </div>
-                      )}
-
-                      {account.iban && (
-                        <div className="text-xs text-muted-foreground font-mono">
-                          {account.iban}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <TrendingUp className="h-3 w-3" />
+                        <span className="capitalize">{account.type.replace('_', ' ')}</span>
+                      </div>
 
                       {account.snapshots && account.snapshots.length > 0 && (
                         <div className="text-xs text-muted-foreground">
