@@ -127,6 +127,7 @@ defmodule WealthBackend.Portfolio do
   Handles updating both the base asset and related type-specific data (e.g., security_asset).
   Uses a transaction to ensure data consistency.
   Allows clearing optional fields by sending empty strings or nil.
+  If optional fields are not sent, they will be set to nil (cleared).
   """
   def update_full_asset(%Asset{} = asset, attrs) do
     Ecto.Multi.new()
@@ -149,7 +150,10 @@ defmodule WealthBackend.Portfolio do
       "security" ->
         # Check if security_asset key exists in attrs (even if empty)
         if has_nested_attrs?(attrs, "security_asset") do
-          security_attrs = get_nested_attrs(attrs, "security_asset")
+          security_attrs = 
+            attrs
+            |> get_nested_attrs("security_asset")
+            |> normalize_security_attrs()
           
           case repo.get(SecurityAsset, asset.id) do
             nil ->
@@ -177,7 +181,10 @@ defmodule WealthBackend.Portfolio do
 
       "insurance" ->
         if has_nested_attrs?(attrs, "insurance_asset") do
-          insurance_attrs = get_nested_attrs(attrs, "insurance_asset")
+          insurance_attrs = 
+            attrs
+            |> get_nested_attrs("insurance_asset")
+            |> normalize_insurance_attrs()
           
           case repo.get(InsuranceAsset, asset.id) do
             nil ->
@@ -203,7 +210,10 @@ defmodule WealthBackend.Portfolio do
 
       "loan" ->
         if has_nested_attrs?(attrs, "loan_asset") do
-          loan_attrs = get_nested_attrs(attrs, "loan_asset")
+          loan_attrs = 
+            attrs
+            |> get_nested_attrs("loan_asset")
+            |> normalize_loan_attrs()
           
           case repo.get(LoanAsset, asset.id) do
             nil ->
@@ -229,7 +239,10 @@ defmodule WealthBackend.Portfolio do
 
       "real_estate" ->
         if has_nested_attrs?(attrs, "real_estate_asset") do
-          re_attrs = get_nested_attrs(attrs, "real_estate_asset")
+          re_attrs = 
+            attrs
+            |> get_nested_attrs("real_estate_asset")
+            |> normalize_real_estate_attrs()
           
           case repo.get(RealEstateAsset, asset.id) do
             nil ->
@@ -257,6 +270,58 @@ defmodule WealthBackend.Portfolio do
         # For cash and other types without specific fields
         {:ok, nil}
     end
+  end
+
+  # Normalize security_asset attrs: set missing optional fields to nil
+  defp normalize_security_attrs(attrs) do
+    optional_fields = [:wkn, :ticker, :exchange, :sector, "wkn", "ticker", "exchange", "sector"]
+    
+    Enum.reduce(optional_fields, attrs, fn field, acc ->
+      if Map.has_key?(attrs, field) do
+        acc
+      else
+        Map.put(acc, field, nil)
+      end
+    end)
+  end
+
+  # Normalize insurance_asset attrs: set missing optional fields to nil
+  defp normalize_insurance_attrs(attrs) do
+    optional_fields = [:policy_number, :insurance_type, :payment_frequency, "policy_number", "insurance_type", "payment_frequency"]
+    
+    Enum.reduce(optional_fields, attrs, fn field, acc ->
+      if Map.has_key?(attrs, field) do
+        acc
+      else
+        Map.put(acc, field, nil)
+      end
+    end)
+  end
+
+  # Normalize loan_asset attrs: set missing optional fields to nil
+  defp normalize_loan_attrs(attrs) do
+    optional_fields = [:payment_frequency, :maturity_date, "payment_frequency", "maturity_date"]
+    
+    Enum.reduce(optional_fields, attrs, fn field, acc ->
+      if Map.has_key?(attrs, field) do
+        acc
+      else
+        Map.put(acc, field, nil)
+      end
+    end)
+  end
+
+  # Normalize real_estate_asset attrs: set missing optional fields to nil
+  defp normalize_real_estate_attrs(attrs) do
+    optional_fields = [:size_m2, :purchase_price, :purchase_date, "size_m2", "purchase_price", "purchase_date"]
+    
+    Enum.reduce(optional_fields, attrs, fn field, acc ->
+      if Map.has_key?(attrs, field) do
+        acc
+      else
+        Map.put(acc, field, nil)
+      end
+    end)
   end
 
   # Check if nested attrs key exists (even if the map is empty)
