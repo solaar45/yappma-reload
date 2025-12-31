@@ -20,6 +20,7 @@ import DashboardPage from '@/pages/DashboardPage';
 import AccountsPage from '@/pages/AccountsPage';
 import AssetsPage from '@/pages/AssetsPage';
 import InstitutionsPage from '@/pages/InstitutionsPage';
+import SnapshotsPage from '@/pages/SnapshotsPage';
 import './App.css';
 
 function getBreadcrumbs(pathname: string) {
@@ -31,6 +32,9 @@ function getBreadcrumbs(pathname: string) {
   }
   if (pathname === '/assets') {
     return { main: 'Portfolio', sub: 'Assets' };
+  }
+  if (pathname === '/snapshots') {
+    return { main: 'Portfolio', sub: 'Snapshots' };
   }
   if (pathname === '/institutions') {
     return { main: 'Settings', sub: 'Institutions' };
@@ -72,6 +76,7 @@ function AppContent() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/accounts" element={<AccountsPage />} />
           <Route path="/assets" element={<AssetsPage />} />
+          <Route path="/snapshots" element={<SnapshotsPage />} />
           <Route path="/institutions" element={<InstitutionsPage />} />
         </Routes>
       </SidebarInset>
