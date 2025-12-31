@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Settings,
   Building2,
+  Calendar,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -48,6 +49,10 @@ const data = {
           title: "Assets",
           url: "/assets",
         },
+        {
+          title: "Snapshots",
+          url: "/snapshots",
+        },
       ],
     },
     {
@@ -72,6 +77,11 @@ const data = {
       name: "Assets",
       url: "/assets",
       icon: PiggyBank,
+    },
+    {
+      name: "Snapshots",
+      url: "/snapshots",
+      icon: Calendar,
     },
     {
       name: "Institutions",
