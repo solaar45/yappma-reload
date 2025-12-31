@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { apiClient } from '@/lib/api/client';
+import { logger } from '@/lib/logger';
 import type { Account } from '@/lib/api/types';
 import {
   AlertDialog,
@@ -29,20 +30,33 @@ export function DeleteAccountDialog({ account, onSuccess }: DeleteAccountDialogP
     setError(null);
 
     try {
-      await apiClient.delete(`/accounts/${account.id}`);
+      logger.info('Deleting account', { accountId: account.id, name: account.name });
+      
+      await apiClient.delete(`accounts/${account.id}`);
+      
+      logger.info('Account deleted successfully', { accountId: account.id });
+      
+      // Close dialog first
       setOpen(false);
-      onSuccess?.();
+      
+      // Then trigger refetch
+      if (onSuccess) {
+        logger.debug('Triggering refetch after account delete');
+        onSuccess();
+      }
     } catch (err: any) {
-      console.error('Failed to delete account:', err);
+      logger.error('Failed to delete account', { error: err, accountId: account.id });
       
       // If account doesn't exist (404), treat as success
-      if (err?.response?.status === 404) {
-        console.log('Account already deleted, refreshing list');
+      if (err?.status === 404) {
+        logger.info('Account already deleted (404), treating as success');
         setOpen(false);
         onSuccess?.();
-      } else {
-        setError(err?.response?.data?.error || 'Failed to delete account. Please try again.');
+        return;
       }
+      
+      const errorMessage = err?.data?.error || err?.message || 'Failed to delete account. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -83,9 +97,14 @@ export function DeleteAccountDialog({ account, onSuccess }: DeleteAccountDialogP
           )}
           
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setOpen(false)} disabled={loading}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
               disabled={loading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
