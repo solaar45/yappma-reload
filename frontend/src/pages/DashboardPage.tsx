@@ -8,14 +8,12 @@ import { TrendingUp, Wallet, PiggyBank } from 'lucide-react';
 export default function DashboardPage() {
   const { t } = useTranslation();
   const { userId } = useUser();
-  const { netWorth, accountSnapshots, assetSnapshots, loading, error } = useDashboard({
-    userId: userId!,
-  });
+  const { data, loading, error } = useDashboard({ userId: userId! });
 
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-destructive">{t('dashboard.errorLoading')}: {error}</div>
+        <div className="text-destructive">{t('dashboard.errorLoading')}: {error.message}</div>
       </div>
     );
   }
@@ -36,10 +34,10 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold">
-                  {netWorth ? formatCurrency(netWorth.total) : '€0.00'}
+                  {data ? formatCurrency(data.totalValue) : '€0.00'}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t('dashboard.asOf')} {netWorth ? formatDate(netWorth.date) : t('common.date')}
+                  {t('dashboard.asOf')} {formatDate(new Date().toISOString())}
                 </p>
               </>
             )}
@@ -58,10 +56,10 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold">
-                  {netWorth ? formatCurrency(netWorth.accounts) : '€0.00'}
+                  {data ? formatCurrency(data.accountsValue) : '€0.00'}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {accountSnapshots?.snapshots.length || 0} {t('dashboard.accounts')}
+                  {data?.accounts.length || 0} {t('dashboard.accounts')}
                 </p>
               </>
             )}
@@ -80,10 +78,10 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold">
-                  {netWorth ? formatCurrency(netWorth.assets) : '€0.00'}
+                  {data ? formatCurrency(data.assetsValue) : '€0.00'}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {assetSnapshots?.snapshots.length || 0} {t('dashboard.assets')}
+                  {data?.assets.length || 0} {t('dashboard.assets')}
                 </p>
               </>
             )}
@@ -105,28 +103,33 @@ export default function DashboardPage() {
                   <div key={i} className="h-16 animate-pulse bg-muted rounded" />
                 ))}
               </div>
-            ) : accountSnapshots?.snapshots.length ? (
+            ) : data?.accounts.length ? (
               <div className="space-y-4">
-                {accountSnapshots.snapshots.slice(0, 5).map((snapshot) => (
-                  <div key={snapshot.id} className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {snapshot.account?.name || 'Unknown Account'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {snapshot.account?.institution?.name || 'No institution'}
-                      </p>
+                {data.accounts.slice(0, 5).map((account) => {
+                  const latestSnapshot = account.snapshots?.[0];
+                  return (
+                    <div key={account.id} className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {account.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {account.institution?.name || 'No institution'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">
+                          {latestSnapshot
+                            ? formatCurrency(latestSnapshot.balance, latestSnapshot.currency)
+                            : formatCurrency('0', account.currency)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">
-                        {formatCurrency(snapshot.balance, snapshot.currency)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(snapshot.snapshot_date)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
@@ -148,34 +151,36 @@ export default function DashboardPage() {
                   <div key={i} className="h-16 animate-pulse bg-muted rounded" />
                 ))}
               </div>
-            ) : assetSnapshots?.snapshots.length ? (
+            ) : data?.assets.length ? (
               <div className="space-y-4">
-                {assetSnapshots.snapshots.slice(0, 5).map((snapshot) => (
-                  <div key={snapshot.id} className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {snapshot.asset?.name || 'Unknown Asset'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {snapshot.asset?.asset_type?.description || 'No type'}
-                        {snapshot.quantity && (
-                          <> · {parseFloat(snapshot.quantity).toFixed(2)} {t('assets.units')}</>
-                        )}
-                      </p>
+                {data.assets.slice(0, 5).map((asset) => {
+                  const latestSnapshot = asset.snapshots?.[0];
+                  return (
+                    <div key={asset.id} className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {asset.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {asset.asset_type?.description || 'No type'}
+                          {latestSnapshot?.quantity && (
+                            <> · {parseFloat(latestSnapshot.quantity).toFixed(2)} {t('assets.units')}</>
+                          )}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">
+                          {latestSnapshot
+                            ? formatCurrency(latestSnapshot.value, asset.currency || 'EUR')
+                            : formatCurrency('0', asset.currency || 'EUR')}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">
-                        {formatCurrency(
-                          snapshot.value,
-                          snapshot.asset?.currency || 'EUR'
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(snapshot.snapshot_date)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
