@@ -10,7 +10,7 @@ defmodule WealthBackend.Institutions.Institution do
 
     # Associations
     belongs_to :user, WealthBackend.Accounts.User, define_field: false
-    has_many :accounts, WealthBackend.Portfolio.Account
+    has_many :accounts, WealthBackend.Accounts.Account
 
     timestamps()
   end

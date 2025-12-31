@@ -12,7 +12,7 @@ defmodule WealthBackend.Accounts.Account do
     field :closed_at, :date
 
     belongs_to :user, WealthBackend.Accounts.User
-    belongs_to :institution, WealthBackend.Accounts.Institution
+    belongs_to :institution, WealthBackend.Institutions.Institution
     has_many :snapshots, WealthBackend.Analytics.AccountSnapshot
 
     timestamps(type: :utc_datetime)
