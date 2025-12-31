@@ -128,6 +128,7 @@ defmodule WealthBackend.Portfolio do
   Uses a transaction to ensure data consistency.
   Allows clearing optional fields by sending empty strings or nil.
   If optional fields are not sent, they will be set to nil (cleared).
+  If no type-specific object is sent at all, all fields will be cleared.
   """
   def update_full_asset(%Asset{} = asset, attrs) do
     Ecto.Multi.new()
@@ -148,128 +149,154 @@ defmodule WealthBackend.Portfolio do
 
     case asset_type.code do
       "security" ->
-        # Check if security_asset key exists in attrs (even if empty)
-        if has_nested_attrs?(attrs, "security_asset") do
-          security_attrs = 
+        # Always process security_asset updates for security type
+        security_attrs = 
+          if has_nested_attrs?(attrs, "security_asset") do
             attrs
             |> get_nested_attrs("security_asset")
             |> normalize_security_attrs()
-          
-          case repo.get(SecurityAsset, asset.id) do
-            nil ->
-              # Create new security_asset if it doesn't exist and has data
-              if map_size(security_attrs) > 0 do
-                security_attrs
-                |> stringify_keys()
-                |> Map.put("asset_id", asset.id)
-                |> then(&SecurityAsset.changeset(%SecurityAsset{}, &1))
-                |> repo.insert()
-              else
-                {:ok, nil}
-              end
-
-            security_asset ->
-              # Update existing security_asset (including clearing fields)
+          else
+            # If no security_asset object sent, clear all optional fields
+            clear_all_security_fields()
+          end
+        
+        case repo.get(SecurityAsset, asset.id) do
+          nil ->
+            # Create new security_asset if it doesn't exist and has data
+            if has_any_value?(security_attrs) do
               security_attrs
               |> stringify_keys()
-              |> then(&SecurityAsset.changeset(security_asset, &1))
-              |> repo.update()
-          end
-        else
-          {:ok, nil}
+              |> Map.put("asset_id", asset.id)
+              |> then(&SecurityAsset.changeset(%SecurityAsset{}, &1))
+              |> repo.insert()
+            else
+              {:ok, nil}
+            end
+
+          security_asset ->
+            # Update existing security_asset (including clearing fields)
+            security_attrs
+            |> stringify_keys()
+            |> then(&SecurityAsset.changeset(security_asset, &1))
+            |> repo.update()
         end
 
       "insurance" ->
-        if has_nested_attrs?(attrs, "insurance_asset") do
-          insurance_attrs = 
+        insurance_attrs = 
+          if has_nested_attrs?(attrs, "insurance_asset") do
             attrs
             |> get_nested_attrs("insurance_asset")
             |> normalize_insurance_attrs()
-          
-          case repo.get(InsuranceAsset, asset.id) do
-            nil ->
-              if map_size(insurance_attrs) > 0 do
-                insurance_attrs
-                |> stringify_keys()
-                |> Map.put("asset_id", asset.id)
-                |> then(&InsuranceAsset.changeset(%InsuranceAsset{}, &1))
-                |> repo.insert()
-              else
-                {:ok, nil}
-              end
-
-            insurance_asset ->
+          else
+            clear_all_insurance_fields()
+          end
+        
+        case repo.get(InsuranceAsset, asset.id) do
+          nil ->
+            if has_any_value?(insurance_attrs) do
               insurance_attrs
               |> stringify_keys()
-              |> then(&InsuranceAsset.changeset(insurance_asset, &1))
-              |> repo.update()
-          end
-        else
-          {:ok, nil}
+              |> Map.put("asset_id", asset.id)
+              |> then(&InsuranceAsset.changeset(%InsuranceAsset{}, &1))
+              |> repo.insert()
+            else
+              {:ok, nil}
+            end
+
+          insurance_asset ->
+            insurance_attrs
+            |> stringify_keys()
+            |> then(&InsuranceAsset.changeset(insurance_asset, &1))
+            |> repo.update()
         end
 
       "loan" ->
-        if has_nested_attrs?(attrs, "loan_asset") do
-          loan_attrs = 
+        loan_attrs = 
+          if has_nested_attrs?(attrs, "loan_asset") do
             attrs
             |> get_nested_attrs("loan_asset")
             |> normalize_loan_attrs()
-          
-          case repo.get(LoanAsset, asset.id) do
-            nil ->
-              if map_size(loan_attrs) > 0 do
-                loan_attrs
-                |> stringify_keys()
-                |> Map.put("asset_id", asset.id)
-                |> then(&LoanAsset.changeset(%LoanAsset{}, &1))
-                |> repo.insert()
-              else
-                {:ok, nil}
-              end
-
-            loan_asset ->
+          else
+            clear_all_loan_fields()
+          end
+        
+        case repo.get(LoanAsset, asset.id) do
+          nil ->
+            if has_any_value?(loan_attrs) do
               loan_attrs
               |> stringify_keys()
-              |> then(&LoanAsset.changeset(loan_asset, &1))
-              |> repo.update()
-          end
-        else
-          {:ok, nil}
+              |> Map.put("asset_id", asset.id)
+              |> then(&LoanAsset.changeset(%LoanAsset{}, &1))
+              |> repo.insert()
+            else
+              {:ok, nil}
+            end
+
+          loan_asset ->
+            loan_attrs
+            |> stringify_keys()
+            |> then(&LoanAsset.changeset(loan_asset, &1))
+            |> repo.update()
         end
 
       "real_estate" ->
-        if has_nested_attrs?(attrs, "real_estate_asset") do
-          re_attrs = 
+        re_attrs = 
+          if has_nested_attrs?(attrs, "real_estate_asset") do
             attrs
             |> get_nested_attrs("real_estate_asset")
             |> normalize_real_estate_attrs()
-          
-          case repo.get(RealEstateAsset, asset.id) do
-            nil ->
-              if map_size(re_attrs) > 0 do
-                re_attrs
-                |> stringify_keys()
-                |> Map.put("asset_id", asset.id)
-                |> then(&RealEstateAsset.changeset(%RealEstateAsset{}, &1))
-                |> repo.insert()
-              else
-                {:ok, nil}
-              end
-
-            real_estate_asset ->
+          else
+            clear_all_real_estate_fields()
+          end
+        
+        case repo.get(RealEstateAsset, asset.id) do
+          nil ->
+            if has_any_value?(re_attrs) do
               re_attrs
               |> stringify_keys()
-              |> then(&RealEstateAsset.changeset(real_estate_asset, &1))
-              |> repo.update()
-          end
-        else
-          {:ok, nil}
+              |> Map.put("asset_id", asset.id)
+              |> then(&RealEstateAsset.changeset(%RealEstateAsset{}, &1))
+              |> repo.insert()
+            else
+              {:ok, nil}
+            end
+
+          real_estate_asset ->
+            re_attrs
+            |> stringify_keys()
+            |> then(&RealEstateAsset.changeset(real_estate_asset, &1))
+            |> repo.update()
         end
 
       _ ->
         # For cash and other types without specific fields
         {:ok, nil}
     end
+  end
+
+  # Return map with all security fields set to nil
+  defp clear_all_security_fields do
+    %{isin: nil, wkn: nil, ticker: nil, exchange: nil, sector: nil}
+  end
+
+  # Return map with all insurance fields set to nil
+  defp clear_all_insurance_fields do
+    %{insurer_name: nil, policy_number: nil, insurance_type: nil, payment_frequency: nil}
+  end
+
+  # Return map with all loan fields set to nil
+  defp clear_all_loan_fields do
+    %{interest_rate: nil, payment_frequency: nil, maturity_date: nil}
+  end
+
+  # Return map with all real estate fields set to nil
+  defp clear_all_real_estate_fields do
+    %{address: nil, size_m2: nil, purchase_price: nil, purchase_date: nil}
+  end
+
+  # Check if any field has a non-nil value
+  defp has_any_value?(attrs) when is_map(attrs) do
+    Enum.any?(attrs, fn {_key, value} -> value != nil end)
   end
 
   # Normalize security_asset attrs: set missing optional fields to nil
