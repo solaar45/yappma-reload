@@ -4,6 +4,8 @@ import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateAccountDialog } from '@/components/CreateAccountDialog';
+import { EditAccountDialog } from '@/components/EditAccountDialog';
+import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 import { Wallet, Building2, TrendingUp } from 'lucide-react';
 
 export default function AccountsPage() {
@@ -11,7 +13,7 @@ export default function AccountsPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const { accounts, loading, error } = useAccounts({ userId: userId!, key: refreshKey });
 
-  const handleAccountCreated = () => {
+  const handleAccountChanged = () => {
     setRefreshKey((prev) => prev + 1);
   };
 
@@ -53,7 +55,7 @@ export default function AccountsPage() {
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Accounts</h1>
-          <CreateAccountDialog onSuccess={handleAccountCreated} />
+          <CreateAccountDialog onSuccess={handleAccountChanged} />
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -89,7 +91,7 @@ export default function AccountsPage() {
             {accounts.length} account{accounts.length !== 1 ? 's' : ''}
           </div>
         </div>
-        <CreateAccountDialog onSuccess={handleAccountCreated} />
+        <CreateAccountDialog onSuccess={handleAccountChanged} />
       </div>
 
       {Object.entries(accountsByInstitution).map(([institutionName, institutionAccounts]) => (
@@ -115,7 +117,16 @@ export default function AccountsPage() {
                     <CardTitle className="text-sm font-medium">
                       {account.name}
                     </CardTitle>
-                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-1">
+                      <EditAccountDialog 
+                        account={account} 
+                        onSuccess={handleAccountChanged} 
+                      />
+                      <DeleteAccountDialog 
+                        account={account} 
+                        onSuccess={handleAccountChanged} 
+                      />
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
