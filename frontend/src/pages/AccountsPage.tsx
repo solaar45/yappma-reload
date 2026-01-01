@@ -25,6 +25,7 @@ import { EditAccountDialog } from '@/components/EditAccountDialog';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 import { Wallet, Search, Filter, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
+import { logger } from '@/lib/logger';
 
 interface Account {
   id: number;
@@ -99,14 +100,18 @@ export default function AccountsPage() {
   const handleBatchDelete = async () => {
     setIsDeleting(true);
     try {
+      logger.info('Batch deleting accounts', { count: selectedAccountIds.length, ids: selectedAccountIds });
+      
       await Promise.all(
-        selectedAccountIds.map(id => apiClient.deleteAccount(id))
+        selectedAccountIds.map(id => apiClient.delete(`accounts/${id}`))
       );
+      
+      logger.info('Batch delete successful');
       await refetch();
       setRowSelection({});
       setShowDeleteDialog(false);
     } catch (error) {
-      console.error('Error deleting accounts:', error);
+      logger.error('Error during batch delete', { error });
     } finally {
       setIsDeleting(false);
     }
