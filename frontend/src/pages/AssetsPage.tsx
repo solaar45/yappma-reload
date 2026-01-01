@@ -517,12 +517,16 @@ export default function AssetsPage() {
       </div>
 
       {/* Data Table */}
-      <DataTable 
-        columns={columns} 
-        data={filteredAssets}
-        rowSelection={rowSelection}
-        onRowSelectionChange={setRowSelection}
-      />
+      <Card>
+        <CardContent className="pt-6">
+          <DataTable 
+            columns={columns} 
+            data={filteredAssets}
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+          />
+        </CardContent>
+      </Card>
 
       {/* Batch Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

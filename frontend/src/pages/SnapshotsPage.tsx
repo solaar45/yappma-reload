@@ -139,10 +139,7 @@ export default function SnapshotsPage() {
 
       {/* Desktop: Table Layout */}
       <Card className="hidden md:block">
-        <CardHeader>
-          <CardTitle>{t('snapshots.allSnapshots')}</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>

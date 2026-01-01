@@ -331,12 +331,16 @@ export default function InstitutionsPage() {
       )}
 
       {/* Data Table */}
-      <DataTable
-        columns={columns}
-        data={filteredInstitutions}
-        rowSelection={rowSelection}
-        onRowSelectionChange={setRowSelection}
-      />
+      <Card>
+        <CardContent className="pt-6">
+          <DataTable
+            columns={columns}
+            data={filteredInstitutions}
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+          />
+        </CardContent>
+      </Card>
 
       {/* Batch Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
