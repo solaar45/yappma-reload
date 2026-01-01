@@ -12,7 +12,7 @@ import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateSnapshotDialog } from '@/components/CreateSnapshotDialog';
 import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
 import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
-import { Calendar as CalendarIcon, Search, Filter } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 
 interface Snapshot {
   id: number;
@@ -24,22 +24,6 @@ interface Snapshot {
   currency?: string;
 }
 
-// Helper to parse German date format (dd.MM.yyyy) to Date
-function parseGermanDate(dateStr: string): Date | null {
-  if (!dateStr) return null;
-  const parts = dateStr.split('.');
-  if (parts.length !== 3) return null;
-  
-  const day = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10) - 1; // months are 0-indexed
-  const year = parseInt(parts[2], 10);
-  
-  if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-  if (day < 1 || day > 31 || month < 0 || month > 11 || year < 1900) return null;
-  
-  return new Date(year, month, day);
-}
-
 export default function SnapshotsPage() {
   const { t } = useTranslation();
   const { userId } = useUser();
@@ -49,8 +33,6 @@ export default function SnapshotsPage() {
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [dateFromStr, setDateFromStr] = useState<string>('');
-  const [dateToStr, setDateToStr] = useState<string>('');
 
   const handleSnapshotChanged = () => {
     setRefreshKey((prev) => prev + 1);
@@ -69,17 +51,9 @@ export default function SnapshotsPage() {
       // Type filter
       const matchesType = typeFilter === 'all' || snapshot.snapshot_type === typeFilter;
 
-      // Date filter
-      const snapshotDate = new Date(snapshot.snapshot_date);
-      const dateFrom = parseGermanDate(dateFromStr);
-      const dateTo = parseGermanDate(dateToStr);
-      
-      const matchesDateFrom = !dateFrom || snapshotDate >= dateFrom;
-      const matchesDateTo = !dateTo || snapshotDate <= dateTo;
-
-      return matchesSearch && matchesType && matchesDateFrom && matchesDateTo;
+      return matchesSearch && matchesType;
     });
-  }, [snapshots, searchTerm, typeFilter, dateFromStr, dateToStr]);
+  }, [snapshots, searchTerm, typeFilter]);
 
   // Define table columns
   const columns: ColumnDef<Snapshot>[] = useMemo(
@@ -196,7 +170,6 @@ export default function SnapshotsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
-              <CalendarIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-lg text-muted-foreground">{t('snapshots.noSnapshots')}</p>
               <p className="text-sm text-muted-foreground mt-2">{t('snapshots.addFirst')}</p>
             </div>
@@ -274,11 +247,9 @@ export default function SnapshotsPage() {
                 />
               </div>
 
-              {/* Type and Date Filters */}
+              {/* Type Filter */}
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
-                
-                {/* Type Filter */}
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder={t('snapshots.allTypes') || 'All Types'} />
@@ -291,22 +262,6 @@ export default function SnapshotsPage() {
                     <SelectItem value="asset">{t('snapshots.types.asset') || 'Asset'}</SelectItem>
                   </SelectContent>
                 </Select>
-
-                {/* Date From Input */}
-                <Input
-                  placeholder="01.10.2019"
-                  value={dateFromStr}
-                  onChange={(e) => setDateFromStr(e.target.value)}
-                  className="w-[140px]"
-                />
-
-                {/* Date To Input */}
-                <Input
-                  placeholder="31.03.2022"
-                  value={dateToStr}
-                  onChange={(e) => setDateToStr(e.target.value)}
-                  className="w-[140px]"
-                />
               </div>
             </div>
           </div>
