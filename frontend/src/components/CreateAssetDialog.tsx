@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -40,6 +41,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
     isin: '',
     ticker: '',
     currency: 'EUR',
+    is_active: true,
   });
 
   useEffect(() => {
@@ -77,6 +79,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       asset_type_id: parseInt(formData.asset_type_id),
       name: formData.name,
       currency: formData.currency,
+      is_active: formData.is_active,
       security_asset:
         formData.isin || formData.ticker
           ? {
@@ -88,7 +91,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
 
     if (result) {
       setOpen(false);
-      setFormData({ name: '', asset_type_id: '', isin: '', ticker: '', currency: 'EUR' });
+      setFormData({ name: '', asset_type_id: '', isin: '', ticker: '', currency: 'EUR', is_active: true });
       onSuccess?.();
     }
   };
@@ -167,6 +170,21 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                 required
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="is-active" className="text-base">
+                  Asset Status
+                </Label>
+                <div className="text-sm text-muted-foreground">
+                  {formData.is_active ? 'Active' : 'Inactive'}
+                </div>
+              </div>
+              <Switch
+                id="is-active"
+                checked={formData.is_active}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
               />
             </div>
             {error && <div className="text-sm text-destructive">{error}</div>}
