@@ -3,17 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { useInstitutions } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { CreateInstitutionDialog } from '@/components/CreateInstitutionDialog';
 import { EditInstitutionDialog } from '@/components/EditInstitutionDialog';
 import { DeleteInstitutionDialog } from '@/components/DeleteInstitutionDialog';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Landmark } from 'lucide-react';
+import { Building2, Landmark, XCircle } from 'lucide-react';
 
 export default function InstitutionsPage() {
   const { t } = useTranslation();
   const { userId } = useUser();
   const [refreshKey, setRefreshKey] = useState(0);
-  const { institutions, loading, error } = useInstitutions({ userId: userId!, key: refreshKey });
+  const { institutions, loading, error, refetch } = useInstitutions({ userId: userId!, key: refreshKey });
 
   const handleInstitutionChanged = () => {
     setRefreshKey((prev) => prev + 1);
@@ -51,8 +52,26 @@ export default function InstitutionsPage() {
 
   if (error) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-destructive">{t('institutions.errorLoading')}: {error}</div>
+      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">{t('institutions.title')}</h1>
+        </div>
+        <Card className="border-dashed">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center py-12 space-y-4">
+              <div className="rounded-full bg-destructive/10 p-3">
+                <XCircle className="h-8 w-8 text-destructive" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">{t('institutions.errorLoading')}</h3>
+                <p className="text-sm text-muted-foreground">{error.message}</p>
+              </div>
+              <Button onClick={() => refetch()} variant="outline">
+                {t('common.retry') || 'Retry'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -64,14 +83,19 @@ export default function InstitutionsPage() {
           <h1 className="text-3xl font-bold">{t('institutions.title')}</h1>
           <CreateInstitutionDialog onSuccess={handleInstitutionChanged} />
         </div>
-        <Card>
+        <Card className="border-dashed">
           <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <Landmark className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg text-muted-foreground">{t('institutions.noInstitutions')}</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                {t('institutions.addFirst')}
-              </p>
+            <div className="flex flex-col items-center text-center py-12 space-y-4">
+              <div className="rounded-full bg-muted p-4">
+                <Landmark className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold">{t('institutions.noInstitutions')}</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  {t('institutions.addFirst')}
+                </p>
+              </div>
+              <CreateInstitutionDialog onSuccess={handleInstitutionChanged} />
             </div>
           </CardContent>
         </Card>
@@ -94,9 +118,9 @@ export default function InstitutionsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">{t('institutions.title')}</h1>
-          <div className="text-sm text-muted-foreground">
-            {institutions.length} {t('institutions.title').toLowerCase()}
-          </div>
+          <Badge variant="secondary" className="text-base">
+            {institutions.length} {institutions.length === 1 ? t('institutions.title').slice(0, -1) : t('institutions.title')}
+          </Badge>
         </div>
         <CreateInstitutionDialog onSuccess={handleInstitutionChanged} />
       </div>
@@ -106,9 +130,9 @@ export default function InstitutionsPage() {
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-muted-foreground" />
             <h2 className="text-xl font-semibold">{typeName}</h2>
-            <span className="text-sm text-muted-foreground">
-              ({typeInstitutions.length})
-            </span>
+            <Badge variant="outline">
+              {typeInstitutions.length}
+            </Badge>
           </div>
 
           <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-3">
