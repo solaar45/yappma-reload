@@ -72,20 +72,28 @@ export function sanitizeObject<T extends Record<string, unknown>>(
 }
 
 /**
- * Rate limiter for API calls
+ * Rate limiter for API calls with exponential backoff
  */
 class RateLimiter {
   private requests: Map<string, number[]> = new Map();
+  private backoffTimers: Map<string, number> = new Map();
   private readonly windowMs: number;
   private readonly maxRequests: number;
 
-  constructor(windowMs: number = 60000, maxRequests: number = 120) {
+  constructor(windowMs: number = 60000, maxRequests: number = 300) {
     this.windowMs = windowMs;
     this.maxRequests = maxRequests;
   }
 
   canMakeRequest(key: string): boolean {
     const now = Date.now();
+    
+    // Check if there's an active backoff
+    const backoffUntil = this.backoffTimers.get(key);
+    if (backoffUntil && now < backoffUntil) {
+      return false;
+    }
+
     const timestamps = this.requests.get(key) || [];
 
     // Remove old timestamps outside the window
@@ -94,11 +102,17 @@ class RateLimiter {
     );
 
     if (validTimestamps.length >= this.maxRequests) {
+      // Apply exponential backoff
+      const backoffMs = Math.min(1000 * Math.pow(2, Math.floor(validTimestamps.length / 100)), 30000);
+      this.backoffTimers.set(key, now + backoffMs);
       return false;
     }
 
     validTimestamps.push(now);
     this.requests.set(key, validTimestamps);
+    
+    // Clear backoff if request is allowed
+    this.backoffTimers.delete(key);
     return true;
   }
 
@@ -113,10 +127,12 @@ class RateLimiter {
 
   reset(key: string): void {
     this.requests.delete(key);
+    this.backoffTimers.delete(key);
   }
 
   resetAll(): void {
     this.requests.clear();
+    this.backoffTimers.clear();
   }
 }
 
