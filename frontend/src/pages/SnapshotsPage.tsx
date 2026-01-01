@@ -6,11 +6,15 @@ import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateSnapshotDialog } from '@/components/CreateSnapshotDialog';
 import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
 import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
-import { Calendar } from 'lucide-react';
+import { Calendar, Search, Filter } from 'lucide-react';
 
 interface Snapshot {
   id: number;
@@ -27,10 +31,70 @@ export default function SnapshotsPage() {
   const { userId } = useUser();
   const [refreshKey, setRefreshKey] = useState(0);
   const { snapshots, loading, error } = useSnapshots({ userId: userId!, key: refreshKey });
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<[number, number]>([0, 100]);
+  const [valueRange, setValueRange] = useState<[number, number]>([0, 100]);
 
   const handleSnapshotChanged = () => {
     setRefreshKey((prev) => prev + 1);
   };
+
+  // Calculate min/max values for sliders
+  const { minDate, maxDate, minValue, maxValue } = useMemo(() => {
+    if (!snapshots || snapshots.length === 0) {
+      return { minDate: 0, maxDate: 0, minValue: 0, maxValue: 0 };
+    }
+
+    const dates = snapshots.map((s) => new Date(s.snapshot_date).getTime());
+    const values = snapshots.map((s) => {
+      const isAccount = s.snapshot_type === 'account';
+      const val = isAccount ? s.balance : s.value;
+      return parseFloat(val || '0');
+    });
+
+    return {
+      minDate: Math.min(...dates),
+      maxDate: Math.max(...dates),
+      minValue: Math.min(...values),
+      maxValue: Math.max(...values),
+    };
+  }, [snapshots]);
+
+  // Filter snapshots
+  const filteredSnapshots = useMemo(() => {
+    if (!snapshots) return [];
+
+    return snapshots.filter((snapshot) => {
+      // Search filter
+      const matchesSearch =
+        searchTerm === '' ||
+        snapshot.entity_name.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Type filter
+      const matchesType =
+        typeFilter === 'all' || snapshot.snapshot_type === typeFilter;
+
+      // Date filter
+      const snapshotDate = new Date(snapshot.snapshot_date).getTime();
+      const dateRangeMin = minDate + (maxDate - minDate) * (dateRange[0] / 100);
+      const dateRangeMax = minDate + (maxDate - minDate) * (dateRange[1] / 100);
+      const matchesDate = snapshotDate >= dateRangeMin && snapshotDate <= dateRangeMax;
+
+      // Value filter
+      const isAccount = snapshot.snapshot_type === 'account';
+      const snapshotValue = parseFloat(
+        isAccount ? (snapshot.balance || '0') : (snapshot.value || '0')
+      );
+      const valueRangeMin = minValue + (maxValue - minValue) * (valueRange[0] / 100);
+      const valueRangeMax = minValue + (maxValue - minValue) * (valueRange[1] / 100);
+      const matchesValue = snapshotValue >= valueRangeMin && snapshotValue <= valueRangeMax;
+
+      return matchesSearch && matchesType && matchesDate && matchesValue;
+    });
+  }, [snapshots, searchTerm, typeFilter, dateRange, valueRange, minDate, maxDate, minValue, maxValue]);
 
   // Define table columns
   const columns: ColumnDef<Snapshot>[] = useMemo(
@@ -165,7 +229,7 @@ export default function SnapshotsPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">{t('snapshots.title')}</h1>
           <Badge variant="secondary" className="text-base">
-            {snapshots.length} {t('snapshots.title').toLowerCase()}
+            {filteredSnapshots.length} {t('snapshots.title').toLowerCase()}
           </Badge>
         </div>
         <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
@@ -173,7 +237,7 @@ export default function SnapshotsPage() {
 
       {/* Mobile: Card Layout */}
       <div className="grid gap-4 md:hidden">
-        {snapshots.map((snapshot) => {
+        {filteredSnapshots.map((snapshot) => {
           const isAccount = snapshot.snapshot_type === 'account';
           const value = isAccount ? (snapshot as any).balance : (snapshot as any).value;
           const currency = isAccount ? (snapshot as any).currency : 'EUR';
@@ -210,10 +274,91 @@ export default function SnapshotsPage() {
         })}
       </div>
 
-      {/* Desktop: DataTable Layout */}
+      {/* Desktop: DataTable with Filters */}
       <Card className="hidden md:block">
         <CardContent className="pt-6">
-          <DataTable columns={columns} data={snapshots} />
+          {/* Filters */}
+          <div className="space-y-6 mb-6">
+            {/* Search and Type Filter */}
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-2 flex-1 max-w-md">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('snapshots.searchPlaceholder') || 'Search by entity name...'}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder={t('snapshots.allTypes') || 'All Types'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('snapshots.allTypes') || 'All Types'}</SelectItem>
+                    <SelectItem value="account">
+                      {t('snapshots.types.account') || 'Account'}
+                    </SelectItem>
+                    <SelectItem value="asset">{t('snapshots.types.asset') || 'Asset'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Date Range Slider */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">
+                  {t('snapshots.dateRange') || 'Date Range'}
+                </Label>
+                <span className="text-sm text-muted-foreground">
+                  {formatDate(new Date(minDate + (maxDate - minDate) * (dateRange[0] / 100)).toISOString())} - {formatDate(new Date(minDate + (maxDate - minDate) * (dateRange[1] / 100)).toISOString())}
+                </span>
+              </div>
+              <Slider
+                value={dateRange}
+                onValueChange={(value) => setDateRange(value as [number, number])}
+                min={0}
+                max={100}
+                step={1}
+                className="w-full"
+              />
+            </div>
+
+            {/* Value Range Slider */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">
+                  {t('snapshots.valueRange') || 'Value Range'}
+                </Label>
+                <span className="text-sm text-muted-foreground">
+                  {formatCurrency(
+                    (minValue + (maxValue - minValue) * (valueRange[0] / 100)).toString(),
+                    'EUR'
+                  )}{' '}
+                  -{' '}
+                  {formatCurrency(
+                    (minValue + (maxValue - minValue) * (valueRange[1] / 100)).toString(),
+                    'EUR'
+                  )}
+                </span>
+              </div>
+              <Slider
+                value={valueRange}
+                onValueChange={(value) => setValueRange(value as [number, number])}
+                min={0}
+                max={100}
+                step={1}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* DataTable */}
+          <DataTable columns={columns} data={filteredSnapshots} />
         </CardContent>
       </Card>
     </div>
