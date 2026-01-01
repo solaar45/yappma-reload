@@ -6,15 +6,17 @@ import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateSnapshotDialog } from '@/components/CreateSnapshotDialog';
 import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
 import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
-import { Calendar, Search, Filter } from 'lucide-react';
+import { Calendar as CalendarIcon, Search, Filter } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Snapshot {
   id: number;
@@ -31,37 +33,16 @@ export default function SnapshotsPage() {
   const { userId } = useUser();
   const [refreshKey, setRefreshKey] = useState(0);
   const { snapshots, loading, error } = useSnapshots({ userId: userId!, key: refreshKey });
-  
+
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<[number, number]>([0, 100]);
-  const [valueRange, setValueRange] = useState<[number, number]>([0, 100]);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   const handleSnapshotChanged = () => {
     setRefreshKey((prev) => prev + 1);
   };
-
-  // Calculate min/max values for sliders
-  const { minDate, maxDate, minValue, maxValue } = useMemo(() => {
-    if (!snapshots || snapshots.length === 0) {
-      return { minDate: 0, maxDate: 0, minValue: 0, maxValue: 0 };
-    }
-
-    const dates = snapshots.map((s) => new Date(s.snapshot_date).getTime());
-    const values = snapshots.map((s) => {
-      const isAccount = s.snapshot_type === 'account';
-      const val = isAccount ? s.balance : s.value;
-      return parseFloat(val || '0');
-    });
-
-    return {
-      minDate: Math.min(...dates),
-      maxDate: Math.max(...dates),
-      minValue: Math.min(...values),
-      maxValue: Math.max(...values),
-    };
-  }, [snapshots]);
 
   // Filter snapshots
   const filteredSnapshots = useMemo(() => {
@@ -74,27 +55,16 @@ export default function SnapshotsPage() {
         snapshot.entity_name.toLowerCase().includes(searchTerm.toLowerCase());
 
       // Type filter
-      const matchesType =
-        typeFilter === 'all' || snapshot.snapshot_type === typeFilter;
+      const matchesType = typeFilter === 'all' || snapshot.snapshot_type === typeFilter;
 
       // Date filter
-      const snapshotDate = new Date(snapshot.snapshot_date).getTime();
-      const dateRangeMin = minDate + (maxDate - minDate) * (dateRange[0] / 100);
-      const dateRangeMax = minDate + (maxDate - minDate) * (dateRange[1] / 100);
-      const matchesDate = snapshotDate >= dateRangeMin && snapshotDate <= dateRangeMax;
+      const snapshotDate = new Date(snapshot.snapshot_date);
+      const matchesDateFrom = !dateFrom || snapshotDate >= dateFrom;
+      const matchesDateTo = !dateTo || snapshotDate <= dateTo;
 
-      // Value filter
-      const isAccount = snapshot.snapshot_type === 'account';
-      const snapshotValue = parseFloat(
-        isAccount ? (snapshot.balance || '0') : (snapshot.value || '0')
-      );
-      const valueRangeMin = minValue + (maxValue - minValue) * (valueRange[0] / 100);
-      const valueRangeMax = minValue + (maxValue - minValue) * (valueRange[1] / 100);
-      const matchesValue = snapshotValue >= valueRangeMin && snapshotValue <= valueRangeMax;
-
-      return matchesSearch && matchesType && matchesDate && matchesValue;
+      return matchesSearch && matchesType && matchesDateFrom && matchesDateTo;
     });
-  }, [snapshots, searchTerm, typeFilter, dateRange, valueRange, minDate, maxDate, minValue, maxValue]);
+  }, [snapshots, searchTerm, typeFilter, dateFrom, dateTo]);
 
   // Define table columns
   const columns: ColumnDef<Snapshot>[] = useMemo(
@@ -105,9 +75,7 @@ export default function SnapshotsPage() {
           <DataTableColumnHeader column={column} title={t('common.date') || 'Date'} />
         ),
         cell: ({ row }) => {
-          return (
-            <div className="font-medium">{formatDate(row.original.snapshot_date)}</div>
-          );
+          return <div className="font-medium">{formatDate(row.original.snapshot_date)}</div>;
         },
         sortingFn: 'datetime',
       },
@@ -213,7 +181,7 @@ export default function SnapshotsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
-              <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <CalendarIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-lg text-muted-foreground">{t('snapshots.noSnapshots')}</p>
               <p className="text-sm text-muted-foreground mt-2">{t('snapshots.addFirst')}</p>
             </div>
@@ -278,9 +246,9 @@ export default function SnapshotsPage() {
       <Card className="hidden md:block">
         <CardContent className="pt-6">
           {/* Filters */}
-          <div className="space-y-6 mb-6">
-            {/* Search and Type Filter */}
+          <div className="flex flex-col gap-4 mb-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              {/* Search */}
               <div className="flex items-center gap-2 flex-1 max-w-md">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
@@ -291,8 +259,11 @@ export default function SnapshotsPage() {
                 />
               </div>
 
+              {/* Type and Date Filters */}
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
+                
+                {/* Type Filter */}
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder={t('snapshots.allTypes') || 'All Types'} />
@@ -305,55 +276,50 @@ export default function SnapshotsPage() {
                     <SelectItem value="asset">{t('snapshots.types.asset') || 'Asset'}</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
 
-            {/* Date Range Slider */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">
-                  {t('snapshots.dateRange') || 'Date Range'}
-                </Label>
-                <span className="text-sm text-muted-foreground">
-                  {formatDate(new Date(minDate + (maxDate - minDate) * (dateRange[0] / 100)).toISOString())} - {formatDate(new Date(minDate + (maxDate - minDate) * (dateRange[1] / 100)).toISOString())}
-                </span>
-              </div>
-              <Slider
-                value={dateRange}
-                onValueChange={(value) => setDateRange(value as [number, number])}
-                min={0}
-                max={100}
-                step={1}
-                className="w-full"
-              />
-            </div>
+                {/* Date From */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'w-[180px] justify-start text-left font-normal',
+                        !dateFrom && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateFrom ? formatDate(dateFrom.toISOString()) : t('snapshots.dateFrom')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={dateFrom}
+                      onSelect={setDateFrom}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
 
-            {/* Value Range Slider */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">
-                  {t('snapshots.valueRange') || 'Value Range'}
-                </Label>
-                <span className="text-sm text-muted-foreground">
-                  {formatCurrency(
-                    (minValue + (maxValue - minValue) * (valueRange[0] / 100)).toString(),
-                    'EUR'
-                  )}{' '}
-                  -{' '}
-                  {formatCurrency(
-                    (minValue + (maxValue - minValue) * (valueRange[1] / 100)).toString(),
-                    'EUR'
-                  )}
-                </span>
+                {/* Date To */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'w-[180px] justify-start text-left font-normal',
+                        !dateTo && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateTo ? formatDate(dateTo.toISOString()) : t('snapshots.dateTo')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus />
+                  </PopoverContent>
+                </Popover>
               </div>
-              <Slider
-                value={valueRange}
-                onValueChange={(value) => setValueRange(value as [number, number])}
-                min={0}
-                max={100}
-                step={1}
-                className="w-full"
-              />
             </div>
           </div>
 
