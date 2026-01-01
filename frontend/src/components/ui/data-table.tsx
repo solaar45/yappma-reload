@@ -1,15 +1,17 @@
 import * as React from 'react';
 import {
   ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+} from '@tanstack/react-table';
+import type {
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
 } from '@tanstack/react-table';
 import { ArrowUpDown } from 'lucide-react';
 
