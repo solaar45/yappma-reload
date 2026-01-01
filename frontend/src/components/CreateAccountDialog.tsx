@@ -61,7 +61,8 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
     if (open) {
       refetchInstitutions();
     }
-  }, [open, refetchInstitutions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
