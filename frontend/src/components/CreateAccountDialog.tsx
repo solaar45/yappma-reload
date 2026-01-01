@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCreateAccount, useInstitutions } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import {
@@ -55,6 +55,13 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
     currency: 'EUR',
     institution_id: '',
   });
+
+  // Refetch institutions when dialog opens
+  useEffect(() => {
+    if (open) {
+      refetchInstitutions();
+    }
+  }, [open, refetchInstitutions]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
