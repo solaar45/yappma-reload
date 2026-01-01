@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -56,6 +57,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
   const [type, setType] = useState(account.type);
   const [currency, setCurrency] = useState(account.currency);
   const [institutionId, setInstitutionId] = useState(account.institution_id?.toString() || '');
+  const [isActive, setIsActive] = useState(account.is_active ?? true);
 
   // Reset form when dialog opens or account changes
   useEffect(() => {
@@ -64,6 +66,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
       setType(account.type);
       setCurrency(account.currency);
       setInstitutionId(account.institution_id?.toString() || '');
+      setIsActive(account.is_active ?? true);
     }
   }, [open, account]);
 
@@ -83,6 +86,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
           type,
           currency,
           institution_id: parseInt(institutionId),
+          is_active: isActive,
           user_id: userId,
         },
       });
@@ -187,6 +191,21 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="is-active" className="text-base">
+                  Account Status
+                </Label>
+                <div className="text-sm text-muted-foreground">
+                  {isActive ? 'Active' : 'Inactive'}
+                </div>
+              </div>
+              <Switch
+                id="is-active"
+                checked={isActive}
+                onCheckedChange={setIsActive}
+              />
             </div>
           </div>
           <DialogFooter>
