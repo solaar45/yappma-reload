@@ -20,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Plus, AlertCircle } from 'lucide-react';
+import { CreateInstitutionDialog } from './CreateInstitutionDialog';
 
 interface CreateAccountDialogProps {
   onSuccess?: () => void;
@@ -45,7 +46,7 @@ const CURRENCIES = [
 
 export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
   const { userId } = useUser();
-  const { institutions } = useInstitutions({ userId: userId! });
+  const { institutions, loading: institutionsLoading, refetch: refetchInstitutions } = useInstitutions({ userId: userId! });
   const { createAccount, loading, error } = useCreateAccount();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -79,6 +80,10 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
     }
   };
 
+  const handleInstitutionCreated = () => {
+    refetchInstitutions();
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -107,22 +112,38 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="institution">Institution *</Label>
-              <Select 
-                value={formData.institution_id} 
-                onValueChange={(value) => setFormData({ ...formData, institution_id: value })}
-              >
-                <SelectTrigger id="institution">
-                  <SelectValue placeholder="Select institution" />
-                </SelectTrigger>
-                <SelectContent>
-                  {institutions?.map((inst) => (
-                    <SelectItem key={inst.id} value={inst.id.toString()}>
-                      {inst.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="institution">Institution *</Label>
+                <CreateInstitutionDialog onSuccess={handleInstitutionCreated} />
+              </div>
+              {institutionsLoading ? (
+                <div className="flex items-center justify-center h-10 border rounded-md bg-muted">
+                  <span className="text-sm text-muted-foreground">Loading institutions...</span>
+                </div>
+              ) : institutions && institutions.length > 0 ? (
+                <Select 
+                  value={formData.institution_id} 
+                  onValueChange={(value) => setFormData({ ...formData, institution_id: value })}
+                >
+                  <SelectTrigger id="institution">
+                    <SelectValue placeholder="Select institution" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {institutions.map((inst) => (
+                      <SelectItem key={inst.id} value={inst.id.toString()}>
+                        {inst.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    No institutions found. Please create one first.
+                  </span>
+                </div>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="type">Account Type *</Label>
@@ -168,7 +189,10 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !formData.name || !formData.institution_id}>
+            <Button 
+              type="submit" 
+              disabled={loading || !formData.name || !formData.institution_id || institutions?.length === 0}
+            >
               {loading ? 'Creating...' : 'Create Account'}
             </Button>
           </DialogFooter>
