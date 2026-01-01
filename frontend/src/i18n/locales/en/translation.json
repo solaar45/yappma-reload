@@ -15,7 +15,8 @@
     "type": "Type",
     "name": "Name",
     "currency": "Currency",
-    "quantity": "Quantity"
+    "quantity": "Quantity",
+    "account": "Account"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -50,10 +51,18 @@
     "deleteAccount": "Delete Account",
     "deleteConfirm": "Are you sure you want to delete this account?",
     "accountName": "Account Name",
+    "name": "Name",
     "institution": "Institution",
     "accountType": "Account Type",
+    "type": "Type",
     "balance": "Balance",
-    "snapshots": "snapshot(s)",
+    "snapshots": "Snapshots",
+    "lastUpdated": "Last Updated",
+    "noSnapshots": "No snapshots",
+    "daysOld": "days old",
+    "searchPlaceholder": "Search accounts...",
+    "allInstitutions": "All Institutions",
+    "allTypes": "All Types",
     "errorLoading": "Error loading accounts"
   },
   "assets": {
