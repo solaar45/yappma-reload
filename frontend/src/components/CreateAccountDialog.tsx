@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCreateAccount, useInstitutions } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import {
@@ -56,14 +56,6 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
     institution_id: '',
   });
 
-  // Refetch institutions when dialog opens
-  useEffect(() => {
-    if (open) {
-      refetchInstitutions();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId || !formData.institution_id) return;
@@ -89,6 +81,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
   };
 
   const handleInstitutionCreated = () => {
+    // Only refetch when a new institution is created
     refetchInstitutions();
   };
 
