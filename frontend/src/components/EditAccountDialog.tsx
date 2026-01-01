@@ -66,7 +66,8 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
       setInstitutionId(account.institution_id?.toString() || '');
       refetchInstitutions();
     }
-  }, [open, account, refetchInstitutions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, account]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
