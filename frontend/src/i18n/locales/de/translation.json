@@ -153,6 +153,10 @@
     "deleteConfirm": "Möchten Sie diese Momentaufnahme wirklich löschen?",
     "allSnapshots": "Alle Momentaufnahmen",
     "entity": "Entität",
+    "searchPlaceholder": "Nach Entitätsnamen suchen...",
+    "allTypes": "Alle Typen",
+    "dateFrom": "Von Datum",
+    "dateTo": "Bis Datum",
     "types": {
       "account": "Konto",
       "asset": "Vermögenswert"
