@@ -6,17 +6,13 @@ import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateSnapshotDialog } from '@/components/CreateSnapshotDialog';
 import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
 import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
 import { Calendar as CalendarIcon, Search, Filter } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface Snapshot {
   id: number;
@@ -28,6 +24,22 @@ interface Snapshot {
   currency?: string;
 }
 
+// Helper to parse German date format (dd.MM.yyyy) to Date
+function parseGermanDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const parts = dateStr.split('.');
+  if (parts.length !== 3) return null;
+  
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1; // months are 0-indexed
+  const year = parseInt(parts[2], 10);
+  
+  if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+  if (day < 1 || day > 31 || month < 0 || month > 11 || year < 1900) return null;
+  
+  return new Date(year, month, day);
+}
+
 export default function SnapshotsPage() {
   const { t } = useTranslation();
   const { userId } = useUser();
@@ -37,8 +49,8 @@ export default function SnapshotsPage() {
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [dateFromStr, setDateFromStr] = useState<string>('');
+  const [dateToStr, setDateToStr] = useState<string>('');
 
   const handleSnapshotChanged = () => {
     setRefreshKey((prev) => prev + 1);
@@ -59,12 +71,15 @@ export default function SnapshotsPage() {
 
       // Date filter
       const snapshotDate = new Date(snapshot.snapshot_date);
+      const dateFrom = parseGermanDate(dateFromStr);
+      const dateTo = parseGermanDate(dateToStr);
+      
       const matchesDateFrom = !dateFrom || snapshotDate >= dateFrom;
       const matchesDateTo = !dateTo || snapshotDate <= dateTo;
 
       return matchesSearch && matchesType && matchesDateFrom && matchesDateTo;
     });
-  }, [snapshots, searchTerm, typeFilter, dateFrom, dateTo]);
+  }, [snapshots, searchTerm, typeFilter, dateFromStr, dateToStr]);
 
   // Define table columns
   const columns: ColumnDef<Snapshot>[] = useMemo(
@@ -277,48 +292,21 @@ export default function SnapshotsPage() {
                   </SelectContent>
                 </Select>
 
-                {/* Date From */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        'w-[180px] justify-start text-left font-normal',
-                        !dateFrom && 'text-muted-foreground'
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateFrom ? formatDate(dateFrom.toISOString()) : t('snapshots.dateFrom')}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={dateFrom}
-                      onSelect={setDateFrom}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                {/* Date From Input */}
+                <Input
+                  placeholder="01.10.2019"
+                  value={dateFromStr}
+                  onChange={(e) => setDateFromStr(e.target.value)}
+                  className="w-[140px]"
+                />
 
-                {/* Date To */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        'w-[180px] justify-start text-left font-normal',
-                        !dateTo && 'text-muted-foreground'
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateTo ? formatDate(dateTo.toISOString()) : t('snapshots.dateTo')}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus />
-                  </PopoverContent>
-                </Popover>
+                {/* Date To Input */}
+                <Input
+                  placeholder="31.03.2022"
+                  value={dateToStr}
+                  onChange={(e) => setDateToStr(e.target.value)}
+                  className="w-[140px]"
+                />
               </div>
             </div>
           </div>
