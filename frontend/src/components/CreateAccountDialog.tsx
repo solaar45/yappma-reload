@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -54,6 +55,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
     type: 'checking',
     currency: 'EUR',
     institution_id: '',
+    is_active: true,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,6 +68,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
       type: formData.type,
       currency: formData.currency,
       institution_id: parseInt(formData.institution_id),
+      is_active: formData.is_active,
     });
 
     if (result) {
@@ -75,6 +78,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
         type: 'checking',
         currency: 'EUR',
         institution_id: '',
+        is_active: true,
       });
       onSuccess?.();
     }
@@ -181,6 +185,21 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="is-active" className="text-base">
+                  Account Status
+                </Label>
+                <div className="text-sm text-muted-foreground">
+                  {formData.is_active ? 'Active' : 'Inactive'}
+                </div>
+              </div>
+              <Switch
+                id="is-active"
+                checked={formData.is_active}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+              />
             </div>
             {error && (
               <div className="text-sm text-destructive">{error}</div>
