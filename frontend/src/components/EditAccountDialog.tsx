@@ -57,16 +57,14 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
   const [currency, setCurrency] = useState(account.currency);
   const [institutionId, setInstitutionId] = useState(account.institution_id?.toString() || '');
 
-  // Reset form and refetch institutions when dialog opens
+  // Reset form when dialog opens or account changes
   useEffect(() => {
     if (open) {
       setName(account.name);
       setType(account.type);
       setCurrency(account.currency);
       setInstitutionId(account.institution_id?.toString() || '');
-      refetchInstitutions();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, account]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,6 +97,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
   };
 
   const handleInstitutionCreated = () => {
+    // Only refetch when a new institution is created
     refetchInstitutions();
   };
 
