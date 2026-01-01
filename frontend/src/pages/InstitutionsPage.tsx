@@ -270,69 +270,72 @@ export default function InstitutionsPage() {
         <CreateInstitutionDialog onSuccess={handleInstitutionChanged} />
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <Input
-            placeholder={t('institutions.searchPlaceholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder={t('institutions.allTypes')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('institutions.allTypes')}</SelectItem>
-            {uniqueTypes.map((type) => (
-              <SelectItem key={type} value={type}>
-                {getTypeLabel(type)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={countryFilter} onValueChange={setCountryFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder={t('institutions.allCountries')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('institutions.allCountries')}</SelectItem>
-            {uniqueCountries.map((country) => (
-              <SelectItem key={country} value={country}>
-                {country}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Batch Actions Bar */}
-      {selectedInstitutions.length > 0 && (
-        <div className="flex items-center justify-between rounded-lg border bg-muted/50 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">
-              {selectedInstitutions.length}{' '}
-              {selectedInstitutions.length === 1
-                ? t('institutions.institutionSelected')
-                : t('institutions.institutionsSelected')}
-            </span>
-          </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowDeleteDialog(true)}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            {t('institutions.deleteSelected')}
-          </Button>
-        </div>
-      )}
-
-      {/* Data Table */}
+      {/* Data Table with Filters */}
       <Card>
         <CardContent className="pt-6">
+          {/* Search and Filters */}
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder={t('institutions.searchPlaceholder')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="max-w-sm"
+                />
+              </div>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={t('institutions.allTypes')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('institutions.allTypes')}</SelectItem>
+                  {uniqueTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {getTypeLabel(type)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={countryFilter} onValueChange={setCountryFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={t('institutions.allCountries')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('institutions.allCountries')}</SelectItem>
+                  {uniqueCountries.map((country) => (
+                    <SelectItem key={country} value={country}>
+                      {country}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Batch Actions Bar */}
+            {selectedInstitutions.length > 0 && (
+              <div className="flex items-center justify-between rounded-lg border bg-muted/50 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    {selectedInstitutions.length}{' '}
+                    {selectedInstitutions.length === 1
+                      ? t('institutions.institutionSelected')
+                      : t('institutions.institutionsSelected')}
+                  </span>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {t('institutions.deleteSelected')}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* DataTable */}
           <DataTable
             columns={columns}
             data={filteredInstitutions}

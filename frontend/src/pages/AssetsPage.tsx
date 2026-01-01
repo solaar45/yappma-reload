@@ -441,84 +441,85 @@ export default function AssetsPage() {
         <CreateAssetDialog onSuccess={refetch} />
       </div>
 
-      {/* Filters and Batch Actions */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-2 flex-1 max-w-md">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('assets.searchPlaceholder') || 'Search assets, ISIN, ticker...'}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
-            />
-          </div>
-          
-          <div className="flex items-center gap-2 flex-wrap">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder={t('assets.allTypes') || 'All Types'} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('assets.allTypes') || 'All Types'}</SelectItem>
-                {assetTypes.map((type) => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select value={accountFilter} onValueChange={setAccountFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder={t('assets.allAccounts') || 'All Accounts'} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('assets.allAccounts') || 'All Accounts'}</SelectItem>
-                {accountsList.map((acc) => (
-                  <SelectItem key={acc.id} value={acc.id.toString()}>
-                    {acc.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder={t('assets.allStatus') || 'All'} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('assets.allStatus') || 'All'}</SelectItem>
-                <SelectItem value="active">{t('assets.active') || 'Active'}</SelectItem>
-                <SelectItem value="inactive">{t('assets.inactive') || 'Inactive'}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Batch Actions Bar */}
-        {selectedAssetIds.length > 0 && (
-          <div className="flex items-center justify-between bg-muted p-3 rounded-md">
-            <span className="text-sm font-medium">
-              {selectedAssetIds.length} {selectedAssetIds.length === 1 ? 
-                t('assets.assetSelected') : t('assets.assetsSelected')
-              }
-            </span>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              {t('assets.deleteSelected') || 'Delete Selected'}
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Data Table */}
+      {/* Data Table with Filters */}
       <Card>
         <CardContent className="pt-6">
+          {/* Filters */}
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-2 flex-1 max-w-md">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('assets.searchPlaceholder') || 'Search assets, ISIN, ticker...'}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+              
+              <div className="flex items-center gap-2 flex-wrap">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder={t('assets.allTypes') || 'All Types'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('assets.allTypes') || 'All Types'}</SelectItem>
+                    {assetTypes.map((type) => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select value={accountFilter} onValueChange={setAccountFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder={t('assets.allAccounts') || 'All Accounts'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('assets.allAccounts') || 'All Accounts'}</SelectItem>
+                    {accountsList.map((acc) => (
+                      <SelectItem key={acc.id} value={acc.id.toString()}>
+                        {acc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder={t('assets.allStatus') || 'All'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('assets.allStatus') || 'All'}</SelectItem>
+                    <SelectItem value="active">{t('assets.active') || 'Active'}</SelectItem>
+                    <SelectItem value="inactive">{t('assets.inactive') || 'Inactive'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Batch Actions Bar */}
+            {selectedAssetIds.length > 0 && (
+              <div className="flex items-center justify-between bg-muted p-3 rounded-md">
+                <span className="text-sm font-medium">
+                  {selectedAssetIds.length} {selectedAssetIds.length === 1 ? 
+                    t('assets.assetSelected') : t('assets.assetsSelected')
+                  }
+                </span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t('assets.deleteSelected') || 'Delete Selected'}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* DataTable */}
           <DataTable 
             columns={columns} 
             data={filteredAssets}
