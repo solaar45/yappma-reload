@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Merriweather:wght@300;400;700&family=JetBrains+Mono:wght@300;400;600;700&display=swap');
 @import "tailwindcss";
+@import "react-day-picker/style.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -171,4 +172,42 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* React DayPicker v9 layout fixes */
+.rdp {
+  --rdp-cell-size: 40px;
+  --rdp-accent-color: var(--color-primary);
+  --rdp-background-color: var(--color-accent);
+}
+
+.rdp-month {
+  width: 100%;
+}
+
+.rdp-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.rdp-head_cell {
+  width: var(--rdp-cell-size);
+  text-align: center;
+  font-weight: normal;
+  font-size: 0.875rem;
+}
+
+.rdp-cell {
+  width: var(--rdp-cell-size);
+  height: var(--rdp-cell-size);
+  text-align: center;
+  padding: 0;
+}
+
+.rdp-day {
+  width: var(--rdp-cell-size);
+  height: var(--rdp-cell-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
