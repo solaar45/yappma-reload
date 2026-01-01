@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -22,7 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Pencil } from 'lucide-react';
+import { Pencil, AlertCircle } from 'lucide-react';
+import { CreateInstitutionDialog } from './CreateInstitutionDialog';
 
 interface EditAccountDialogProps {
   account: Account;
@@ -48,13 +50,25 @@ const CURRENCIES = [
 
 export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps) {
   const { userId } = useUser();
-  const { institutions } = useInstitutions({ userId: userId! });
+  const { institutions, loading: institutionsLoading, refetch: refetchInstitutions } = useInstitutions({ userId: userId! });
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState(account.name);
   const [type, setType] = useState(account.type);
   const [currency, setCurrency] = useState(account.currency);
   const [institutionId, setInstitutionId] = useState(account.institution_id?.toString() || '');
+  const [isActive, setIsActive] = useState(account.is_active ?? true);
+
+  // Reset form when dialog opens or account changes
+  useEffect(() => {
+    if (open) {
+      setName(account.name);
+      setType(account.type);
+      setCurrency(account.currency);
+      setInstitutionId(account.institution_id?.toString() || '');
+      setIsActive(account.is_active ?? true);
+    }
+  }, [open, account]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +86,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
           type,
           currency,
           institution_id: parseInt(institutionId),
+          is_active: isActive,
           user_id: userId,
         },
       });
@@ -83,6 +98,11 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleInstitutionCreated = () => {
+    // Only refetch when a new institution is created
+    refetchInstitutions();
   };
 
   return (
@@ -112,19 +132,35 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="institution">Institution *</Label>
-              <Select value={institutionId} onValueChange={setInstitutionId}>
-                <SelectTrigger id="institution">
-                  <SelectValue placeholder="Select institution" />
-                </SelectTrigger>
-                <SelectContent>
-                  {institutions?.map((inst) => (
-                    <SelectItem key={inst.id} value={inst.id.toString()}>
-                      {inst.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="institution">Institution *</Label>
+                <CreateInstitutionDialog compact onSuccess={handleInstitutionCreated} />
+              </div>
+              {institutionsLoading ? (
+                <div className="flex items-center justify-center h-10 border rounded-md bg-muted">
+                  <span className="text-sm text-muted-foreground">Loading institutions...</span>
+                </div>
+              ) : institutions && institutions.length > 0 ? (
+                <Select value={institutionId} onValueChange={setInstitutionId}>
+                  <SelectTrigger id="institution">
+                    <SelectValue placeholder="Select institution" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {institutions.map((inst) => (
+                      <SelectItem key={inst.id} value={inst.id.toString()}>
+                        {inst.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    No institutions found. Please create one first.
+                  </span>
+                </div>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="type">Account Type *</Label>
@@ -156,12 +192,30 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="is-active" className="text-base">
+                  Account Status
+                </Label>
+                <div className="text-sm text-muted-foreground">
+                  {isActive ? 'Active' : 'Inactive'}
+                </div>
+              </div>
+              <Switch
+                id="is-active"
+                checked={isActive}
+                onCheckedChange={setIsActive}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !name.trim() || !institutionId}>
+            <Button 
+              type="submit" 
+              disabled={loading || !name.trim() || !institutionId || institutions?.length === 0}
+            >
               {loading ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>

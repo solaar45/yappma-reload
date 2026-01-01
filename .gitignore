@@ -1,0 +1,3 @@
+fints-worker/venv/
+fints-worker/__pycache__/
+fints-worker/*.pyc

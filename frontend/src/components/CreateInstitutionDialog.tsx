@@ -24,6 +24,7 @@ import { Plus } from 'lucide-react';
 
 interface CreateInstitutionDialogProps {
   onSuccess?: () => void;
+  compact?: boolean;
 }
 
 const INSTITUTION_TYPES = [
@@ -43,7 +44,7 @@ const COUNTRIES = [
   { value: 'other', label: 'Other' },
 ] as const;
 
-export function CreateInstitutionDialog({ onSuccess }: CreateInstitutionDialogProps) {
+export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateInstitutionDialogProps) {
   const { userId } = useUser();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -86,10 +87,17 @@ export function CreateInstitutionDialog({ onSuccess }: CreateInstitutionDialogPr
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Institution
-        </Button>
+        {compact ? (
+          <Button variant="ghost" size="sm" type="button">
+            <Plus className="h-3 w-3 mr-1" />
+            New
+          </Button>
+        ) : (
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Institution
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>

@@ -6,10 +6,8 @@ import { logger } from '@/lib/logger';
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -17,35 +15,28 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import DashboardPage from '@/pages/DashboardPage';
 import AccountsPage from '@/pages/AccountsPage';
 import AssetsPage from '@/pages/AssetsPage';
 import InstitutionsPage from '@/pages/InstitutionsPage';
 import SnapshotsPage from '@/pages/SnapshotsPage';
 
-function getBreadcrumbs(pathname: string) {
-  if (pathname === '/') {
-    return { main: 'Dashboard', sub: 'Overview' };
-  }
-  if (pathname === '/accounts') {
-    return { main: 'Portfolio', sub: 'Accounts' };
-  }
-  if (pathname === '/assets') {
-    return { main: 'Portfolio', sub: 'Assets' };
-  }
-  if (pathname === '/snapshots') {
-    return { main: 'Portfolio', sub: 'Snapshots' };
-  }
-  if (pathname === '/institutions') {
-    return { main: 'Settings', sub: 'Institutions' };
-  }
-  return { main: 'Dashboard', sub: 'Overview' };
+function getBreadcrumb(pathname: string): string {
+  const breadcrumbs: Record<string, string> = {
+    '/': 'Dashboard',
+    '/accounts': 'Accounts',
+    '/assets': 'Assets',
+    '/snapshots': 'Snapshots',
+    '/institutions': 'Institutions',
+  };
+  
+  return breadcrumbs[pathname] || 'Dashboard';
 }
 
 function AppContent() {
   const location = useLocation();
-  const breadcrumbs = getBreadcrumbs(location.pathname);
+  const breadcrumb = getBreadcrumb(location.pathname);
 
   return (
     <SidebarProvider>
@@ -60,14 +51,8 @@ function AppContent() {
             />
             <Breadcrumb>
               <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink asChild>
-                    <Link to={location.pathname === '/' ? '#' : '/'}>{breadcrumbs.main}</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>{breadcrumbs.sub}</BreadcrumbPage>
+                  <BreadcrumbPage>{breadcrumb}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>

@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -39,7 +40,22 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
     isin: asset.security_asset?.isin || '',
     ticker: asset.security_asset?.ticker || '',
     currency: asset.currency,
+    is_active: asset.is_active ?? true,
   });
+
+  // Reset form when dialog opens or asset changes
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        name: asset.name,
+        asset_type_id: asset.asset_type_id.toString(),
+        isin: asset.security_asset?.isin || '',
+        ticker: asset.security_asset?.ticker || '',
+        currency: asset.currency,
+        is_active: asset.is_active ?? true,
+      });
+    }
+  }, [open, asset]);
 
   useEffect(() => {
     const fetchAssetTypes = async () => {
@@ -70,6 +86,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
         name: formData.name,
         asset_type_id: parseInt(formData.asset_type_id),
         currency: formData.currency,
+        is_active: formData.is_active,
       };
 
       // Add symbol (ISIN) if available
@@ -163,6 +180,21 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                 required
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="is-active" className="text-base">
+                  Asset Status
+                </Label>
+                <div className="text-sm text-muted-foreground">
+                  {formData.is_active ? 'Active' : 'Inactive'}
+                </div>
+              </div>
+              <Switch
+                id="is-active"
+                checked={formData.is_active}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
               />
             </div>
             {error && <div className="text-sm text-destructive">{error}</div>}
