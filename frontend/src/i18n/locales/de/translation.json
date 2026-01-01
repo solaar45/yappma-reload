@@ -15,7 +15,8 @@
     "type": "Typ",
     "name": "Name",
     "currency": "Währung",
-    "quantity": "Menge"
+    "quantity": "Menge",
+    "account": "Konto"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -50,10 +51,18 @@
     "deleteAccount": "Konto löschen",
     "deleteConfirm": "Möchten Sie dieses Konto wirklich löschen?",
     "accountName": "Kontoname",
+    "name": "Name",
     "institution": "Institution",
     "accountType": "Kontotyp",
+    "type": "Typ",
     "balance": "Saldo",
-    "snapshots": "Momentaufnahme(n)",
+    "snapshots": "Momentaufnahmen",
+    "lastUpdated": "Zuletzt aktualisiert",
+    "noSnapshots": "Keine Momentaufnahmen",
+    "daysOld": "Tage alt",
+    "searchPlaceholder": "Konten durchsuchen...",
+    "allInstitutions": "Alle Institutionen",
+    "allTypes": "Alle Typen",
     "errorLoading": "Fehler beim Laden der Konten"
   },
   "assets": {
