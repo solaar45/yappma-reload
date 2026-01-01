@@ -114,7 +114,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="institution">Institution *</Label>
-                <CreateInstitutionDialog onSuccess={handleInstitutionCreated} />
+                <CreateInstitutionDialog compact onSuccess={handleInstitutionCreated} />
               </div>
               {institutionsLoading ? (
                 <div className="flex items-center justify-center h-10 border rounded-md bg-muted">
