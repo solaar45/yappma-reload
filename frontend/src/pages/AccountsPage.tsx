@@ -3,21 +3,35 @@ import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useAccounts } from '@/lib/api/hooks';
 import { formatCurrency, formatDate } from '@/lib/formatters';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateAccountDialog } from '@/components/CreateAccountDialog';
 import { EditAccountDialog } from '@/components/EditAccountDialog';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
-import { Wallet, Search, Filter } from 'lucide-react';
+import { Wallet, Search, Filter, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 
 interface Account {
   id: number;
   name: string;
   type: string;
   currency: string;
+  is_active: boolean;
   institution?: {
     id: number;
     name: string;
@@ -36,6 +50,9 @@ export default function AccountsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [institutionFilter, setInstitutionFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [rowSelection, setRowSelection] = useState({});
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Get unique institutions and types for filters
   const institutions = useMemo(() => {
@@ -71,8 +88,54 @@ export default function AccountsPage() {
     });
   }, [accounts, searchTerm, institutionFilter, typeFilter]);
 
+  // Get selected account IDs
+  const selectedAccountIds = useMemo(() => {
+    return Object.keys(rowSelection)
+      .filter(key => rowSelection[key as keyof typeof rowSelection])
+      .map(key => filteredAccounts[parseInt(key)]?.id)
+      .filter(Boolean);
+  }, [rowSelection, filteredAccounts]);
+
+  const handleBatchDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await Promise.all(
+        selectedAccountIds.map(id => apiClient.deleteAccount(id))
+      );
+      await refetch();
+      setRowSelection({});
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error('Error deleting accounts:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Define table columns
   const columns: ColumnDef<Account>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: 'name',
       header: ({ column }) => (
@@ -110,6 +173,34 @@ export default function AccountsPage() {
           <Badge variant="outline" className="capitalize">
             {type}
           </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: 'is_active',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('accounts.status') || 'Status'} />
+      ),
+      cell: ({ row }) => {
+        const isActive = row.original.is_active;
+        return (
+          <div className="flex items-center gap-2">
+            {isActive ? (
+              <>
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-600">
+                  {t('accounts.active') || 'Active'}
+                </span>
+              </>
+            ) : (
+              <>
+                <XCircle className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {t('accounts.inactive') || 'Inactive'}
+                </span>
+              </>
+            )}
+          </div>
         );
       },
     },
@@ -223,7 +314,22 @@ export default function AccountsPage() {
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-destructive">{t('accounts.errorLoading')}: {error.message}</div>
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="rounded-full bg-destructive/10 p-3">
+                <XCircle className="h-8 w-8 text-destructive" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">{t('accounts.errorLoading')}</h3>
+                <p className="text-sm text-muted-foreground">{error.message}</p>
+              </div>
+              <Button onClick={() => refetch()} variant="outline">
+                {t('common.retry') || 'Retry'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -235,14 +341,20 @@ export default function AccountsPage() {
           <h1 className="text-3xl font-bold">{t('accounts.title')}</h1>
           <CreateAccountDialog onSuccess={refetch} />
         </div>
-        <Card>
+        <Card className="border-dashed">
           <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <Wallet className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg text-muted-foreground">{t('accounts.noAccounts')}</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                {t('accounts.addFirst')}
-              </p>
+            <div className="flex flex-col items-center text-center py-12 space-y-4">
+              <div className="rounded-full bg-muted p-4">
+                <Wallet className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold">{t('accounts.noAccounts')}</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  {t('accounts.addFirstDescription') || 
+                    'Start tracking your wealth by adding your first account. Connect bank accounts, credit cards, or other financial accounts.'}
+                </p>
+              </div>
+              <CreateAccountDialog onSuccess={refetch} />
             </div>
           </CardContent>
         </Card>
@@ -263,50 +375,104 @@ export default function AccountsPage() {
         <CreateAccountDialog onSuccess={refetch} />
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2 flex-1 max-w-md">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={t('accounts.searchPlaceholder') || 'Search accounts...'}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1"
-          />
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select value={institutionFilter} onValueChange={setInstitutionFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={t('accounts.allInstitutions') || 'All Institutions'} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('accounts.allInstitutions') || 'All Institutions'}</SelectItem>
-              {institutions.map((inst) => (
-                <SelectItem key={inst} value={inst}>{inst}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Filters and Batch Actions */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2 flex-1 max-w-md">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('accounts.searchPlaceholder') || 'Search accounts...'}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+          </div>
           
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder={t('accounts.allTypes') || 'All Types'} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('accounts.allTypes') || 'All Types'}</SelectItem>
-              {accountTypes.map((type) => (
-                <SelectItem key={type} value={type} className="capitalize">
-                  {type.replace('_', ' ')}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select value={institutionFilter} onValueChange={setInstitutionFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder={t('accounts.allInstitutions') || 'All Institutions'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('accounts.allInstitutions') || 'All Institutions'}</SelectItem>
+                {institutions.map((inst) => (
+                  <SelectItem key={inst} value={inst}>{inst}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder={t('accounts.allTypes') || 'All Types'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('accounts.allTypes') || 'All Types'}</SelectItem>
+                {accountTypes.map((type) => (
+                  <SelectItem key={type} value={type} className="capitalize">
+                    {type.replace('_', ' ')}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        {/* Batch Actions Bar */}
+        {selectedAccountIds.length > 0 && (
+          <div className="flex items-center justify-between bg-muted p-3 rounded-md">
+            <span className="text-sm font-medium">
+              {selectedAccountIds.length} {selectedAccountIds.length === 1 ? 
+                t('accounts.accountSelected') : t('accounts.accountsSelected')
+              }
+            </span>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t('accounts.deleteSelected') || 'Delete Selected'}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Data Table */}
-      <DataTable columns={columns} data={filteredAccounts} />
+      <DataTable 
+        columns={columns} 
+        data={filteredAccounts}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+      />
+
+      {/* Batch Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('accounts.deleteSelectedTitle') || 'Delete Selected Accounts'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('accounts.deleteSelectedConfirm') || 
+                `Are you sure you want to delete ${selectedAccountIds.length} account(s)? This action cannot be undone.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              {t('common.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleBatchDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? t('common.deleting') || 'Deleting...' : t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
