@@ -12,6 +12,8 @@ import type {
   ColumnFiltersState,
   SortingState,
   VisibilityState,
+  RowSelectionState,
+  OnChangeFn,
 } from '@tanstack/react-table';
 import { ArrowUpDown } from 'lucide-react';
 
@@ -28,15 +30,24 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  rowSelection?: RowSelectionState;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  onRowSelectionChange,
+  rowSelection: externalRowSelection,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [internalRowSelection, setInternalRowSelection] = React.useState<RowSelectionState>({});
+
+  // Use external row selection if provided, otherwise use internal
+  const rowSelection = externalRowSelection ?? internalRowSelection;
+  const setRowSelection = onRowSelectionChange ?? setInternalRowSelection;
 
   const table = useReactTable({
     data,
@@ -48,10 +59,12 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      rowSelection,
     },
   });
 
