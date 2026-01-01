@@ -5,14 +5,11 @@ import {
   LayoutDashboard,
   Wallet,
   PiggyBank,
-  TrendingUp,
-  Settings,
   Building2,
   Calendar,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 import {
@@ -34,57 +31,24 @@ const data = {
       title: "Dashboard",
       url: "/",
       icon: LayoutDashboard,
-      isActive: true,
     },
     {
-      title: "Portfolio",
-      url: "#",
-      icon: TrendingUp,
-      items: [
-        {
-          title: "Accounts",
-          url: "/accounts",
-        },
-        {
-          title: "Assets",
-          url: "/assets",
-        },
-        {
-          title: "Snapshots",
-          url: "/snapshots",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings,
-      items: [
-        {
-          title: "Institutions",
-          url: "/institutions",
-        },
-      ],
-    },
-  ],
-  quickAccess: [
-    {
-      name: "Accounts",
+      title: "Accounts",
       url: "/accounts",
       icon: Wallet,
     },
     {
-      name: "Assets",
+      title: "Assets",
       url: "/assets",
       icon: PiggyBank,
     },
     {
-      name: "Snapshots",
+      title: "Snapshots",
       url: "/snapshots",
       icon: Calendar,
     },
     {
-      name: "Institutions",
+      title: "Institutions",
       url: "/institutions",
       icon: Building2,
     },
@@ -99,7 +63,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.quickAccess} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
