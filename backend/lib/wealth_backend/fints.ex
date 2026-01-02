@@ -4,6 +4,7 @@ defmodule WealthBackend.FinTS do
   """
 
   import Ecto.Query, warn: false
+  require Logger
   alias WealthBackend.Repo
   alias WealthBackend.FinTS.{BankConnection, BankAccount}
   alias WealthBackend.Analytics.AccountSnapshot
@@ -143,28 +144,52 @@ defmodule WealthBackend.FinTS do
   Creates account snapshots from balance data.
   """
   def create_snapshots_from_balances(bank_connection_id, balances) do
+    Logger.info("Creating snapshots for connection #{bank_connection_id}, #{length(balances)} balances")
+    
     bank_accounts = list_bank_accounts(bank_connection_id)
+    Logger.debug("Found #{length(bank_accounts)} bank accounts: #{inspect(Enum.map(bank_accounts, & {&1.id, &1.iban, &1.account_id}))}")
 
     results = Enum.map(balances, fn balance ->
+      Logger.debug("Processing balance for IBAN #{balance.iban}: #{balance.balance} #{balance.currency}")
+      
       # Find matching bank account by IBAN
       bank_account = Enum.find(bank_accounts, fn ba -> ba.iban == balance.iban end)
 
-      if bank_account && bank_account.account_id do
-        # Create snapshot for linked account
-        attrs = %{
-          account_id: bank_account.account_id,
-          snapshot_date: balance.date || Date.utc_today(),
-          balance: Decimal.new(to_string(balance.balance)),
-          currency: balance.currency,
-          source: "fints",
-          external_reference: bank_connection_id
-        }
+      if bank_account do
+        Logger.debug("Found bank_account #{bank_account.id} for IBAN #{balance.iban}, account_id: #{inspect(bank_account.account_id)}")
+        
+        if bank_account.account_id do
+          # Create snapshot for linked account
+          attrs = %{
+            account_id: bank_account.account_id,
+            snapshot_date: balance.date || Date.utc_today(),
+            balance: Decimal.new(to_string(balance.balance)),
+            currency: balance.currency,
+            source: "fints",
+            external_reference: bank_connection_id
+          }
 
-        %AccountSnapshot{}
-        |> AccountSnapshot.changeset(attrs)
-        |> Repo.insert()
+          Logger.debug("Creating snapshot with attrs: #{inspect(attrs)}")
+
+          result = %AccountSnapshot{}
+            |> AccountSnapshot.changeset(attrs)
+            |> Repo.insert()
+          
+          case result do
+            {:ok, snapshot} -> 
+              Logger.info("Successfully created snapshot #{snapshot.id}")
+              result
+            {:error, changeset} ->
+              Logger.error("Failed to create snapshot: #{inspect(changeset.errors)}")
+              result
+          end
+        else
+          Logger.warn("Bank account #{bank_account.id} not linked to any account")
+          {:error, "Bank account not linked: #{balance.iban}"}
+        end
       else
-        {:error, "Bank account not linked: #{balance.iban}"}
+        Logger.warn("No bank account found for IBAN #{balance.iban}")
+        {:error, "Bank account not found: #{balance.iban}"}
       end
     end)
 
@@ -173,6 +198,8 @@ defmodule WealthBackend.FinTS do
       {:ok, _} -> true
       _ -> false
     end)
+
+    Logger.info("Created #{created} snapshots out of #{length(balances)} balances")
 
     {:ok, created}
   end
