@@ -1,5 +1,9 @@
 import Config
 
+# Configure Ecto repositories
+config :wealth_backend,
+  ecto_repos: [WealthBackend.Repo]
+
 # Configures the endpoint
 config :wealth_backend, WealthBackendWeb.Endpoint,
   url: [host: "localhost"],
@@ -10,15 +14,6 @@ config :wealth_backend, WealthBackendWeb.Endpoint,
   ],
   pubsub_server: WealthBackend.PubSub,
   live_view: [signing_salt: "your-signing-salt"]
-
-# Configures the database
-config :wealth_backend, WealthBackend.Repo,
-  database: "wealth_backend_dev",
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
 
 # Configures Elixir's Logger
 config :logger, :console,
