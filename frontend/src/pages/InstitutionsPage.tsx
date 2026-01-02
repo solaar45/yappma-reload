@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useInstitutions } from '@/lib/api/hooks';
-import { useUser } from '@/contexts/UserContext';
+import { useInstitutions, useDeleteInstitution } from '@/lib/api/hooks';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,13 +30,11 @@ import { DeleteInstitutionDialog } from '@/components/DeleteInstitutionDialog';
 import { Building2, Landmark, XCircle, Trash2 } from 'lucide-react';
 import type { ColumnDef, RowSelectionState } from '@tanstack/react-table';
 import type { Institution } from '@/lib/api/types';
-import { apiClient } from '@/lib/api/client';
 
 export default function InstitutionsPage() {
   const { t } = useTranslation();
-  const { userId } = useUser();
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { institutions, loading, error, refetch } = useInstitutions({ userId: userId!, key: refreshKey });
+  const { data: institutions, isLoading, error, refetch } = useInstitutions();
+  const { mutateAsync: deleteInstitution } = useDeleteInstitution();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [countryFilter, setCountryFilter] = useState<string>('all');
@@ -46,7 +43,7 @@ export default function InstitutionsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleInstitutionChanged = () => {
-    setRefreshKey((prev) => prev + 1);
+    refetch();
     setRowSelection({});
   };
 
@@ -91,13 +88,13 @@ export default function InstitutionsPage() {
   }, [rowSelection, filteredInstitutions]);
 
   const handleBatchDelete = async () => {
-    if (!userId || selectedInstitutions.length === 0) return;
+    if (selectedInstitutions.length === 0) return;
 
     setIsDeleting(true);
     try {
       await Promise.all(
         selectedInstitutions.map((institution) =>
-          apiClient.delete(`institutions/${institution.id}`)
+          deleteInstitution(institution.id)
         )
       );
       setShowDeleteDialog(false);
@@ -188,7 +185,7 @@ export default function InstitutionsPage() {
     },
   ];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
