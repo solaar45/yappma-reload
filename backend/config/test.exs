@@ -21,3 +21,14 @@ config :logger, level: :warning
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
+
+# Cloak encryption key for tests
+config :wealth_backend, WealthBackend.Vault,
+  ciphers: [
+    default: {
+      Cloak.Ciphers.AES.GCM,
+      tag: "AES.GCM.V1",
+      # Static key for tests - safe to commit
+      key: Base.decode64!("qsL3oHxVbBRJNq4BhVQ2w5yLXUgT6pqMrqHF3SbCbmE=")
+    }
+  ]
