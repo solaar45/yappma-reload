@@ -6,6 +6,14 @@ defmodule WealthBackendWeb.AccountSnapshotController do
 
   action_fallback WealthBackendWeb.FallbackController
 
+  # List all account snapshots for current user (latest per account)
+  def index(conn, %{}) do
+    user_id = conn.assigns.current_user_id
+    snapshots = Analytics.get_latest_account_snapshots(user_id)
+    render(conn, :index, snapshots: snapshots)
+  end
+
+  # List snapshots for a specific account
   def index(conn, %{"account_id" => account_id}) do
     snapshots = Analytics.list_account_snapshots(account_id)
     render(conn, :index, snapshots: snapshots)
