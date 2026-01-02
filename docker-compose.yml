@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: yappma-postgres
+    environment:
+      POSTGRES_DB: wealth_backend_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - yappma-network
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: yappma-backend
+    depends_on:
+      - postgres
+      - fints-worker
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/wealth_backend_dev
+      FINTS_WORKER_URL: http://fints-worker:5000
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app
+    networks:
+      - yappma-network
+    restart: unless-stopped
+    command: mix phx.server
+
+  fints-worker:
+    build: ./fints-worker
+    container_name: yappma-fints-worker
+    environment:
+      FINTS_API_KEY: ${FINTS_API_KEY}
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    networks:
+      - yappma-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/fints/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: yappma-frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:4000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - yappma-network
+    restart: unless-stopped
+    command: npm run dev -- --host
+
+volumes:
+  postgres_data:
+
+networks:
+  yappma-network:
+    driver: bridge
