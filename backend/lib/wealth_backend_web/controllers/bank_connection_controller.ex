@@ -2,7 +2,7 @@ defmodule WealthBackendWeb.BankConnectionController do
   use WealthBackendWeb, :controller
 
   alias WealthBackend.FinTS
-  alias WealthBackend.FinTS.BankConnection
+  alias WealthBackend.FinTS.{BankConnection, Client}
 
   action_fallback WealthBackendWeb.FallbackController
 
@@ -79,19 +79,16 @@ defmodule WealthBackendWeb.BankConnectionController do
   end
 
   @doc """
-  Test FinTS connection credentials without persisting.
+  Test FinTS connection credentials.
   POST /api/bank_connections/test
   """
-  def test(conn, _params) do
-    # Mock implementation for Phase 2A
-    # Real FinTS test will be implemented in Phase 2C
-    result = %{
-      success: true,
-      message: "Connection test successful (mock)",
-      account_count: 2
-    }
-
-    json(conn, result)
+  def test(conn, %{"blz" => blz, "user_id" => user_id_fints, "pin" => pin, "fints_url" => fints_url}) do
+    case Client.test_connection(blz, user_id_fints, pin, fints_url) do
+      {:ok, result} ->
+        json(conn, result)
+      {:error, reason} ->
+        json(conn, %{success: false, message: reason})
+    end
   end
 
   @doc """
@@ -108,40 +105,35 @@ defmodule WealthBackendWeb.BankConnectionController do
       |> put_status(:forbidden)
       |> json(%{error: "Access denied"})
     else
-      # Mock implementation for Phase 2A
-      mock_accounts = [
-        %{
-          iban: "DE89370400440532013000",
-          account_number: "532013000",
-          account_name: "Girokonto",
-          bic: "COBADEFFXXX",
-          bank_name: "Commerzbank",
-          currency: "EUR",
-          type: "checking"
-        },
-        %{
-          iban: "DE89370400440532013001",
-          account_number: "532013001",
-          account_name: "Sparkonto",
-          bic: "COBADEFFXXX",
-          bank_name: "Commerzbank",
-          currency: "EUR",
-          type: "savings"
-        }
-      ]
+      # Decrypt PIN
+      pin = FinTS.decrypt_pin(bank_connection.pin_encrypted)
 
-      # Create/update bank accounts in database
-      case FinTS.upsert_bank_accounts(bank_connection.id, mock_accounts) do
-        results when is_list(results) ->
-          json(conn, %{
-            success: true,
-            accounts: mock_accounts
-          })
+      case Client.fetch_accounts(
+        bank_connection.blz,
+        bank_connection.user_id_fints,
+        pin,
+        bank_connection.fints_url
+      ) do
+        {:ok, accounts} ->
+          # Create/update bank accounts in database
+          case FinTS.upsert_bank_accounts(bank_connection.id, accounts) do
+            results when is_list(results) ->
+              json(conn, %{
+                success: true,
+                accounts: accounts
+              })
 
-        _error ->
+            _error ->
+              json(conn, %{
+                success: false,
+                error: "Failed to save accounts"
+              })
+          end
+
+        {:error, reason} ->
           json(conn, %{
             success: false,
-            error: "Failed to save accounts"
+            error: reason
           })
       end
     end
@@ -161,31 +153,44 @@ defmodule WealthBackendWeb.BankConnectionController do
       |> put_status(:forbidden)
       |> json(%{error: "Access denied"})
     else
-      # Mock balance data
-      mock_balances = [
-        %{
-          iban: "DE89370400440532013000",
-          balance: 1234.56,
-          currency: "EUR",
-          date: Date.utc_today()
-        },
-        %{
-          iban: "DE89370400440532013001",
-          balance: 5678.90,
-          currency: "EUR",
-          date: Date.utc_today()
-        }
-      ]
+      # Decrypt PIN
+      pin = FinTS.decrypt_pin(bank_connection.pin_encrypted)
 
-      case FinTS.create_snapshots_from_balances(bank_connection.id, mock_balances) do
-        {:ok, count} ->
-          FinTS.update_sync_status(bank_connection.id, "active", nil)
+      case Client.fetch_balances(
+        bank_connection.blz,
+        bank_connection.user_id_fints,
+        pin,
+        bank_connection.fints_url
+      ) do
+        {:ok, balances} ->
+          # Convert balance maps to have atom keys
+          balances_with_atoms = Enum.map(balances, fn balance ->
+            %{
+              iban: balance["iban"],
+              balance: balance["balance"],
+              currency: balance["currency"],
+              date: Date.from_iso8601!(balance["date"])
+            }
+          end)
 
-          json(conn, %{
-            success: true,
-            message: "Balances synced successfully",
-            snapshots_created: count
-          })
+          case FinTS.create_snapshots_from_balances(bank_connection.id, balances_with_atoms) do
+            {:ok, count} ->
+              FinTS.update_sync_status(bank_connection.id, "active", nil)
+
+              json(conn, %{
+                success: true,
+                message: "Balances synced successfully",
+                snapshots_created: count
+              })
+
+            {:error, reason} ->
+              FinTS.update_sync_status(bank_connection.id, "error", to_string(reason))
+
+              json(conn, %{
+                success: false,
+                error: to_string(reason)
+              })
+          end
 
         {:error, reason} ->
           FinTS.update_sync_status(bank_connection.id, "error", to_string(reason))
