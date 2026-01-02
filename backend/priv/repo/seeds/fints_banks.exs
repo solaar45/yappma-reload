@@ -1,6 +1,7 @@
 # FinTS Bank Configuration for DKB and comdirect
 # This seed file adds the supported banks to the institutions table
 
+import Ecto.Query
 alias WealthBackend.Repo
 alias WealthBackend.Institutions.Institution
 alias WealthBackend.Accounts.User
