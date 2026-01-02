@@ -1,10 +1,6 @@
 import Config
 
 # Configure your database
-#
-# The MIX_TEST_PARTITION environment variable can be used
-# to provide built-in test partitioning in CI environment.
-# Run `mix help test` for more information.
 config :wealth_backend, WealthBackend.Repo,
   username: "postgres",
   password: "postgres",
@@ -17,7 +13,7 @@ config :wealth_backend, WealthBackend.Repo,
 # you can enable the server option below.
 config :wealth_backend, WealthBackendWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "5ZMgYICZf1HytBlV/GZRhsHu5RAtGx4bhu/UjKuxinC6vplzNwLbDa3M1fwxAmyn",
+  secret_key_base: "KHZm0hKHvNlUZVsF8G3xrT8TyHYqb2gMRvZCkLCJVDZiJhxMHNbqzLsJFYqTzHLC",
   server: false
 
 # Print only warnings and errors during test
@@ -25,7 +21,3 @@ config :logger, level: :warning
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
-
-# Sort query params output of verified routes for robust url comparisons
-config :phoenix,
-  sort_verified_routes_query_params: true
