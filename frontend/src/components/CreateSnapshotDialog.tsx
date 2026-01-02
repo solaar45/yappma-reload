@@ -106,16 +106,25 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
       onSuccess?.();
     } catch (err: any) {
       console.error('Failed to create snapshot:', err);
+      console.log('Error response:', err?.response?.data);
       
-      // Check if it's a duplicate error (422 with unique constraint message)
+      // Check if it's a duplicate error (422 with unique constraint)
       if (err?.response?.status === 422) {
-        const errorMessage = err?.response?.data?.errors?.snapshot_date?.[0] || 
-                           err?.response?.data?.error || '';
+        const errorData = err?.response?.data;
         
-        if (errorMessage.toLowerCase().includes('already exists') || 
-            errorMessage.toLowerCase().includes('unique')) {
-          // Fetch the existing snapshot
+        // Check for error_type === 'duplicate' or constraint name contains snapshot unique index
+        const isDuplicate = 
+          errorData?.error_type === 'duplicate' ||
+          (errorData?.constraint && (
+            errorData.constraint.includes('snapshot') && 
+            errorData.constraint.includes('date')
+          ));
+        
+        if (isDuplicate) {
+          console.log('Duplicate snapshot detected, fetching existing...');
           await fetchExistingSnapshot();
+        } else {
+          console.error('Validation error (not duplicate):', errorData);
         }
       }
     } finally {
@@ -125,6 +134,8 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
 
   const fetchExistingSnapshot = async () => {
     try {
+      console.log('Fetching existing snapshot for entity:', formData.entity_id, 'date:', formData.snapshot_date);
+      
       // Fetch all snapshots for this entity
       let response;
       if (snapshotType === 'account') {
@@ -136,10 +147,14 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
       const entity = response.data;
       const snapshots = entity.snapshots || [];
       
+      console.log('Found snapshots:', snapshots);
+      
       // Find the snapshot for this date
       const existing = snapshots.find(
         (s: any) => s.snapshot_date === formData.snapshot_date
       );
+
+      console.log('Existing snapshot:', existing);
 
       if (existing) {
         const entityName = entity.name;
@@ -149,6 +164,8 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
           entity_name: entityName,
         } as CombinedSnapshot);
         setShowDuplicateDialog(true);
+      } else {
+        console.error('Could not find existing snapshot for date:', formData.snapshot_date);
       }
     } catch (err) {
       console.error('Failed to fetch existing snapshot:', err);
