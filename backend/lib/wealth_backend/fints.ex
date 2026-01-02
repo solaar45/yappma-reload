@@ -165,8 +165,8 @@ defmodule WealthBackend.FinTS do
             snapshot_date: balance.date || Date.utc_today(),
             balance: Decimal.new(to_string(balance.balance)),
             currency: balance.currency,
-            source: "fints",
-            external_reference: bank_connection_id
+            source: "fints_auto",
+            external_reference: to_string(bank_connection_id)
           }
 
           Logger.debug("Creating snapshot with attrs: #{inspect(attrs)}")
@@ -184,11 +184,11 @@ defmodule WealthBackend.FinTS do
               result
           end
         else
-          Logger.warn("Bank account #{bank_account.id} not linked to any account")
+          Logger.warning("Bank account #{bank_account.id} not linked to any account")
           {:error, "Bank account not linked: #{balance.iban}"}
         end
       else
-        Logger.warn("No bank account found for IBAN #{balance.iban}")
+        Logger.warning("No bank account found for IBAN #{balance.iban}")
         {:error, "Bank account not found: #{balance.iban}"}
       end
     end)
