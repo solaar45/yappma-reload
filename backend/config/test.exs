@@ -22,6 +22,10 @@ config :logger, level: :warning
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 
+# JWT Secret for tests
+config :wealth_backend,
+  jwt_secret: "test-jwt-secret-for-testing-only"
+
 # Cloak encryption key for tests
 config :wealth_backend, WealthBackend.Vault,
   ciphers: [

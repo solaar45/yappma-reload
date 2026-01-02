@@ -52,6 +52,21 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
+  # JWT secret for production
+  jwt_secret =
+    System.get_env("JWT_SECRET") ||
+      raise """
+      environment variable JWT_SECRET is missing.
+      You can generate one by running:
+      
+        mix phx.gen.secret
+      
+      Then set it as an environment variable.
+      """
+
+  config :wealth_backend,
+    jwt_secret: jwt_secret
+
   # Cloak encryption key for production
   cloak_key =
     System.get_env("CLOAK_KEY") ||

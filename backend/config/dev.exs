@@ -35,6 +35,10 @@ config :phoenix, :stacktrace_depth, 20
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
 
+# JWT Secret for development (use ENV variable in production!)
+config :wealth_backend,
+  jwt_secret: "dev-jwt-secret-do-not-use-in-production-please-change-this-to-something-secure"
+
 # Cloak encryption key for development
 # Generated with: mix cloak.gen.secret
 # NOTE: In production, use a different key from environment variable!
