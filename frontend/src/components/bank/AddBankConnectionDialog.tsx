@@ -74,7 +74,7 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
           name,
           blz,
           user_id_fints: userId,
-          pin_encrypted: pin, // Backend will encrypt
+          pin, // Backend expects 'pin' virtual field, will store as pin_encrypted
           fints_url: fintsUrl,
           user_id: 1, // TODO: Get from user context
         },
@@ -136,9 +136,11 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
             <Input
               id="blz"
               placeholder="e.g., 12030000"
+              maxLength={8}
               value={blz}
               onChange={(e) => setBlz(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">Must be exactly 8 digits</p>
           </div>
 
           <div className="grid gap-2">
@@ -170,6 +172,7 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
               value={fintsUrl}
               onChange={(e) => setFintsUrl(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">Must start with http:// or https://</p>
           </div>
 
           {testResult && (
