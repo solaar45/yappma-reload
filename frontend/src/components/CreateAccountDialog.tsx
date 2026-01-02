@@ -47,7 +47,7 @@ const CURRENCIES = [
 
 export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
   const { userId } = useUser();
-  const { institutions, loading: institutionsLoading, refetch: refetchInstitutions } = useInstitutions({ userId: userId! });
+  const { data: institutions, isLoading: institutionsLoading, refetch: refetchInstitutions } = useInstitutions();
   const { createAccount, loading, error } = useCreateAccount();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
