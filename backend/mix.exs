@@ -44,15 +44,6 @@ defmodule WealthBackend.MixProject do
       {:ecto_sql, "~> 3.13"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_live_dashboard, "~> 0.8.3"},
-      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
-      {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
-      {:heroicons,
-       github: "tailwindlabs/heroicons",
-       tag: "v2.2.0",
-       sparse: "optimized",
-       app: false,
-       compile: false,
-       depth: 1},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 1.0"},
@@ -62,7 +53,7 @@ defmodule WealthBackend.MixProject do
       {:cors_plug, "~> 3.0"},
       # FinTS Integration
       {:tesla, "~> 1.8"},
-      # Auth & Encryption (Phase 2B)
+      # Auth & Encryption
       {:joken, "~> 2.6"},
       {:cloak_ecto, "~> 1.3"},
       {:bcrypt_elixir, "~> 3.0"}
@@ -77,17 +68,10 @@ defmodule WealthBackend.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
+      setup: ["deps.get", "ecto.setup"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
-      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["compile", "tailwind wealth_backend", "esbuild wealth_backend"],
-      "assets.deploy": [
-        "tailwind wealth_backend --minify",
-        "esbuild wealth_backend --minify",
-        "phx.digest"
-      ],
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
     ]
   end

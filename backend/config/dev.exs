@@ -22,17 +22,7 @@ config :wealth_backend, WealthBackendWeb.Endpoint,
   secret_key_base: "iJ8VvCLKhEq7Iq8VvCLKhEq7Iq8VvCLKhEq7Iq8VvCLKhEq7Iq8VvCLKhEq7Iq8VvCLKhEq7",
   watchers: []
 
-# Watch static and templates for browser reloading.
-config :wealth_backend, WealthBackendWeb.Endpoint,
-  live_reload: [
-    patterns: [
-      ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
-      ~r"priv/gettext/.*(po)$",
-      ~r"lib/wealth_backend_web/(controllers|live|components)/.*(ex|heex)$"
-    ]
-  ]
-
-# Enable dev routes for dashboard and mailbox
+# Enable dev routes for dashboard
 config :wealth_backend, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
@@ -44,9 +34,6 @@ config :phoenix, :stacktrace_depth, 20
 
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
-
-# Disable swoosh api client as it is only required for production adapters.
-config :swoosh, :api_client, false
 
 # Cloak encryption key for development
 # Generated with: mix cloak.gen.secret
