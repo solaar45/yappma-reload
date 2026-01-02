@@ -6,11 +6,13 @@ defmodule WealthBackend.FinTS.Client do
 
   require Logger
 
-  @python_script_path Path.join([
+  @python_dir Path.join([
     :code.priv_dir(:wealth_backend),
-    "python",
-    "fints_wrapper.py"
+    "python"
   ])
+
+  @python_script_path Path.join(@python_dir, "fints_wrapper.py")
+  @python_venv_path Path.join([@python_dir, "venv", "bin", "python3"])
 
   @doc """
   Test FinTS connection.
@@ -79,9 +81,18 @@ defmodule WealthBackend.FinTS.Client do
   defp execute_command(command) do
     Logger.debug("Executing FinTS command: #{inspect(command)}")
 
+    # Use venv Python if available, otherwise fallback to system Python
+    python_exec = if File.exists?(@python_venv_path) do
+      Logger.debug("Using Python venv: #{@python_venv_path}")
+      @python_venv_path
+    else
+      Logger.warning("Python venv not found at #{@python_venv_path}, using system Python")
+      python_executable()
+    end
+
     # Start Python process
     port = Port.open(
-      {:spawn_executable, python_executable()},
+      {:spawn_executable, python_exec},
       [
         :binary,
         :exit_status,
