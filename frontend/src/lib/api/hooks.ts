@@ -317,7 +317,106 @@ export function useDeleteAssetSnapshot() {
   });
 }
 
-// Dashboard
+// Dashboard - Combined hook for dashboard data
+export function useDashboard({ userId, key }: { userId: number; key?: number }) {
+  return useQuery({
+    queryKey: ['dashboard', userId, key],
+    queryFn: async () => {
+      // Fetch accounts with snapshots
+      const accountsResponse = await apiClient.get<{ data: Account[] }>('accounts');
+      const accounts = Array.isArray(accountsResponse) ? accountsResponse : (accountsResponse?.data || []);
+
+      // Fetch assets with snapshots
+      const assetsResponse = await apiClient.get<{ data: Asset[] }>('assets');
+      const assets = Array.isArray(assetsResponse) ? assetsResponse : (assetsResponse?.data || []);
+
+      // Calculate totals
+      const accountsValue = accounts.reduce((sum, account) => {
+        const latestSnapshot = account.snapshots?.[0];
+        return sum + (latestSnapshot ? parseFloat(latestSnapshot.balance) : 0);
+      }, 0);
+
+      const assetsValue = assets.reduce((sum, asset) => {
+        const latestSnapshot = asset.snapshots?.[0];
+        return sum + (latestSnapshot ? parseFloat(latestSnapshot.value) : 0);
+      }, 0);
+
+      return {
+        accounts,
+        assets,
+        accountsValue,
+        assetsValue,
+        totalValue: accountsValue + assetsValue,
+      };
+    },
+    enabled: !!userId,
+  });
+}
+
+// Snapshots - Combined hook for snapshots page
+export function useSnapshots({ userId, key }: { userId: number; key?: number }) {
+  return useQuery({
+    queryKey: ['snapshots', 'all', userId, key],
+    queryFn: async () => {
+      try {
+        // Fetch account snapshots with account details
+        const accountSnapshotsResponse = await apiClient.get<{ data: AccountSnapshot[] }>('snapshots/accounts');
+        const accountSnapshots = Array.isArray(accountSnapshotsResponse) 
+          ? accountSnapshotsResponse 
+          : (accountSnapshotsResponse?.data || []);
+
+        // Fetch asset snapshots with asset details
+        const assetSnapshotsResponse = await apiClient.get<{ data: AssetSnapshot[] }>('snapshots/assets');
+        const assetSnapshots = Array.isArray(assetSnapshotsResponse) 
+          ? assetSnapshotsResponse 
+          : (assetSnapshotsResponse?.data || []);
+
+        // Fetch accounts and assets for entity names
+        const accountsResponse = await apiClient.get<{ data: Account[] }>('accounts');
+        const accounts = Array.isArray(accountsResponse) ? accountsResponse : (accountsResponse?.data || []);
+
+        const assetsResponse = await apiClient.get<{ data: Asset[] }>('assets');
+        const assets = Array.isArray(assetsResponse) ? assetsResponse : (assetsResponse?.data || []);
+
+        // Create lookup maps
+        const accountsMap = new Map(accounts.map(a => [a.id, a]));
+        const assetsMap = new Map(assets.map(a => [a.id, a]));
+
+        // Combine and format snapshots
+        const combined = [
+          ...accountSnapshots.map(snap => ({
+            id: snap.id,
+            snapshot_type: 'account' as const,
+            snapshot_date: snap.snapshot_date,
+            entity_name: accountsMap.get(snap.account_id)?.name || 'Unknown Account',
+            balance: snap.balance,
+            currency: snap.currency,
+          })),
+          ...assetSnapshots.map(snap => ({
+            id: snap.id,
+            snapshot_type: 'asset' as const,
+            snapshot_date: snap.snapshot_date,
+            entity_name: assetsMap.get(snap.asset_id)?.name || 'Unknown Asset',
+            value: snap.value,
+            currency: 'EUR',
+          })),
+        ];
+
+        // Sort by date descending
+        combined.sort((a, b) => 
+          new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime()
+        );
+
+        return combined;
+      } catch (error) {
+        logger.error('Failed to fetch snapshots', { error });
+        throw error;
+      }
+    },
+    enabled: !!userId,
+  });
+}
+
 export function useDashboardNetWorth() {
   return useQuery({
     queryKey: ['dashboard', 'net-worth'],
@@ -434,6 +533,7 @@ export function useSyncBalances() {
       queryClient.invalidateQueries({ queryKey: ['bank-connections'] });
       queryClient.invalidateQueries({ queryKey: ['account-snapshots'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['snapshots'] });
     },
   });
 }
