@@ -3,3 +3,5 @@ fints==4.1.0
 mt-940==4.30.0
 gunicorn==21.2.0
 python-dotenv==1.0.0
+# Fix for Python 3.12 compatibility
+enum-tools==0.12.0
