@@ -20,21 +20,64 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+class TANHandler:
+    """
+    Handler for TAN input. Communicates with Elixir to request TAN from user.
+    """
+    def __init__(self):
+        self.tan = None
+    
+    def __call__(self, tan_request):
+        """
+        Called by FinTS client when TAN is needed.
+        Sends TAN request to Elixir and waits for response.
+        """
+        # Send TAN request to Elixir
+        tan_request_data = {
+            "type": "tan_request",
+            "challenge": tan_request if isinstance(tan_request, str) else str(tan_request)
+        }
+        
+        print(json.dumps(tan_request_data))
+        sys.stdout.flush()
+        
+        # Wait for TAN from Elixir
+        try:
+            response_line = sys.stdin.readline().strip()
+            response = json.loads(response_line)
+            
+            if response.get("action") == "provide_tan":
+                return response.get("tan")
+            else:
+                logger.error(f"Unexpected response: {response}")
+                return None
+        except Exception as e:
+            logger.error(f"Failed to receive TAN: {str(e)}")
+            return None
+
+
 def test_connection(blz, user_id, pin, fints_url):
     """
     Test FinTS connection.
     Returns: {"success": bool, "message": str}
     """
     try:
+        tan_handler = TANHandler()
+        
         client = FinTS3PinTanClient(
             blz,
             user_id,
             pin,
-            fints_url
+            fints_url,
+            product_id='YAPPMA'
         )
         
-        # Try to get accounts to verify connection
-        accounts = client.get_sepa_accounts()
+        # Set TAN mechanism
+        client.set_tan_mechanism(['942'])  # decoupled (DKB-App)
+        
+        # Try to get accounts to verify connection (may require TAN)
+        with client:
+            accounts = client.get_sepa_accounts()
         
         return {
             "success": True,
@@ -56,14 +99,21 @@ def fetch_accounts(blz, user_id, pin, fints_url):
     Returns: {"success": bool, "accounts": list, "error": str}
     """
     try:
+        tan_handler = TANHandler()
+        
         client = FinTS3PinTanClient(
             blz,
             user_id,
             pin,
-            fints_url
+            fints_url,
+            product_id='YAPPMA'
         )
         
-        sepa_accounts = client.get_sepa_accounts()
+        # Set TAN mechanism
+        client.set_tan_mechanism(['942'])  # decoupled (DKB-App)
+        
+        with client:
+            sepa_accounts = client.get_sepa_accounts()
         
         accounts = []
         for account in sepa_accounts:
@@ -72,9 +122,9 @@ def fetch_accounts(blz, user_id, pin, fints_url):
                 "account_number": account.accountnumber,
                 "account_name": getattr(account, 'name', 'Unknown'),
                 "bic": account.bic,
-                "bank_name": getattr(account, 'bank_name', 'Unknown'),
-                "currency": "EUR",  # FinTS is typically EUR
-                "type": "checking"  # Default to checking, can be refined
+                "bank_name": getattr(account, 'bank_name', 'DKB'),
+                "currency": "EUR",
+                "type": "checking"
             })
         
         return {
@@ -97,26 +147,33 @@ def fetch_balances(blz, user_id, pin, fints_url):
     Returns: {"success": bool, "balances": list, "error": str}
     """
     try:
+        tan_handler = TANHandler()
+        
         client = FinTS3PinTanClient(
             blz,
             user_id,
             pin,
-            fints_url
+            fints_url,
+            product_id='YAPPMA'
         )
         
-        sepa_accounts = client.get_sepa_accounts()
+        # Set TAN mechanism
+        client.set_tan_mechanism(['942'])  # decoupled (DKB-App)
         
-        balances = []
-        for account in sepa_accounts:
-            # Get balance for each account
-            balance_info = client.get_balance(account)
+        with client:
+            sepa_accounts = client.get_sepa_accounts()
             
-            balances.append({
-                "iban": account.iban,
-                "balance": float(balance_info.amount.amount),
-                "currency": balance_info.amount.currency,
-                "date": balance_info.date.isoformat() if balance_info.date else date.today().isoformat()
-            })
+            balances = []
+            for account in sepa_accounts:
+                # Get balance for each account
+                balance_info = client.get_balance(account)
+                
+                balances.append({
+                    "iban": account.iban,
+                    "balance": float(balance_info.amount.amount),
+                    "currency": balance_info.amount.currency,
+                    "date": balance_info.date.isoformat() if balance_info.date else date.today().isoformat()
+                })
         
         return {
             "success": True,
