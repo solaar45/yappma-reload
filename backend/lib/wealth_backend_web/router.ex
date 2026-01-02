@@ -29,6 +29,9 @@ defmodule WealthBackendWeb.Router do
     # Assets
     resources "/assets", AssetController, except: [:new, :edit]
     
+    # Asset Types (global, read-only)
+    get "/asset_types", AssetTypeController, :index
+    
     # Snapshots (alias for account_snapshots for frontend compatibility)
     get "/snapshots", AccountSnapshotController, :index
     post "/snapshots", AccountSnapshotController, :create
