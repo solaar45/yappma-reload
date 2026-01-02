@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { UserProvider } from '@/contexts/UserContext';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -26,6 +27,17 @@ import SnapshotsPage from '@/pages/SnapshotsPage';
 import BankConnectionsPage from '@/pages/BankConnectionsPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 function getBreadcrumb(pathname: string): string {
   const breadcrumbs: Record<string, string> = {
@@ -107,13 +119,15 @@ export default function App() {
         logger.error('App Error Caught', { error, errorInfo });
       }}
     >
-      <AuthProvider>
-        <UserProvider>
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
-        </UserProvider>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <UserProvider>
+            <BrowserRouter>
+              <AppContent />
+            </BrowserRouter>
+          </UserProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }
