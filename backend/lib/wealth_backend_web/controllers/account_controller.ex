@@ -15,7 +15,11 @@ defmodule WealthBackendWeb.AccountController do
   # Accept account key (wrapped params)
   def create(conn, %{"account" => account_params}) do
     user_id = conn.assigns.current_user_id
-    account_params = Map.put(account_params, "user_id", user_id)
+    # Remove user_id from params and use authenticated user's ID
+    account_params = 
+      account_params
+      |> Map.drop(["user_id"])
+      |> Map.put("user_id", user_id)
     
     with {:ok, %Account{} = account} <- Accounts.create_account(account_params) do
       conn
@@ -63,6 +67,9 @@ defmodule WealthBackendWeb.AccountController do
 
     # Ensure account belongs to authenticated user
     if account.user_id == user_id do
+      # Drop user_id from params to prevent changing ownership
+      account_params = Map.drop(account_params, ["user_id"])
+      
       with {:ok, %Account{} = account} <- Accounts.update_account(account, account_params) do
         render(conn, :show, account: account)
       end
@@ -80,7 +87,9 @@ defmodule WealthBackendWeb.AccountController do
 
     # Ensure account belongs to authenticated user
     if account.user_id == user_id do
+      # Drop id and user_id from params to prevent changing ownership
       account_params = Map.drop(params, ["id", "user_id"])
+      
       with {:ok, %Account{} = account} <- Accounts.update_account(account, account_params) do
         render(conn, :show, account: account)
       end
