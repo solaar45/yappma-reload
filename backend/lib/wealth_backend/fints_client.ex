@@ -8,7 +8,8 @@ defmodule WealthBackend.FintsClient do
 
   plug Tesla.Middleware.BaseUrl, get_base_url()
   plug Tesla.Middleware.JSON
-  plug Tesla.Middleware.Timeout, timeout: 30_000
+  plug Tesla.Middleware.Headers, get_headers()
+  plug Tesla.Middleware.Timeout, timeout: get_timeout()
 
   @doc """
   Tests connection to bank.
@@ -35,13 +36,13 @@ defmodule WealthBackend.FintsClient do
   Fetches list of accounts from bank.
   """
   def fetch_accounts(blz, user_id, pin, fints_url) do
-    case post("/api/fints/fetch-accounts", %{
+    case post("/api/fints/accounts", %{
            blz: blz,
            user_id: user_id,
            pin: pin,
            fints_url: fints_url
          }) do
-      {:ok, %{status: 200, body: %{"accounts" => accounts}}} ->
+      {:ok, %{status: 200, body: %{"success" => true, "accounts" => accounts}}} ->
         {:ok, accounts}
 
       {:ok, %{status: status, body: body}} ->
@@ -56,13 +57,13 @@ defmodule WealthBackend.FintsClient do
   Fetches current balances for all accounts.
   """
   def fetch_balances(blz, user_id, pin, fints_url) do
-    case post("/api/fints/fetch-balances", %{
+    case post("/api/fints/balances", %{
            blz: blz,
            user_id: user_id,
            pin: pin,
            fints_url: fints_url
          }) do
-      {:ok, %{status: 200, body: %{"balances" => balances}}} ->
+      {:ok, %{status: 200, body: %{"success" => true, "balances" => balances}}} ->
         parsed_balances =
           Enum.map(balances, fn balance ->
             %{
@@ -93,6 +94,18 @@ defmodule WealthBackend.FintsClient do
   defp parse_date(_), do: Date.utc_today()
 
   defp get_base_url do
-    Application.get_env(:wealth_backend, :fints_worker_url, "http://localhost:5000")
+    config = Application.get_env(:wealth_backend, :fints_worker, [])
+    Keyword.get(config, :base_url, "http://localhost:5000")
+  end
+
+  defp get_headers do
+    config = Application.get_env(:wealth_backend, :fints_worker, [])
+    api_key = Keyword.get(config, :api_key, "dev-test-key-12345")
+    [{"X-API-Key", api_key}]
+  end
+
+  defp get_timeout do
+    config = Application.get_env(:wealth_backend, :fints_worker, [])
+    Keyword.get(config, :timeout, 30_000)
   end
 end
