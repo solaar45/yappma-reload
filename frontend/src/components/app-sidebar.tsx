@@ -7,6 +7,7 @@ import {
   PiggyBank,
   Building2,
   Calendar,
+  Link2,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -51,6 +52,11 @@ const data = {
       title: "Institutions",
       url: "/institutions",
       icon: Building2,
+    },
+    {
+      title: "Bank Connections",
+      url: "/bank-connections",
+      icon: Link2,
     },
   ],
 }
