@@ -20,10 +20,16 @@ user = Repo.one(from u in User, where: u.email == "test@test.de", limit: 1) ||
 
 IO.puts("✅ Test User: #{user.email} (ID: #{user.id})")
 
-# Get DKB institution
-dkb = Repo.one!(from i in Institution, where: i.name == "DKB (Deutsche Kreditbank)" and i.user_id == ^user.id)
+# Get or create DKB institution for this user
+dkb = Repo.one(from i in Institution, where: i.name == "DKB (Deutsche Kreditbank)" and i.user_id == ^user.id) ||
+  Repo.insert!(%Institution{
+    name: "DKB (Deutsche Kreditbank)",
+    type: "bank",
+    country: "DE",
+    user_id: user.id
+  })
 
-IO.puts("✅ DKB Institution found (ID: #{dkb.id})")
+IO.puts("✅ DKB Institution (ID: #{dkb.id})")
 
 # Create mock bank connection
 bank_connection = case Repo.one(from bc in BankConnection, where: bc.name == "Mock DKB Connection" and bc.user_id == ^user.id) do
