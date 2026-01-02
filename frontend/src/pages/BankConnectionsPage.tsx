@@ -10,7 +10,7 @@ import { AddBankConnectionDialog } from '@/components/bank/AddBankConnectionDial
 import { BankAccountsList } from '@/components/bank/BankAccountsList';
 import { SyncStatusIndicator } from '@/components/bank/SyncStatusIndicator';
 import { ErrorDisplay } from '@/components/bank/ErrorDisplay';
-import { Link2, RefreshCw, Search, Loader2, Download, XCircle } from 'lucide-react';
+import { Link2, RefreshCw, Search, Loader2, Download } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { BankConnection, BankAccount } from '@/lib/api/types';
 import { logger } from '@/lib/logger';
