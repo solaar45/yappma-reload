@@ -17,9 +17,9 @@ import { logger } from '@/lib/logger';
 import { apiClient } from '@/lib/api/client';
 
 export default function BankConnectionsPage() {
-  const { connections, isLoading, error, refetch } = useBankConnections();
-  const { fetchAccounts, isLoading: isFetching } = useFetchAccounts();
-  const { syncBalances, isLoading: isSyncing } = useSyncBalances();
+  const { data: connections, isLoading, error, refetch } = useBankConnections();
+  const { mutateAsync: fetchAccounts, isPending: isFetching } = useFetchAccounts();
+  const { mutateAsync: syncBalances, isPending: isSyncing } = useSyncBalances();
   const [searchTerm, setSearchTerm] = useState('');
   const [fetchedAccounts, setFetchedAccounts] = useState<BankAccount[]>([]);
   const [activeConnectionId, setActiveConnectionId] = useState<number | null>(null);
@@ -49,6 +49,8 @@ export default function BankConnectionsPage() {
       }
     } catch (error) {
       logger.error('Failed to fetch accounts', { error });
+    } finally {
+      setActiveConnectionId(null);
     }
   };
 
