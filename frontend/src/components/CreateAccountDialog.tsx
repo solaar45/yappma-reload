@@ -48,7 +48,7 @@ const CURRENCIES = [
 export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
   const { userId } = useUser();
   const { data: institutions, isLoading: institutionsLoading, refetch: refetchInstitutions } = useInstitutions();
-  const { createAccount, loading, error } = useCreateAccount();
+  const { mutateAsync: createAccount, isPending, error } = useCreateAccount();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -62,16 +62,16 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
     e.preventDefault();
     if (!userId || !formData.institution_id) return;
 
-    const result = await createAccount({
-      user_id: userId,
-      name: formData.name,
-      type: formData.type,
-      currency: formData.currency,
-      institution_id: parseInt(formData.institution_id),
-      is_active: formData.is_active,
-    });
+    try {
+      await createAccount({
+        user_id: userId,
+        name: formData.name,
+        type: formData.type,
+        currency: formData.currency,
+        institution_id: parseInt(formData.institution_id),
+        is_active: formData.is_active,
+      });
 
-    if (result) {
       setOpen(false);
       setFormData({ 
         name: '', 
@@ -81,6 +81,9 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
         is_active: true,
       });
       onSuccess?.();
+    } catch (err) {
+      // Error is handled by React Query and available in error variable
+      console.error('Failed to create account:', err);
     }
   };
 
@@ -202,7 +205,9 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               />
             </div>
             {error && (
-              <div className="text-sm text-destructive">{error}</div>
+              <div className="text-sm text-destructive">
+                {error instanceof Error ? error.message : 'Failed to create account'}
+              </div>
             )}
           </div>
           <DialogFooter>
@@ -211,9 +216,9 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             </Button>
             <Button 
               type="submit" 
-              disabled={loading || !formData.name || !formData.institution_id || institutions?.length === 0}
+              disabled={isPending || !formData.name || !formData.institution_id || institutions?.length === 0}
             >
-              {loading ? 'Creating...' : 'Create Account'}
+              {isPending ? 'Creating...' : 'Create Account'}
             </Button>
           </DialogFooter>
         </form>
