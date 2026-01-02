@@ -47,7 +47,7 @@ interface Account {
 
 export default function AccountsPage() {
   const { t } = useTranslation();
-  const { accounts, isLoading: loading, error, refetch } = useAccounts();
+  const { data: accounts, isLoading: loading, error, refetch } = useAccounts();
   const [searchTerm, setSearchTerm] = useState('');
   const [institutionFilter, setInstitutionFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
