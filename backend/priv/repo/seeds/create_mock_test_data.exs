@@ -82,7 +82,7 @@ bank_account_giro = case Repo.one(from ba in BankAccount, where: ba.iban == "DE8
       account_name: "Mock Girokonto",
       bic: "COBADEFFXXX",
       bank_connection_id: bank_connection.id,
-      yappma_account_id: giro_account.id
+      account_id: giro_account.id
     })
   existing -> existing
 end
@@ -95,7 +95,7 @@ bank_account_spar = case Repo.one(from ba in BankAccount, where: ba.iban == "DE8
       account_name: "Mock Sparkonto",
       bic: "COBADEFFXXX",
       bank_connection_id: bank_connection.id,
-      yappma_account_id: spar_account.id
+      account_id: spar_account.id
     })
   existing -> existing
 end
