@@ -22,7 +22,7 @@ defmodule WealthBackendWeb.AuthController do
   def register(conn, %{"user" => user_params}) do
     case Accounts.register_user(user_params) do
       {:ok, user} ->
-        {:ok, token} = Token.generate_token(user.id)
+        {:ok, token, _claims} = Token.generate_token(user.id)
 
         conn
         |> put_status(:created)
@@ -54,7 +54,7 @@ defmodule WealthBackendWeb.AuthController do
   def login(conn, %{"email" => email, "password" => password}) do
     case Accounts.authenticate_user(email, password) do
       {:ok, user} ->
-        {:ok, token} = Token.generate_token(user.id)
+        {:ok, token, _claims} = Token.generate_token(user.id)
         render(conn, :token, token: token, user: user)
 
       {:error, :unauthorized} ->
