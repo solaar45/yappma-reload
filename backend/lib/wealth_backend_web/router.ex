@@ -26,11 +26,22 @@ defmodule WealthBackendWeb.Router do
     # Accounts
     resources "/accounts", AccountController, except: [:new, :edit]
     
-    # Account Snapshots
+    # Assets
+    resources "/assets", AssetController, except: [:new, :edit]
+    
+    # Snapshots (alias for account_snapshots for frontend compatibility)
+    get "/snapshots", AccountSnapshotController, :index
+    post "/snapshots", AccountSnapshotController, :create
+    get "/snapshots/:id", AccountSnapshotController, :show
+    put "/snapshots/:id", AccountSnapshotController, :update
+    patch "/snapshots/:id", AccountSnapshotController, :update
+    delete "/snapshots/:id", AccountSnapshotController, :delete
+    
+    # Account Snapshots (original route)
     resources "/account_snapshots", AccountSnapshotController, except: [:new, :edit]
     
     # Institutions
-    resources "/institutions", InstitutionController, only: [:index, :show]
+    resources "/institutions", InstitutionController, except: [:new, :edit]
     
     # Bank Connections (FinTS)
     post "/bank_connections/test", BankConnectionController, :test
