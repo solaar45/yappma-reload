@@ -118,7 +118,7 @@ unless Repo.exists?(from s in AccountSnapshot, where: s.account_id == ^giro_acco
     account_id: giro_account.id,
     balance: Decimal.new("1250.50"),
     snapshot_date: today,
-    source: "fints",
+    source: :fints_auto,
     external_reference: bank_account_giro.iban
   })
 end
@@ -128,7 +128,7 @@ unless Repo.exists?(from s in AccountSnapshot, where: s.account_id == ^spar_acco
     account_id: spar_account.id,
     balance: Decimal.new("5000.00"),
     snapshot_date: today,
-    source: "fints",
+    source: :fints_auto,
     external_reference: bank_account_spar.iban
   })
 end
