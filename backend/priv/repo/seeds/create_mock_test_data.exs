@@ -117,6 +117,7 @@ unless Repo.exists?(from s in AccountSnapshot, where: s.account_id == ^giro_acco
   Repo.insert!(%AccountSnapshot{
     account_id: giro_account.id,
     balance: Decimal.new("1250.50"),
+    currency: "EUR",
     snapshot_date: today,
     source: :fints_auto,
     external_reference: bank_account_giro.iban
@@ -127,6 +128,7 @@ unless Repo.exists?(from s in AccountSnapshot, where: s.account_id == ^spar_acco
   Repo.insert!(%AccountSnapshot{
     account_id: spar_account.id,
     balance: Decimal.new("5000.00"),
+    currency: "EUR",
     snapshot_date: today,
     source: :fints_auto,
     external_reference: bank_account_spar.iban
