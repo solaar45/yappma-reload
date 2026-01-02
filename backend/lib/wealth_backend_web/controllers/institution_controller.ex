@@ -10,7 +10,7 @@ defmodule WealthBackendWeb.InstitutionController do
   List all institutions for the current user.
   """
   def index(conn, _params) do
-    user_id = conn.assigns.current_user.id
+    user_id = conn.assigns.current_user_id
     institutions = Institutions.list_institutions(user_id)
     render(conn, :index, institutions: institutions)
   end
@@ -19,7 +19,7 @@ defmodule WealthBackendWeb.InstitutionController do
   Create a new institution.
   """
   def create(conn, %{"institution" => institution_params}) do
-    user_id = conn.assigns.current_user.id
+    user_id = conn.assigns.current_user_id
     institution_params = Map.put(institution_params, "user_id", user_id)
 
     case Institutions.create_institution(institution_params) do
@@ -41,7 +41,7 @@ defmodule WealthBackendWeb.InstitutionController do
   Get a single institution by ID.
   """
   def show(conn, %{"id" => id}) do
-    user_id = conn.assigns.current_user.id
+    user_id = conn.assigns.current_user_id
 
     case Institutions.get_institution_by_user(id, user_id) do
       nil ->
@@ -59,7 +59,7 @@ defmodule WealthBackendWeb.InstitutionController do
   Update an existing institution.
   """
   def update(conn, %{"id" => id, "institution" => institution_params}) do
-    user_id = conn.assigns.current_user.id
+    user_id = conn.assigns.current_user_id
 
     case Institutions.get_institution_by_user(id, user_id) do
       nil ->
@@ -86,7 +86,7 @@ defmodule WealthBackendWeb.InstitutionController do
   Delete an institution.
   """
   def delete(conn, %{"id" => id}) do
-    user_id = conn.assigns.current_user.id
+    user_id = conn.assigns.current_user_id
 
     case Institutions.get_institution_by_user(id, user_id) do
       nil ->

@@ -43,6 +43,9 @@ defmodule WealthBackendWeb.Router do
     # Account Snapshots (original route)
     resources "/account_snapshots", AccountSnapshotController, except: [:new, :edit]
     
+    # Asset Snapshots
+    resources "/asset_snapshots", AssetSnapshotController, except: [:new, :edit]
+    
     # Institutions
     resources "/institutions", InstitutionController, except: [:new, :edit]
     
