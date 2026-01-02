@@ -74,6 +74,6 @@ defmodule WealthBackendWeb.Router do
     
     # Bank Accounts
     resources "/bank_accounts", BankAccountController, only: [:index, :show]
-    post "/bank_accounts/:id/link", BankAccountController, :link
+    post "/bank_accounts/:id/map", BankAccountController, :map_account
   end
 end
