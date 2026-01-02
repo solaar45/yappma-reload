@@ -50,7 +50,8 @@ defmodule WealthBackendWeb.AccountJSON do
       snapshot_date: snapshot.snapshot_date,
       balance: decimal_to_string(snapshot.balance),
       currency: snapshot.currency,
-      note: snapshot.note,
+      source: snapshot.source,
+      external_reference: snapshot.external_reference,
       account_id: snapshot.account_id
     }
   end
