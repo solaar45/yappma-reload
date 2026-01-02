@@ -37,3 +37,9 @@ config :phoenix, :plug_init_mode, :runtime
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# FinTS Worker configuration
+config :wealth_backend, :fints_worker,
+  base_url: "http://localhost:5000",
+  api_key: "dev-test-key-12345",
+  timeout: 30_000
