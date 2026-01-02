@@ -28,7 +28,12 @@ export default function SnapshotsPage() {
   const { t } = useTranslation();
   const { userId } = useUser();
   const [refreshKey, setRefreshKey] = useState(0);
-  const { snapshots, loading, error } = useSnapshots({ userId: userId!, key: refreshKey });
+  
+  // Don't call useSnapshots if userId is not available yet
+  const { snapshots, loading, error } = useSnapshots({ 
+    userId: userId || 0, 
+    key: refreshKey 
+  });
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -131,7 +136,8 @@ export default function SnapshotsPage() {
     [t, handleSnapshotChanged]
   );
 
-  if (loading) {
+  // Show loading state if userId is not available or data is loading
+  if (!userId || loading) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
