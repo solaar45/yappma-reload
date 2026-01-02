@@ -19,8 +19,9 @@ config :wealth_backend, WealthBackendWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "KHZm0hKHvNlUZVsF8G3xrT8TyHYqb2gMRvZCkLCJVDZiJhxMHNbqzLsJFYqTzHLC",
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:wealth_backend, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:wealth_backend, ~w(--watch)]}
+    # Disabled: Frontend runs on Vite, backend is API-only
+    # esbuild: {Esbuild, :install_and_run, [:wealth_backend, ~w(--sourcemap=inline --watch)]},
+    # tailwind: {Tailwind, :install_and_run, [:wealth_backend, ~w(--watch)]}
   ]
 
 # Enable dev routes for dashboard and mailbox
@@ -34,9 +35,6 @@ config :phoenix, :stacktrace_depth, 20
 
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
-
-# Disable swoosh api client as it is only required for production adapters.
-config :swoosh, :api_client, false
 
 # FinTS Worker configuration
 config :wealth_backend, :fints_worker,
