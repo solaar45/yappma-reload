@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -33,9 +33,45 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
 
   const { testConnection, isLoading: isTesting } = useTestConnection();
 
+  // BLZ validation
+  const blzError = useMemo(() => {
+    if (!blz) return null;
+    if (!/^[0-9]*$/.test(blz)) return 'BLZ must contain only digits';
+    if (blz.length !== 8) return `BLZ must be exactly 8 digits (currently ${blz.length})`;
+    return null;
+  }, [blz]);
+
+  // FinTS URL validation
+  const fintsUrlError = useMemo(() => {
+    if (!fintsUrl) return null;
+    if (!/^https?:\/\/.+/.test(fintsUrl)) return 'URL must start with http:// or https://';
+    return null;
+  }, [fintsUrl]);
+
+  // Form is valid if all required fields filled and no errors
+  const isFormValid = useMemo(() => {
+    return (
+      name.trim() !== '' &&
+      blz.length === 8 &&
+      !blzError &&
+      userId.trim() !== '' &&
+      pin.trim() !== '' &&
+      fintsUrl.trim() !== '' &&
+      !fintsUrlError
+    );
+  }, [name, blz, blzError, userId, pin, fintsUrl, fintsUrlError]);
+
+  const handleBlzChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow digits and max 8 characters
+    if (/^[0-9]*$/.test(value) && value.length <= 8) {
+      setBlz(value);
+    }
+  };
+
   const handleTest = async () => {
-    if (!blz || !userId || !pin || !fintsUrl) {
-      setTestResult({ success: false, message: 'Please fill all fields' });
+    if (!isFormValid) {
+      setTestResult({ success: false, message: 'Please fill all fields correctly' });
       return;
     }
 
@@ -62,8 +98,8 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
   };
 
   const handleCreate = async () => {
-    if (!name || !blz || !userId || !pin || !fintsUrl) {
-      setTestResult({ success: false, message: 'Please fill all fields' });
+    if (!isFormValid) {
+      setTestResult({ success: false, message: 'Please fill all fields correctly' });
       return;
     }
 
@@ -122,7 +158,7 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
 
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">Connection Name</Label>
+            <Label htmlFor="name">Connection Name *</Label>
             <Input
               id="name"
               placeholder="e.g., DKB Checking"
@@ -132,19 +168,27 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="blz">BLZ (Bank Code)</Label>
+            <Label htmlFor="blz" className={blzError ? 'text-destructive' : ''}>
+              BLZ (Bank Code) *
+            </Label>
             <Input
               id="blz"
               placeholder="e.g., 12030000"
-              maxLength={8}
               value={blz}
-              onChange={(e) => setBlz(e.target.value)}
+              onChange={handleBlzChange}
+              className={blzError ? 'border-destructive' : ''}
             />
-            <p className="text-xs text-muted-foreground">Must be exactly 8 digits</p>
+            {blzError ? (
+              <p className="text-xs text-destructive">{blzError}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Must be exactly 8 digits {blz && `(${blz.length}/8)`}
+              </p>
+            )}
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="userId">User ID</Label>
+            <Label htmlFor="userId">User ID *</Label>
             <Input
               id="userId"
               placeholder="Your bank user ID"
@@ -154,7 +198,7 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="pin">PIN</Label>
+            <Label htmlFor="pin">PIN *</Label>
             <Input
               id="pin"
               type="password"
@@ -165,14 +209,21 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="fintsUrl">FinTS URL</Label>
+            <Label htmlFor="fintsUrl" className={fintsUrlError ? 'text-destructive' : ''}>
+              FinTS URL *
+            </Label>
             <Input
               id="fintsUrl"
               placeholder="https://banking-dkb.s-fints-pt-dkb.de/fints30"
               value={fintsUrl}
               onChange={(e) => setFintsUrl(e.target.value)}
+              className={fintsUrlError ? 'border-destructive' : ''}
             />
-            <p className="text-xs text-muted-foreground">Must start with http:// or https://</p>
+            {fintsUrlError ? (
+              <p className="text-xs text-destructive">{fintsUrlError}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Must start with http:// or https://</p>
+            )}
           </div>
 
           {testResult && (
@@ -188,7 +239,11 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleTest} disabled={isTesting || isCreating}>
+          <Button 
+            variant="outline" 
+            onClick={handleTest} 
+            disabled={!isFormValid || isTesting || isCreating}
+          >
             {isTesting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -200,7 +255,7 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
           </Button>
           <Button
             onClick={handleCreate}
-            disabled={isTesting || isCreating || !testResult?.success}
+            disabled={!isFormValid || isTesting || isCreating || !testResult?.success}
           >
             {isCreating ? (
               <>
