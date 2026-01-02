@@ -318,9 +318,9 @@ export function useDeleteAssetSnapshot() {
 }
 
 // Dashboard - Combined hook for dashboard data
-export function useDashboard({ userId, key }: { userId: number; key?: number }) {
-  return useQuery({
-    queryKey: ['dashboard', userId, key],
+export function useDashboard({ userId }: { userId: number }) {
+  const query = useQuery({
+    queryKey: ['dashboard', userId],
     queryFn: async () => {
       // Fetch accounts with snapshots
       const accountsResponse = await apiClient.get<{ data: Account[] }>('accounts');
@@ -351,11 +351,17 @@ export function useDashboard({ userId, key }: { userId: number; key?: number }) 
     },
     enabled: !!userId,
   });
+
+  return {
+    data: query.data,
+    loading: query.isLoading,
+    error: query.error,
+  };
 }
 
 // Snapshots - Combined hook for snapshots page
 export function useSnapshots({ userId, key }: { userId: number; key?: number }) {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['snapshots', 'all', userId, key],
     queryFn: async () => {
       try {
@@ -415,6 +421,12 @@ export function useSnapshots({ userId, key }: { userId: number; key?: number }) 
     },
     enabled: !!userId,
   });
+
+  return {
+    snapshots: query.data,
+    loading: query.isLoading,
+    error: query.error,
+  };
 }
 
 export function useDashboardNetWorth() {
