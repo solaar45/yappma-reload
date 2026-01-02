@@ -16,33 +16,38 @@ user = Repo.one(from u in User, limit: 1) ||
 
 IO.puts("Using user_id: #{user.id}")
 
+# Check if institutions already exist
+dkb_exists = Repo.exists?(from i in Institution, where: i.name == "DKB (Deutsche Kreditbank)" and i.user_id == ^user.id)
+comdirect_exists = Repo.exists?(from i in Institution, where: i.name == "comdirect bank AG" and i.user_id == ^user.id)
+
 # DKB (Deutsche Kreditbank)
 # BLZ: 12030000, FinTS URL: https://banking-dkb.s-fints-pt-dkb.de/fints30
-Repo.insert!(
-  %Institution{
+unless dkb_exists do
+  Repo.insert!(%Institution{
     name: "DKB (Deutsche Kreditbank)",
     type: "bank",
     country: "DE",
     user_id: user.id
-  },
-  on_conflict: :nothing,
-  conflict_target: [:name, :user_id]
-)
+  })
+  IO.puts("✅ DKB added")
+else
+  IO.puts("ℹ️ DKB already exists")
+end
 
 # comdirect
 # BLZ: 20041155, FinTS URL: https://fints.comdirect.de/fints
-Repo.insert!(
-  %Institution{
+unless comdirect_exists do
+  Repo.insert!(%Institution{
     name: "comdirect bank AG",
     type: "bank",
     country: "DE",
     user_id: user.id
-  },
-  on_conflict: :nothing,
-  conflict_target: [:name, :user_id]
-)
+  })
+  IO.puts("✅ comdirect added")
+else
+  IO.puts("ℹ️ comdirect already exists")
+end
 
-IO.puts("✅ FinTS banks seeded (DKB, comdirect)")
 IO.puts("")
 IO.puts("Bank Details:")
 IO.puts("  DKB: BLZ 12030000, FinTS URL: https://banking-dkb.s-fints-pt-dkb.de/fints30")
