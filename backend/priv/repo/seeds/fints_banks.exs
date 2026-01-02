@@ -4,28 +4,38 @@
 alias WealthBackend.Repo
 alias WealthBackend.Institutions.Institution
 
+# Note: Institutions require a user_id
+# You need to create a user first, or use an existing one
+# For testing, we'll use user_id = 1 (create a user first if needed)
+
 # DKB (Deutsche Kreditbank)
-{:ok, _dkb} = Repo.insert(
+# BLZ: 12030000, FinTS URL: https://banking-dkb.s-fints-pt-dkb.de/fints30
+Repo.insert!(
   %Institution{
     name: "DKB (Deutsche Kreditbank)",
-    type: :bank,
+    type: "bank",
     country: "DE",
-    website: "https://www.dkb.de",
-    notes: "BLZ: 12030000, FinTS URL: https://banking-dkb.s-fints-pt-dkb.de/fints30"
+    user_id: 1
   },
-  on_conflict: :nothing
+  on_conflict: :nothing,
+  conflict_target: [:name, :user_id]
 )
 
 # comdirect
-{:ok, _comdirect} = Repo.insert(
+# BLZ: 20041155, FinTS URL: https://fints.comdirect.de/fints
+Repo.insert!(
   %Institution{
     name: "comdirect bank AG",
-    type: :bank,
+    type: "bank",
     country: "DE",
-    website: "https://www.comdirect.de",
-    notes: "BLZ: 20041155, FinTS URL: https://fints.comdirect.de/fints"
+    user_id: 1
   },
-  on_conflict: :nothing
+  on_conflict: :nothing,
+  conflict_target: [:name, :user_id]
 )
 
 IO.puts("✅ FinTS banks seeded (DKB, comdirect)")
+IO.puts("")
+IO.puts("Bank Details:")
+IO.puts("  DKB: BLZ 12030000, FinTS URL: https://banking-dkb.s-fints-pt-dkb.de/fints30")
+IO.puts("  comdirect: BLZ 20041155, FinTS URL: https://fints.comdirect.de/fints")
