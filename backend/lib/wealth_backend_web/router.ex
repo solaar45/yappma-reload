@@ -32,7 +32,24 @@ defmodule WealthBackendWeb.Router do
     # Asset Types (global, read-only)
     get "/asset_types", AssetTypeController, :index
     
-    # Snapshots (alias for account_snapshots for frontend compatibility)
+    # Snapshots - Frontend expects nested routes
+    # Account Snapshots (nested under /snapshots for frontend)
+    get "/snapshots/accounts", AccountSnapshotController, :index
+    post "/snapshots/accounts", AccountSnapshotController, :create
+    get "/snapshots/accounts/:id", AccountSnapshotController, :show
+    put "/snapshots/accounts/:id", AccountSnapshotController, :update
+    patch "/snapshots/accounts/:id", AccountSnapshotController, :update
+    delete "/snapshots/accounts/:id", AccountSnapshotController, :delete
+    
+    # Asset Snapshots (nested under /snapshots for frontend)
+    get "/snapshots/assets", AssetSnapshotController, :index
+    post "/snapshots/assets", AssetSnapshotController, :create
+    get "/snapshots/assets/:id", AssetSnapshotController, :show
+    put "/snapshots/assets/:id", AssetSnapshotController, :update
+    patch "/snapshots/assets/:id", AssetSnapshotController, :update
+    delete "/snapshots/assets/:id", AssetSnapshotController, :delete
+    
+    # Legacy snapshot routes (for backward compatibility)
     get "/snapshots", AccountSnapshotController, :index
     post "/snapshots", AccountSnapshotController, :create
     get "/snapshots/:id", AccountSnapshotController, :show
@@ -40,10 +57,8 @@ defmodule WealthBackendWeb.Router do
     patch "/snapshots/:id", AccountSnapshotController, :update
     delete "/snapshots/:id", AccountSnapshotController, :delete
     
-    # Account Snapshots (original route)
+    # Original flat routes (for backward compatibility)
     resources "/account_snapshots", AccountSnapshotController, except: [:new, :edit]
-    
-    # Asset Snapshots
     resources "/asset_snapshots", AssetSnapshotController, except: [:new, :edit]
     
     # Institutions
