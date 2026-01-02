@@ -3,13 +3,21 @@ defmodule WealthBackendWeb.AssetSnapshotController do
 
   alias WealthBackend.Analytics
   alias WealthBackend.Analytics.AssetSnapshot
+  alias WealthBackend.Portfolio
 
   action_fallback WealthBackendWeb.FallbackController
 
-  # List all asset snapshots for current user (latest per asset)
+  # List all asset snapshots for current user
   def index(conn, %{}) do
     user_id = conn.assigns.current_user_id
-    snapshots = Analytics.get_latest_asset_snapshots(user_id)
+    
+    # Get all assets for this user
+    assets = Portfolio.list_assets(user_id)
+    asset_ids = Enum.map(assets, & &1.id)
+    
+    # Get all snapshots for these assets, ordered by date desc
+    snapshots = Analytics.list_asset_snapshots_by_user(asset_ids)
+    
     render(conn, :index, snapshots: snapshots)
   end
 
@@ -19,7 +27,7 @@ defmodule WealthBackendWeb.AssetSnapshotController do
     render(conn, :index, snapshots: snapshots)
   end
 
-  # Accept asset_snapshot key (from frontend)
+  # Accept asset_snapshot key
   def create(conn, %{"asset_snapshot" => snapshot_params}) do
     with {:ok, %AssetSnapshot{} = snapshot} <- Analytics.create_asset_snapshot(snapshot_params) do
       conn
