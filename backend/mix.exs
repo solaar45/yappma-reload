@@ -64,7 +64,8 @@ defmodule WealthBackend.MixProject do
       {:tesla, "~> 1.8"},
       # Auth & Encryption (Phase 2B)
       {:joken, "~> 2.6"},
-      {:cloak_ecto, "~> 1.3"}
+      {:cloak_ecto, "~> 1.3"},
+      {:bcrypt_elixir, "~> 3.0"}
     ]
   end
 

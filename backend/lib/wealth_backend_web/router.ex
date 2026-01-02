@@ -14,6 +14,10 @@ defmodule WealthBackendWeb.Router do
 
     # Public endpoints
     get "/health", HealthController, :index
+    
+    # Auth endpoints
+    post "/auth/register", AuthController, :register
+    post "/auth/login", AuthController, :login
   end
 
   scope "/api", WealthBackendWeb do
