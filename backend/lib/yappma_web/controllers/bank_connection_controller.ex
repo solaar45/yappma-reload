@@ -1,0 +1,157 @@
+defmodule YappmaWeb.BankConnectionController do
+  use YappmaWeb, :controller
+
+  alias Yappma.BankConnections
+
+  action_fallback YappmaWeb.FallbackController
+
+  @doc """
+  GET /api/bank_connections/banks
+  Lists all available banks (ASPSPs)
+  """
+  def list_banks(conn, _params) do
+    case BankConnections.list_banks() do
+      {:ok, banks} ->
+        json(conn, banks)
+
+      {:error, reason} ->
+        conn
+        |> put_status(:service_unavailable)
+        |> json(%{error: "Failed to load banks", reason: inspect(reason)})
+    end
+  end
+
+  @doc """
+  GET /api/bank_connections/banks/:id
+  Get details for a specific bank
+  """
+  def get_bank(conn, %{"id" => aspsp_id}) do
+    case BankConnections.get_bank(aspsp_id) do
+      {:ok, bank} ->
+        json(conn, bank)
+
+      {:error, reason} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Bank not found", reason: inspect(reason)})
+    end
+  end
+
+  @doc """
+  POST /api/bank_connections/consents
+  Initiates a new consent request
+  
+  Body:
+    - aspsp_id: Bank identifier
+    - redirect_url: Callback URL after authorization
+  """
+  def create_consent(conn, %{"aspsp_id" => aspsp_id, "redirect_url" => redirect_url}) do
+    user_id = conn.assigns.current_user.id
+
+    case BankConnections.initiate_consent(user_id, aspsp_id, redirect_url: redirect_url) do
+      {:ok, consent_data} ->
+        conn
+        |> put_status(:created)
+        |> json(consent_data)
+
+      {:error, reason} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Failed to create consent", reason: inspect(reason)})
+    end
+  end
+
+  @doc """
+  GET /api/bank_connections/consents
+  Lists all consents for the current user
+  """
+  def list_consents(conn, _params) do
+    user_id = conn.assigns.current_user.id
+    consents = BankConnections.list_user_consents(user_id)
+    json(conn, consents)
+  end
+
+  @doc """
+  GET /api/bank_connections/consents/:id
+  Gets consent status
+  """
+  def get_consent(conn, %{"id" => consent_id}) do
+    case BankConnections.get_consent_status(consent_id) do
+      {:ok, status} ->
+        json(conn, status)
+
+      {:error, reason} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Consent not found", reason: inspect(reason)})
+    end
+  end
+
+  @doc """
+  POST /api/bank_connections/consents/:id/complete
+  Completes consent after user authorization
+  """
+  def complete_consent(conn, %{"id" => consent_id} = params) do
+    auth_code = params["authorization_code"]
+
+    case BankConnections.complete_consent(consent_id, auth_code) do
+      {:ok, result} ->
+        json(conn, result)
+
+      {:error, reason} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Failed to complete consent", reason: inspect(reason)})
+    end
+  end
+
+  @doc """
+  DELETE /api/bank_connections/consents/:id
+  Revokes a consent
+  """
+  def delete_consent(conn, %{"id" => consent_id}) do
+    case BankConnections.revoke_consent(consent_id) do
+      {:ok, _result} ->
+        send_resp(conn, :no_content, "")
+
+      {:error, reason} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Failed to revoke consent", reason: inspect(reason)})
+    end
+  end
+
+  @doc """
+  GET /api/bank_connections/consents/:id/accounts
+  Lists accounts for a consent
+  """
+  def list_accounts(conn, %{"id" => consent_id}) do
+    case BankConnections.list_accounts(consent_id) do
+      {:ok, accounts} ->
+        json(conn, accounts)
+
+      {:error, reason} ->
+        conn
+        |> put_status(:service_unavailable)
+        |> json(%{error: "Failed to load accounts", reason: inspect(reason)})
+    end
+  end
+
+  @doc """
+  POST /api/bank_connections/consents/:id/sync
+  Syncs accounts and transactions
+  """
+  def sync_accounts(conn, %{"id" => consent_id}) do
+    user_id = conn.assigns.current_user.id
+
+    case BankConnections.sync_accounts(user_id, consent_id) do
+      {:ok, stats} ->
+        json(conn, stats)
+
+      {:error, reason} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Failed to sync accounts", reason: inspect(reason)})
+    end
+  end
+end
