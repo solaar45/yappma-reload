@@ -15,7 +15,8 @@ defmodule WealthBackendWeb.AccountSnapshotJSON do
       snapshot_date: snapshot.snapshot_date,
       balance: to_string(snapshot.balance),
       currency: snapshot.currency,
-      note: snapshot.note,
+      source: snapshot.source,
+      external_reference: snapshot.external_reference,
       account_id: snapshot.account_id,
       inserted_at: snapshot.inserted_at,
       updated_at: snapshot.updated_at

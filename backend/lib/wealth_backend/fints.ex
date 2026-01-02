@@ -6,7 +6,6 @@ defmodule WealthBackend.FinTS do
   import Ecto.Query, warn: false
   alias WealthBackend.Repo
   alias WealthBackend.FinTS.{BankConnection, BankAccount}
-  alias WealthBackend.Accounts.Account
   alias WealthBackend.Analytics.AccountSnapshot
 
   ## Bank Connections
