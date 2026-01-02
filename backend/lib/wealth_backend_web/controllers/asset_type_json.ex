@@ -11,7 +11,7 @@ defmodule WealthBackendWeb.AssetTypeJSON do
   defp data(%AssetType{} = asset_type) do
     %{
       id: asset_type.id,
-      name: asset_type.name,
+      code: asset_type.code,
       description: asset_type.description
     }
   end
