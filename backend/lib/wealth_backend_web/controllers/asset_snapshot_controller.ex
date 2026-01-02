@@ -6,6 +6,14 @@ defmodule WealthBackendWeb.AssetSnapshotController do
 
   action_fallback WealthBackendWeb.FallbackController
 
+  # List all asset snapshots for current user (latest per asset)
+  def index(conn, %{}) do
+    user_id = conn.assigns.current_user_id
+    snapshots = Analytics.get_latest_asset_snapshots(user_id)
+    render(conn, :index, snapshots: snapshots)
+  end
+
+  # List snapshots for a specific asset
   def index(conn, %{"asset_id" => asset_id}) do
     snapshots = Analytics.list_asset_snapshots(asset_id)
     render(conn, :index, snapshots: snapshots)
