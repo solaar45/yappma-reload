@@ -6,6 +6,7 @@ defmodule WealthBackend.Analytics.AccountSnapshot do
 
   schema "account_snapshots" do
     field :balance, :decimal
+    field :currency, :string
     field :snapshot_date, :date
     field :source, Ecto.Enum, values: @source_values, default: :manual
     field :external_reference, :string
@@ -18,8 +19,8 @@ defmodule WealthBackend.Analytics.AccountSnapshot do
   @doc false
   def changeset(account_snapshot, attrs) do
     account_snapshot
-    |> cast(attrs, [:balance, :snapshot_date, :account_id, :source, :external_reference])
-    |> validate_required([:balance, :snapshot_date, :account_id])
+    |> cast(attrs, [:balance, :currency, :snapshot_date, :account_id, :source, :external_reference])
+    |> validate_required([:balance, :currency, :snapshot_date, :account_id])
     |> validate_inclusion(:source, @source_values)
     |> foreign_key_constraint(:account_id)
     |> unique_constraint([:account_id, :snapshot_date],
