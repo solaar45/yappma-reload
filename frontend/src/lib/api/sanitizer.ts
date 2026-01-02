@@ -26,19 +26,27 @@ export function escapeHtml(unsafe: string): string {
 
 /**
  * Sanitize URL/endpoint path
- * Only allows alphanumeric, hyphens, underscores, forward slashes
+ * Allows alphanumeric, hyphens, underscores, forward slashes, and query parameters
  */
 export function sanitizeEndpoint(endpoint: string): string {
   // Remove leading/trailing slashes
   const cleaned = endpoint.replace(/^\/+|\/+$/g, '');
   
-  // Only allow safe characters
-  const sanitized = cleaned.replace(/[^a-zA-Z0-9\-_\/]/g, '');
+  // Split into path and query string
+  const [path, ...queryParts] = cleaned.split('?');
+  const queryString = queryParts.join('?'); // Rejoin in case there were multiple ?
   
-  // Prevent path traversal
-  const parts = sanitized.split('/').filter(part => part !== '..' && part !== '.');
+  // Sanitize path - only allow safe characters
+  const sanitizedPath = path.replace(/[^a-zA-Z0-9\-_\/]/g, '');
   
-  return parts.join('/');
+  // Prevent path traversal in path
+  const parts = sanitizedPath.split('/').filter(part => part !== '..' && part !== '.');
+  const finalPath = parts.join('/');
+  
+  // Sanitize query string - allow =, &, and alphanumeric
+  const sanitizedQuery = queryString ? queryString.replace(/[^a-zA-Z0-9\-_=&]/g, '') : '';
+  
+  return sanitizedQuery ? `${finalPath}?${sanitizedQuery}` : finalPath;
 }
 
 /**
