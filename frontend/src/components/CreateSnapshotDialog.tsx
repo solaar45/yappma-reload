@@ -136,17 +136,20 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
     try {
       console.log('Fetching existing snapshot for entity:', formData.entity_id, 'date:', formData.snapshot_date);
       
-      // Fetch all snapshots for this entity
-      let response;
-      if (snapshotType === 'account') {
-        response = await apiClient.get(`/accounts/${formData.entity_id}`);
-      } else {
-        response = await apiClient.get(`/assets/${formData.entity_id}`);
-      }
+      // Fetch entity with snapshots
+      const response: any = await apiClient.get(
+        snapshotType === 'account' 
+          ? `/accounts/${formData.entity_id}`
+          : `/assets/${formData.entity_id}`
+      );
 
-      const entity = response as any;
-      const snapshots = entity.snapshots || [];
+      console.log('Full response:', response);
       
+      // API wraps response in { data: {...} }
+      const entity = response.data || response;
+      console.log('Entity:', entity);
+      
+      const snapshots = entity.snapshots || [];
       console.log('Found snapshots:', snapshots);
       
       // Find the snapshot for this date
@@ -166,6 +169,14 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
         setShowDuplicateDialog(true);
       } else {
         console.error('Could not find existing snapshot for date:', formData.snapshot_date);
+        // Show dialog anyway with generic message
+        setExistingSnapshot({
+          id: 0,
+          snapshot_date: formData.snapshot_date,
+          snapshot_type: snapshotType,
+          entity_name: entity.name || 'Unknown',
+        } as CombinedSnapshot);
+        setShowDuplicateDialog(true);
       }
     } catch (err) {
       console.error('Failed to fetch existing snapshot:', err);
@@ -175,10 +186,16 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
   const handleEditExisting = () => {
     setShowDuplicateDialog(false);
     setOpen(false);
-    // Small delay to let dialogs close before opening edit
-    setTimeout(() => {
-      setShowEditDialog(true);
-    }, 100);
+    
+    // If we have a real snapshot with ID, open edit dialog
+    if (existingSnapshot && existingSnapshot.id > 0) {
+      setTimeout(() => {
+        setShowEditDialog(true);
+      }, 100);
+    } else {
+      // No snapshot found, just inform user
+      console.log('Cannot edit - snapshot details not found');
+    }
   };
 
   const handleEditSuccess = () => {
@@ -334,22 +351,28 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
               A snapshot for <strong>{existingSnapshot?.entity_name}</strong> on{' '}
               <strong>{existingSnapshot?.snapshot_date}</strong> already exists.
               <br /><br />
-              Would you like to edit the existing snapshot instead?
+              {existingSnapshot && existingSnapshot.id > 0 ? (
+                'Would you like to edit the existing snapshot instead?'
+              ) : (
+                'Please delete the existing snapshot first or choose a different date.'
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setShowDuplicateDialog(false)}>
-              Cancel
+              {existingSnapshot && existingSnapshot.id > 0 ? 'Cancel' : 'OK'}
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleEditExisting}>
-              Edit Existing
-            </AlertDialogAction>
+            {existingSnapshot && existingSnapshot.id > 0 && (
+              <AlertDialogAction onClick={handleEditExisting}>
+                Edit Existing
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Edit Dialog (triggered when user chooses to edit) */}
-      {existingSnapshot && showEditDialog && (
+      {existingSnapshot && existingSnapshot.id > 0 && showEditDialog && (
         <EditSnapshotDialog
           snapshot={existingSnapshot}
           onSuccess={handleEditSuccess}
