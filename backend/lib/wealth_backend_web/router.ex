@@ -30,15 +30,15 @@ defmodule WealthBackendWeb.Router do
     resources "/institutions", InstitutionController, only: [:index, :show]
     
     # Bank Connections (FinTS)
+    post "/bank_connections/test", BankConnectionController, :test
+    
     resources "/bank_connections", BankConnectionController, except: [:new, :edit] do
       post "/fetch_accounts", BankConnectionController, :fetch_accounts
       post "/sync_balances", BankConnectionController, :sync_balances
     end
     
-    post "/bank_connections/test", BankConnectionController, :test_connection
-    
     # Bank Accounts
-    resources "/bank_accounts", BankAccountController, only: [:create]
-    post "/bank_accounts/:id/link", BankAccountController, :link_account
+    resources "/bank_accounts", BankAccountController, only: [:index, :show]
+    post "/bank_accounts/:id/link", BankAccountController, :link
   end
 end
