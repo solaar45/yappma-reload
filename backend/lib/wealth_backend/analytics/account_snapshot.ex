@@ -2,11 +2,13 @@ defmodule WealthBackend.Analytics.AccountSnapshot do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @source_values [:manual, :fints_auto]
+
   schema "account_snapshots" do
-    field :snapshot_date, :date
     field :balance, :decimal
-    field :currency, :string
-    field :note, :string
+    field :snapshot_date, :date
+    field :source, Ecto.Enum, values: @source_values, default: :manual
+    field :external_reference, :string
 
     belongs_to :account, WealthBackend.Accounts.Account
 
@@ -16,9 +18,15 @@ defmodule WealthBackend.Analytics.AccountSnapshot do
   @doc false
   def changeset(account_snapshot, attrs) do
     account_snapshot
-    |> cast(attrs, [:snapshot_date, :balance, :currency, :note, :account_id])
-    |> validate_required([:snapshot_date, :balance, :currency, :account_id])
+    |> cast(attrs, [:balance, :snapshot_date, :account_id, :source, :external_reference])
+    |> validate_required([:balance, :snapshot_date, :account_id])
+    |> validate_inclusion(:source, @source_values)
     |> foreign_key_constraint(:account_id)
-    |> unique_constraint(:snapshot_date, name: :account_snapshots_account_id_snapshot_date_index)
+    |> unique_constraint([:account_id, :snapshot_date],
+      name: :account_snapshots_account_id_snapshot_date_index,
+      message: "Snapshot for this account and date already exists"
+    )
   end
+
+  def source_values, do: @source_values
 end
