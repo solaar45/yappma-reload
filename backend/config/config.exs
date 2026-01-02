@@ -30,16 +30,6 @@ config :wealth_backend,
 # Suppress Tesla deprecated builder warning
 config :tesla, disable_deprecated_builder_warning: true
 
-# Configure esbuild (not used but suppresses warnings)
-config :esbuild,
-  version: "0.25.4",
-  wealth_backend: []
-
-# Configure tailwind (not used but suppresses warnings)
-config :tailwind,
-  version: "4.1.12",
-  wealth_backend: []
-
 # Import environment specific config
 # This must be at the end to allow environment configs to override
 import_config "#{config_env()}.exs"

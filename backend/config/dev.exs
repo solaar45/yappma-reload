@@ -12,10 +12,6 @@ config :wealth_backend, WealthBackend.Repo,
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
-#
-# The watchers configuration can be used to run external
-# watchers to your application. For example, we can use it
-# to bundle .js and .css sources.
 config :wealth_backend, WealthBackendWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
@@ -24,10 +20,7 @@ config :wealth_backend, WealthBackendWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "iJ8VvCLKhEq7Iq8VvCLKhEq7Iq8VvCLKhEq7Iq8VvCLKhEq7Iq8VvCLKhEq7Iq8VvCLKhEq7",
-  watchers: [
-    esbuild: {Esbuild, :install_and_run, [:wealth_backend, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:wealth_backend, ~w(--watch)]}
-  ]
+  watchers: []
 
 # Watch static and templates for browser reloading.
 config :wealth_backend, WealthBackendWeb.Endpoint,
