@@ -129,7 +129,7 @@ defmodule WealthBackend.BankConnections do
 
       # Update sync status
       update_bank_connection(bank_connection, %{
-        last_sync_at: DateTime.utc_now(),
+        last_sync_at: DateTime.utc_now() |> DateTime.truncate(:second),
         sync_count: bank_connection.sync_count + 1,
         status: :active,
         last_error: nil
@@ -164,11 +164,15 @@ defmodule WealthBackend.BankConnections do
       end)
 
     if bank_account && bank_account.account_id && bank_account.auto_import_enabled do
+      # Convert balance to Decimal, handling both float and string
+      balance_decimal = convert_to_decimal(balance.balance)
+
       # Create snapshot
       %AccountSnapshot{}
       |> AccountSnapshot.changeset(%{
         account_id: bank_account.account_id,
-        balance: Decimal.new(balance.balance),
+        balance: balance_decimal,
+        currency: balance.currency,
         snapshot_date: balance.date,
         source: :fints_auto,
         external_reference: balance.iban
@@ -178,6 +182,22 @@ defmodule WealthBackend.BankConnections do
       {:skipped, "No linked account or auto_import disabled"}
     end
   end
+
+  defp convert_to_decimal(value) when is_float(value) do
+    value
+    |> Float.to_string()
+    |> Decimal.new()
+  end
+
+  defp convert_to_decimal(value) when is_integer(value) do
+    Decimal.new(value)
+  end
+
+  defp convert_to_decimal(value) when is_binary(value) do
+    Decimal.new(value)
+  end
+
+  defp convert_to_decimal(%Decimal{} = value), do: value
 
   # TODO: Implement proper encryption/decryption with Cloak
   defp decrypt_field(encrypted_binary) when is_binary(encrypted_binary) do
