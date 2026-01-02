@@ -18,6 +18,17 @@ defmodule WealthBackend.Analytics do
     |> Repo.all()
   end
 
+  @doc """
+  List all account snapshots for given account IDs, ordered by date desc.
+  Used for displaying all snapshots history in the Snapshots page.
+  """
+  def list_account_snapshots_by_user(account_ids) when is_list(account_ids) do
+    AccountSnapshot
+    |> where([s], s.account_id in ^account_ids)
+    |> order_by([s], desc: s.snapshot_date)
+    |> Repo.all()
+  end
+
   def get_account_snapshot!(id), do: Repo.get!(AccountSnapshot, id)
 
   def create_account_snapshot(attrs \\ %{}) do
@@ -41,6 +52,17 @@ defmodule WealthBackend.Analytics do
   def list_asset_snapshots(asset_id) do
     AssetSnapshot
     |> where([s], s.asset_id == ^asset_id)
+    |> order_by([s], desc: s.snapshot_date)
+    |> Repo.all()
+  end
+
+  @doc """
+  List all asset snapshots for given asset IDs, ordered by date desc.
+  Used for displaying all snapshots history in the Snapshots page.
+  """
+  def list_asset_snapshots_by_user(asset_ids) when is_list(asset_ids) do
+    AssetSnapshot
+    |> where([s], s.asset_id in ^asset_ids)
     |> order_by([s], desc: s.snapshot_date)
     |> Repo.all()
   end
