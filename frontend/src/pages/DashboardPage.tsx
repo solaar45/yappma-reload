@@ -192,12 +192,38 @@ const mockPortfolioPositions: PortfolioPosition[] = [
 export default function DashboardPage() {
   const { t } = useTranslation();
   const { userId } = useUser();
-  const { data, loading, error } = useDashboard({ userId: userId! });
+  
+  // Only call useDashboard if userId is available
+  const { data, loading, error } = useDashboard({ 
+    userId: userId || 0
+  });
+
+  // Show loading state if userId is not available or data is loading
+  if (!userId || loading) {
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+        <div className="grid gap-4 md:gap-6 xl:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 w-32 animate-pulse bg-muted rounded" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-32 animate-pulse bg-muted rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-destructive">{t('dashboard.errorLoading')}: {error.message}</div>
+        <div className="text-destructive">
+          {t('dashboard.errorLoading')}: {String(error)}
+        </div>
       </div>
     );
   }
@@ -213,18 +239,12 @@ export default function DashboardPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="h-8 w-32 animate-pulse bg-muted rounded" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {data ? formatCurrency(data.totalValue) : '€0.00'}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('dashboard.asOf')} {formatDate(new Date().toISOString())}
-                </p>
-              </>
-            )}
+            <div className="text-2xl font-bold">
+              {data ? formatCurrency(data.totalValue) : '€0.00'}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t('dashboard.asOf')} {formatDate(new Date().toISOString())}
+            </p>
           </CardContent>
         </Card>
 
@@ -235,18 +255,12 @@ export default function DashboardPage() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="h-8 w-32 animate-pulse bg-muted rounded" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {data ? formatCurrency(data.accountsValue) : '€0.00'}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {data?.accounts.length || 0} {t('dashboard.accounts')}
-                </p>
-              </>
-            )}
+            <div className="text-2xl font-bold">
+              {data ? formatCurrency(data.accountsValue) : '€0.00'}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {data?.accounts.length || 0} {t('dashboard.accounts')}
+            </p>
           </CardContent>
         </Card>
 
@@ -257,18 +271,12 @@ export default function DashboardPage() {
             <PiggyBank className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="h-8 w-32 animate-pulse bg-muted rounded" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {data ? formatCurrency(data.assetsValue) : '€0.00'}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {data?.assets.length || 0} {t('dashboard.assets')}
-                </p>
-              </>
-            )}
+            <div className="text-2xl font-bold">
+              {data ? formatCurrency(data.assetsValue) : '€0.00'}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {data?.assets.length || 0} {t('dashboard.assets')}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -301,13 +309,7 @@ export default function DashboardPage() {
             <CardTitle>{t('dashboard.recentAccounts')}</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
-            {loading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 animate-pulse bg-muted rounded" />
-                ))}
-              </div>
-            ) : data?.accounts.length ? (
+            {data?.accounts.length ? (
               <div className="space-y-4">
                 {data.accounts.slice(0, 5).map((account) => {
                   const latestSnapshot = account.snapshots?.[0];
@@ -349,13 +351,7 @@ export default function DashboardPage() {
             <CardTitle>{t('dashboard.recentAssets')}</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
-            {loading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 animate-pulse bg-muted rounded" />
-                ))}
-              </div>
-            ) : data?.assets.length ? (
+            {data?.assets.length ? (
               <div className="space-y-4">
                 {data.assets.slice(0, 5).map((asset) => {
                   const latestSnapshot = asset.snapshots?.[0];
@@ -368,7 +364,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-muted-foreground">
                           {asset.asset_type?.description || 'No type'}
                           {latestSnapshot?.quantity && (
-                            <> · {parseFloat(latestSnapshot.quantity).toFixed(2)} {t('assets.units')}</>
+                            <> · {parseFloat(latestSnapshot.quantity).toFixed(2)} {t('assets.units')}</>  
                           )}
                         </p>
                       </div>
