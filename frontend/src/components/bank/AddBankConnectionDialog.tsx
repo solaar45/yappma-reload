@@ -31,7 +31,7 @@ export function AddBankConnectionDialog({ onSuccess }: AddBankConnectionDialogPr
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  const { testConnection, isLoading: isTesting } = useTestConnection();
+  const { mutateAsync: testConnection, isPending: isTesting } = useTestConnection();
 
   // BLZ validation
   const blzError = useMemo(() => {
