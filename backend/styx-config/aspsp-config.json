@@ -1,0 +1,25 @@
+{
+  "aspsps": [
+    {
+      "name": "DKB Bank",
+      "bic": "BYLADEM1001",
+      "aspsp_id": "dkb-bank-de",
+      "logo_url": "https://www.dkb.de/logo.png",
+      "supported_services": ["AIS", "PIS"],
+      "supported_sca_methods": ["REDIRECT"],
+      "xs2a_base_url": "https://xs2a.dkb.de",
+      "production": false,
+      "sandbox_base_url": "https://xs2a-sandbox.dkb.de"
+    },
+    {
+      "name": "Sparkasse",
+      "bic": "MARKDEF1100",
+      "aspsp_id": "sparkasse-de",
+      "logo_url": "https://www.sparkasse.de/logo.png",
+      "supported_services": ["AIS", "PIS"],
+      "supported_sca_methods": ["REDIRECT", "EMBEDDED"],
+      "xs2a_base_url": "https://api.sparkasse.de/xs2a",
+      "production": false
+    }
+  ]
+}

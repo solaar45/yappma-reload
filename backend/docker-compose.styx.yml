@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  styx:
+    image: ghcr.io/petafuel/styx:latest
+    container_name: yappma-styx
+    ports:
+      - "8093:8093"
+    environment:
+      # Database Configuration
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=styx
+      - DB_USER=styx
+      - DB_PASSWORD=styx_password
+      
+      # Styx Configuration
+      - STYX_MODE=sandbox  # Use 'production' for live banking
+      - LOG_LEVEL=INFO
+      
+      # Optional: Add custom ASPSP configurations
+      - ASPSP_CONFIG_PATH=/config/aspsp-config.json
+    
+    volumes:
+      - ./styx-config:/config
+      - styx-logs:/logs
+    
+    depends_on:
+      - postgres
+    
+    networks:
+      - yappma-network
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8093/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: yappma-styx-db
+    environment:
+      - POSTGRES_DB=styx
+      - POSTGRES_USER=styx
+      - POSTGRES_PASSWORD=styx_password
+    volumes:
+      - styx-postgres-data:/var/lib/postgresql/data
+    networks:
+      - yappma-network
+    restart: unless-stopped
+
+volumes:
+  styx-postgres-data:
+  styx-logs:
+
+networks:
+  yappma-network:
+    driver: bridge
