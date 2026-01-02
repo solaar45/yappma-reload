@@ -1,5 +1,6 @@
 defmodule WealthBackendWeb.AuthController do
   use WealthBackendWeb, :controller
+  require Logger
 
   alias WealthBackend.Accounts
   alias WealthBackend.Token
@@ -29,6 +30,8 @@ defmodule WealthBackendWeb.AuthController do
         |> render(:token, token: token, user: user)
 
       {:error, %Ecto.Changeset{} = changeset} ->
+        Logger.error("Registration failed: #{inspect(changeset.errors)}")
+        
         conn
         |> put_status(:unprocessable_entity)
         |> put_view(json: WealthBackendWeb.ChangesetJSON)
