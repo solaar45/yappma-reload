@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger';
 import { sanitizeEndpoint, rateLimiter } from './sanitizer';
+import { authService } from '@/lib/auth';
 
 /**
  * API Error Class
@@ -27,7 +28,7 @@ export class DeduplicationError extends Error {
 }
 
 /**
- * API Client with request cancellation, rate limiting, and sanitization
+ * API Client with JWT auth, request cancellation, rate limiting, and sanitization
  */
 class ApiClient {
   private baseURL: string;
@@ -37,8 +38,19 @@ class ApiClient {
   };
 
   constructor() {
-    this.baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
+    this.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
     logger.info('ApiClient initialized', { baseURL: this.baseURL });
+  }
+
+  /**
+   * Get Authorization header with JWT token
+   */
+  private getAuthHeader(): Record<string, string> {
+    const token = authService.getToken();
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
+    }
+    return {};
   }
 
   /**
@@ -68,7 +80,7 @@ class ApiClient {
    */
   private async request<T>(
     endpoint: string,
-    options: RequestInit & { dedupe?: boolean; skipRateLimit?: boolean } = {}
+    options: RequestInit & { dedupe?: boolean; skipRateLimit?: boolean; skipAuth?: boolean } = {}
   ): Promise<T> {
     // Sanitize endpoint to prevent injection
     const sanitizedEndpoint = sanitizeEndpoint(endpoint);
@@ -116,13 +128,19 @@ class ApiClient {
     const controller = new AbortController();
     this.activeRequests.set(requestKey, controller);
 
-    // Add CSRF token for state-changing requests
-    const csrfToken = this.getCsrfToken();
+    // Build headers
     const headers: HeadersInit = {
       ...this.defaultHeaders,
       ...options.headers,
     };
 
+    // Add JWT Authorization header (skip for auth endpoints)
+    if (!options.skipAuth) {
+      Object.assign(headers, this.getAuthHeader());
+    }
+
+    // Add CSRF token for state-changing requests
+    const csrfToken = this.getCsrfToken();
     if (csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method || '')) {
       (headers as Record<string, string>)['X-CSRF-Token'] = csrfToken;
     }
@@ -139,6 +157,13 @@ class ApiClient {
         headers,
         credentials: 'include', // Include cookies
       });
+
+      // Handle 401 Unauthorized - auto logout
+      if (response.status === 401) {
+        logger.warn('Unauthorized request, clearing auth', { endpoint: sanitizedEndpoint });
+        authService.logout();
+        // Redirect to login will happen via React Router
+      }
 
       // Handle HTTP errors
       if (!response.ok) {
@@ -221,7 +246,7 @@ class ApiClient {
   /**
    * POST request
    */
-  async post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown, options?: RequestInit & { skipAuth?: boolean }): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
