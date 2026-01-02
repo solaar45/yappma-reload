@@ -28,7 +28,7 @@ import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateInstitutionDialog } from '@/components/CreateInstitutionDialog';
 import { EditInstitutionDialog } from '@/components/EditInstitutionDialog';
 import { DeleteInstitutionDialog } from '@/components/DeleteInstitutionDialog';
-import { Building2, Landmark, XCircle, Trash2, Plus } from 'lucide-react';
+import { Building2, Landmark, XCircle, Trash2 } from 'lucide-react';
 import type { ColumnDef, RowSelectionState } from '@tanstack/react-table';
 import type { Institution } from '@/lib/api/types';
 import { apiClient } from '@/lib/api/client';
@@ -247,10 +247,7 @@ export default function InstitutionsPage() {
                   {t('institutions.addFirst')}
                 </p>
               </div>
-              <Button onClick={() => {}} size="lg">
-                <Plus className="mr-2 h-5 w-5" />
-                {t('institutions.createInstitution')}
-              </Button>
+              <CreateInstitutionDialog onSuccess={handleInstitutionChanged} size="lg" />
             </div>
           </CardContent>
         </Card>
