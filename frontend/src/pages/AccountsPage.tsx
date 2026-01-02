@@ -51,6 +51,7 @@ export default function AccountsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [institutionFilter, setInstitutionFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [rowSelection, setRowSelection] = useState({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -85,9 +86,14 @@ export default function AccountsPage() {
       // Type filter
       const matchesType = typeFilter === 'all' || account.type === typeFilter;
       
-      return matchesSearch && matchesInstitution && matchesType;
+      // Status filter
+      const matchesStatus = statusFilter === 'all' ||
+        (statusFilter === 'active' && account.is_active) ||
+        (statusFilter === 'inactive' && !account.is_active);
+      
+      return matchesSearch && matchesInstitution && matchesType && matchesStatus;
     });
-  }, [accounts, searchTerm, institutionFilter, typeFilter]);
+  }, [accounts, searchTerm, institutionFilter, typeFilter, statusFilter]);
 
   // Get selected account IDs
   const selectedAccountIds = useMemo(() => {
@@ -421,6 +427,17 @@ export default function AccountsPage() {
                         {type.replace('_', ' ')}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
