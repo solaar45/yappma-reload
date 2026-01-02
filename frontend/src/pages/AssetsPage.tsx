@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useAssets, useAccounts } from '@/lib/api/hooks';
-import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -31,9 +30,8 @@ import type { Asset } from '@/lib/api/types';
 
 export default function AssetsPage() {
   const { t } = useTranslation();
-  const { userId } = useUser();
-  const { assets, loading, error, refetch } = useAssets({ userId: userId! });
-  const { accounts } = useAccounts();
+  const { data: assets, isLoading: loading, error, refetch } = useAssets();
+  const { data: accounts } = useAccounts();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [accountFilter, setAccountFilter] = useState<string>('all');
