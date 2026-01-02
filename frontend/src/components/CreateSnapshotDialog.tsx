@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useUser } from '@/contexts/UserContext';
 import { useAccounts, useAssets } from '@/lib/api/hooks';
-import { apiClient } from '@/lib/api/client';
+import { apiClient, ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -106,11 +106,11 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
       onSuccess?.();
     } catch (err: any) {
       console.error('Failed to create snapshot:', err);
-      console.log('Error response:', err?.response?.data);
       
-      // Check if it's a duplicate error (422 with unique constraint)
-      if (err?.response?.status === 422) {
-        const errorData = err?.response?.data;
+      // Check if it's an ApiError with 422 status
+      if (err instanceof ApiError && err.status === 422) {
+        const errorData = err.data as any;
+        console.log('Error data:', errorData);
         
         // Check for error_type === 'duplicate' or constraint name contains snapshot unique index
         const isDuplicate = 
@@ -144,7 +144,7 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
         response = await apiClient.get(`/assets/${formData.entity_id}`);
       }
 
-      const entity = response.data;
+      const entity = response as any;
       const snapshots = entity.snapshots || [];
       
       console.log('Found snapshots:', snapshots);
