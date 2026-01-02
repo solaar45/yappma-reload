@@ -49,7 +49,6 @@ const CURRENCIES = [
 ] as const;
 
 export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps) {
-  const { userId } = useUser();
   const { data: institutions, isLoading: institutionsLoading, refetch: refetchInstitutions } = useInstitutions();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -80,6 +79,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
     setLoading(true);
 
     try {
+      // Don't send user_id - backend uses authenticated user from token
       await apiClient.put(`/accounts/${account.id}`, {
         account: {
           name: name.trim(),
@@ -87,7 +87,6 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
           currency,
           institution_id: parseInt(institutionId),
           is_active: isActive,
-          user_id: userId,
         },
       });
 
