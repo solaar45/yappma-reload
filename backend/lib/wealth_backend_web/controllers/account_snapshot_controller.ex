@@ -1,5 +1,6 @@
 defmodule WealthBackendWeb.AccountSnapshotController do
   use WealthBackendWeb, :controller
+  require Logger
 
   alias WealthBackend.Analytics
   alias WealthBackend.Analytics.AccountSnapshot
@@ -15,8 +16,12 @@ defmodule WealthBackendWeb.AccountSnapshotController do
     accounts = Accounts.list_accounts(user_id)
     account_ids = Enum.map(accounts, & &1.id)
     
+    Logger.debug("Fetching snapshots for user #{user_id}, account_ids: #{inspect(account_ids)}")
+    
     # Get all snapshots for these accounts, ordered by date desc
     snapshots = Analytics.list_account_snapshots_by_user(account_ids)
+    
+    Logger.debug("Found #{length(snapshots)} snapshots")
     
     render(conn, :index, snapshots: snapshots)
   end
