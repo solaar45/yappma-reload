@@ -9,6 +9,24 @@ defmodule WealthBackend.FinTS do
   alias WealthBackend.FinTS.{BankConnection, BankAccount}
   alias WealthBackend.Analytics.AccountSnapshot
 
+  ## PIN Encryption
+
+  @doc """
+  Decrypt a PIN from encrypted storage.
+  """
+  def decrypt_pin(encrypted_pin) when is_binary(encrypted_pin) do
+    # For now, simple base64 decode (TODO: use proper encryption)
+    Base.decode64!(encrypted_pin)
+  end
+
+  @doc """
+  Encrypt a PIN for storage.
+  """
+  def encrypt_pin(plain_pin) when is_binary(plain_pin) do
+    # For now, simple base64 encode (TODO: use proper encryption)
+    Base.encode64(plain_pin)
+  end
+
   ## Bank Connections
 
   @doc """
@@ -128,11 +146,14 @@ defmodule WealthBackend.FinTS do
   """
   def upsert_bank_accounts(bank_connection_id, accounts_data) do
     Enum.map(accounts_data, fn account_data ->
-      attrs = Map.put(account_data, :bank_connection_id, bank_connection_id)
+      # Convert string keys to atoms for compatibility
+      attrs = account_data
+        |> Map.new(fn {k, v} -> {String.to_atom(k), v} end)
+        |> Map.put(:bank_connection_id, bank_connection_id)
 
       case Repo.get_by(BankAccount, 
         bank_connection_id: bank_connection_id,
-        iban: account_data.iban
+        iban: attrs.iban
       ) do
         nil -> create_bank_account(attrs)
         existing -> update_bank_account(existing, attrs)
