@@ -61,7 +61,10 @@ defmodule WealthBackend.MixProject do
       {:bandit, "~> 1.5"},
       {:cors_plug, "~> 3.0"},
       # FinTS Integration
-      {:tesla, "~> 1.8"}
+      {:tesla, "~> 1.8"},
+      # Auth & Encryption (Phase 2B)
+      {:joken, "~> 2.6"},
+      {:cloak_ecto, "~> 1.3"}
     ]
   end
 

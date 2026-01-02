@@ -6,8 +6,7 @@ defmodule WealthBackend.FinTS.BankConnection do
     field :name, :string
     field :blz, :string
     field :user_id_fints, :string
-    # TODO: Phase 2B - Replace with WealthBackend.Encrypted.Binary
-    field :pin_encrypted, :binary
+    field :pin_encrypted, WealthBackend.Encrypted.Binary
     field :fints_url, :string
     field :status, :string, default: "active"
     field :last_sync_at, :utc_datetime
@@ -48,15 +47,23 @@ defmodule WealthBackend.FinTS.BankConnection do
     )
   end
 
-  # Phase 2A: Simple binary storage (insecure, for testing only)
-  # Phase 2B: Will be replaced with Cloak encryption
+  # Encrypt PIN using Cloak before storing
   defp encrypt_pin(changeset) do
     case get_change(changeset, :pin) do
       nil -> changeset
       pin when is_binary(pin) ->
-        # WARNING: Storing PIN as plain binary - NOT SECURE!
-        # This is only for Phase 2A testing with mock data
+        # Cloak.Ecto.Binary handles encryption automatically
         put_change(changeset, :pin_encrypted, pin)
     end
   end
+
+  @doc """
+  Decrypts and returns the PIN for FinTS communication.
+  PIN is automatically decrypted by Cloak when accessing pin_encrypted field.
+  """
+  def get_decrypted_pin(%__MODULE__{pin_encrypted: encrypted}) when not is_nil(encrypted) do
+    {:ok, encrypted}
+  end
+
+  def get_decrypted_pin(_), do: {:error, :no_pin}
 end

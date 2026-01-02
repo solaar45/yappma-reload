@@ -6,8 +6,7 @@ defmodule WealthBackendWeb.Router do
   end
 
   pipeline :authenticated do
-    # TODO: Add authentication plug
-    # plug WealthBackendWeb.Plugs.Authenticate
+    plug WealthBackendWeb.Plugs.Authenticate
   end
 
   scope "/api", WealthBackendWeb do

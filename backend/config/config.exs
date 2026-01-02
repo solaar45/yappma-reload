@@ -40,5 +40,20 @@ config :tailwind,
   version: "4.1.12",
   wealth_backend: []
 
+# Cloak Vault for encryption
+config :wealth_backend, WealthBackend.Vault,
+  ciphers: [
+    default: {
+      Cloak.Ciphers.AES.GCM,
+      tag: "AES.GCM.V1",
+      key: Base.decode64!(System.get_env("CLOAK_KEY") || Base.encode64(:crypto.strong_rand_bytes(32))),
+      iv_length: 12
+    }
+  ]
+
+# JWT Secret for token signing
+config :wealth_backend,
+  jwt_secret: System.get_env("JWT_SECRET") || "dev-jwt-secret-change-in-production-#{:crypto.strong_rand_bytes(32) |> Base.encode64()}"
+
 # Import environment specific config
 import_config "#{config_env()}.exs"
