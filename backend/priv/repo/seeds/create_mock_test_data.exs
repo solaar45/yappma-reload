@@ -43,7 +43,7 @@ bank_connection = case Repo.one(from bc in BankConnection, where: bc.name == "Mo
       user_id: user.id,
       institution_id: dkb.id,
       status: :active,
-      last_sync_at: DateTime.utc_now()
+      last_sync_at: DateTime.utc_now() |> DateTime.truncate(:second)
     })
   existing -> existing
 end
