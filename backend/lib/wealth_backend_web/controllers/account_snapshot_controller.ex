@@ -11,6 +11,16 @@ defmodule WealthBackendWeb.AccountSnapshotController do
     render(conn, :index, snapshots: snapshots)
   end
 
+  # Accept account_snapshot key (from frontend)
+  def create(conn, %{"account_snapshot" => snapshot_params}) do
+    with {:ok, %AccountSnapshot{} = snapshot} <- Analytics.create_account_snapshot(snapshot_params) do
+      conn
+      |> put_status(:created)
+      |> render(:show, snapshot: snapshot)
+    end
+  end
+
+  # Accept snapshot key (backward compatibility)
   def create(conn, %{"snapshot" => snapshot_params}) do
     with {:ok, %AccountSnapshot{} = snapshot} <- Analytics.create_account_snapshot(snapshot_params) do
       conn
@@ -19,7 +29,7 @@ defmodule WealthBackendWeb.AccountSnapshotController do
     end
   end
 
-  # Accept direct params (from frontend)
+  # Accept direct params
   def create(conn, params) when is_map(params) do
     with {:ok, %AccountSnapshot{} = snapshot} <- Analytics.create_account_snapshot(params) do
       conn
@@ -33,6 +43,16 @@ defmodule WealthBackendWeb.AccountSnapshotController do
     render(conn, :show, snapshot: snapshot)
   end
 
+  # Accept account_snapshot key
+  def update(conn, %{"id" => id, "account_snapshot" => snapshot_params}) do
+    snapshot = Analytics.get_account_snapshot!(id)
+
+    with {:ok, %AccountSnapshot{} = snapshot} <- Analytics.update_account_snapshot(snapshot, snapshot_params) do
+      render(conn, :show, snapshot: snapshot)
+    end
+  end
+
+  # Accept snapshot key (backward compatibility)
   def update(conn, %{"id" => id, "snapshot" => snapshot_params}) do
     snapshot = Analytics.get_account_snapshot!(id)
 
@@ -41,7 +61,7 @@ defmodule WealthBackendWeb.AccountSnapshotController do
     end
   end
 
-  # Accept direct params (from frontend)
+  # Accept direct params
   def update(conn, %{"id" => id} = params) do
     snapshot = Analytics.get_account_snapshot!(id)
     snapshot_params = Map.drop(params, ["id"])
