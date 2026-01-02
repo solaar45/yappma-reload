@@ -7,13 +7,15 @@ defmodule WealthBackendWeb.BankConnectionController do
   action_fallback WealthBackendWeb.FallbackController
 
   def index(conn, _params) do
-    # TODO: Get user_id from session/auth (Phase 2B)
-    user_id = 1
+    user_id = conn.assigns.current_user_id
     bank_connections = FinTS.list_bank_connections(user_id)
     render(conn, :index, bank_connections: bank_connections)
   end
 
   def create(conn, %{"bank_connection" => bank_connection_params}) do
+    user_id = conn.assigns.current_user_id
+    bank_connection_params = Map.put(bank_connection_params, "user_id", user_id)
+    
     case FinTS.create_bank_connection(bank_connection_params) do
       {:ok, bank_connection} ->
         conn
@@ -30,24 +32,49 @@ defmodule WealthBackendWeb.BankConnectionController do
   end
 
   def show(conn, %{"id" => id}) do
+    user_id = conn.assigns.current_user_id
     bank_connection = FinTS.get_bank_connection!(id)
-    render(conn, :show, bank_connection: bank_connection)
+    
+    # Ensure bank connection belongs to authenticated user
+    if bank_connection.user_id == user_id do
+      render(conn, :show, bank_connection: bank_connection)
+    else
+      conn
+      |> put_status(:forbidden)
+      |> json(%{error: "Access denied"})
+    end
   end
 
   def update(conn, %{"id" => id, "bank_connection" => bank_connection_params}) do
+    user_id = conn.assigns.current_user_id
     bank_connection = FinTS.get_bank_connection!(id)
 
-    with {:ok, %BankConnection{} = bank_connection} <-
-           FinTS.update_bank_connection(bank_connection, bank_connection_params) do
-      render(conn, :show, bank_connection: bank_connection)
+    # Ensure bank connection belongs to authenticated user
+    if bank_connection.user_id == user_id do
+      with {:ok, %BankConnection{} = bank_connection} <-
+             FinTS.update_bank_connection(bank_connection, bank_connection_params) do
+        render(conn, :show, bank_connection: bank_connection)
+      end
+    else
+      conn
+      |> put_status(:forbidden)
+      |> json(%{error: "Access denied"})
     end
   end
 
   def delete(conn, %{"id" => id}) do
+    user_id = conn.assigns.current_user_id
     bank_connection = FinTS.get_bank_connection!(id)
 
-    with {:ok, %BankConnection{}} <- FinTS.delete_bank_connection(bank_connection) do
-      send_resp(conn, :no_content, "")
+    # Ensure bank connection belongs to authenticated user
+    if bank_connection.user_id == user_id do
+      with {:ok, %BankConnection{}} <- FinTS.delete_bank_connection(bank_connection) do
+        send_resp(conn, :no_content, "")
+      end
+    else
+      conn
+      |> put_status(:forbidden)
+      |> json(%{error: "Access denied"})
     end
   end
 
@@ -72,43 +99,51 @@ defmodule WealthBackendWeb.BankConnectionController do
   POST /api/bank_connections/:id/fetch_accounts
   """
   def fetch_accounts(conn, %{"id" => id}) do
+    user_id = conn.assigns.current_user_id
     bank_connection = FinTS.get_bank_connection!(id)
 
-    # Mock implementation for Phase 2A
-    mock_accounts = [
-      %{
-        iban: "DE89370400440532013000",
-        account_number: "532013000",
-        account_name: "Girokonto",
-        bic: "COBADEFFXXX",
-        bank_name: "Commerzbank",
-        currency: "EUR",
-        type: "checking"
-      },
-      %{
-        iban: "DE89370400440532013001",
-        account_number: "532013001",
-        account_name: "Sparkonto",
-        bic: "COBADEFFXXX",
-        bank_name: "Commerzbank",
-        currency: "EUR",
-        type: "savings"
-      }
-    ]
+    # Ensure bank connection belongs to authenticated user
+    if bank_connection.user_id != user_id do
+      conn
+      |> put_status(:forbidden)
+      |> json(%{error: "Access denied"})
+    else
+      # Mock implementation for Phase 2A
+      mock_accounts = [
+        %{
+          iban: "DE89370400440532013000",
+          account_number: "532013000",
+          account_name: "Girokonto",
+          bic: "COBADEFFXXX",
+          bank_name: "Commerzbank",
+          currency: "EUR",
+          type: "checking"
+        },
+        %{
+          iban: "DE89370400440532013001",
+          account_number: "532013001",
+          account_name: "Sparkonto",
+          bic: "COBADEFFXXX",
+          bank_name: "Commerzbank",
+          currency: "EUR",
+          type: "savings"
+        }
+      ]
 
-    # Create/update bank accounts in database
-    case FinTS.upsert_bank_accounts(bank_connection.id, mock_accounts) do
-      results when is_list(results) ->
-        json(conn, %{
-          success: true,
-          accounts: mock_accounts
-        })
+      # Create/update bank accounts in database
+      case FinTS.upsert_bank_accounts(bank_connection.id, mock_accounts) do
+        results when is_list(results) ->
+          json(conn, %{
+            success: true,
+            accounts: mock_accounts
+          })
 
-      _error ->
-        json(conn, %{
-          success: false,
-          error: "Failed to save accounts"
-        })
+        _error ->
+          json(conn, %{
+            success: false,
+            error: "Failed to save accounts"
+          })
+      end
     end
   end
 
@@ -117,41 +152,49 @@ defmodule WealthBackendWeb.BankConnectionController do
   POST /api/bank_connections/:id/sync_balances
   """
   def sync_balances(conn, %{"id" => id}) do
+    user_id = conn.assigns.current_user_id
     bank_connection = FinTS.get_bank_connection!(id)
 
-    # Mock balance data
-    mock_balances = [
-      %{
-        iban: "DE89370400440532013000",
-        balance: 1234.56,
-        currency: "EUR",
-        date: Date.utc_today()
-      },
-      %{
-        iban: "DE89370400440532013001",
-        balance: 5678.90,
-        currency: "EUR",
-        date: Date.utc_today()
-      }
-    ]
+    # Ensure bank connection belongs to authenticated user
+    if bank_connection.user_id != user_id do
+      conn
+      |> put_status(:forbidden)
+      |> json(%{error: "Access denied"})
+    else
+      # Mock balance data
+      mock_balances = [
+        %{
+          iban: "DE89370400440532013000",
+          balance: 1234.56,
+          currency: "EUR",
+          date: Date.utc_today()
+        },
+        %{
+          iban: "DE89370400440532013001",
+          balance: 5678.90,
+          currency: "EUR",
+          date: Date.utc_today()
+        }
+      ]
 
-    case FinTS.create_snapshots_from_balances(bank_connection.id, mock_balances) do
-      {:ok, count} ->
-        FinTS.update_sync_status(bank_connection.id, "active", nil)
+      case FinTS.create_snapshots_from_balances(bank_connection.id, mock_balances) do
+        {:ok, count} ->
+          FinTS.update_sync_status(bank_connection.id, "active", nil)
 
-        json(conn, %{
-          success: true,
-          message: "Balances synced successfully",
-          snapshots_created: count
-        })
+          json(conn, %{
+            success: true,
+            message: "Balances synced successfully",
+            snapshots_created: count
+          })
 
-      {:error, reason} ->
-        FinTS.update_sync_status(bank_connection.id, "error", to_string(reason))
+        {:error, reason} ->
+          FinTS.update_sync_status(bank_connection.id, "error", to_string(reason))
 
-        json(conn, %{
-          success: false,
-          error: to_string(reason)
-        })
+          json(conn, %{
+            success: false,
+            error: to_string(reason)
+          })
+      end
     end
   end
 end
