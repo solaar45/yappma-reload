@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  fints-worker:
+    build: .
+    container_name: yappma-fints-worker
+    ports:
+      - "5000:5000"
+    environment:
+      - FINTS_API_KEY=${FINTS_API_KEY:-dev-key-change-in-production}
+      - PORT=5000
+    restart: unless-stopped
+    networks:
+      - yappma-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/fints/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+networks:
+  yappma-network:
+    external: true
