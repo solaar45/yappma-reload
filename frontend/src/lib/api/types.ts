@@ -26,6 +26,8 @@ export interface AccountSnapshot {
   currency: string;
   note: string | null;
   account_id: number;
+  source?: string;
+  external_reference?: string;
   inserted_at?: string;
   updated_at?: string;
 }
@@ -108,6 +110,65 @@ export interface Asset {
   snapshots?: AssetSnapshot[];
   inserted_at: string;
   updated_at: string;
+}
+
+// FinTS Types
+export interface BankConnection {
+  id: number;
+  name: string;
+  blz: string;
+  user_id_fints: string;
+  fints_url: string;
+  status: 'active' | 'error' | 'inactive';
+  last_sync_at: string | null;
+  error_message: string | null;
+  user_id: number;
+  inserted_at: string;
+  updated_at: string;
+}
+
+export interface BankAccount {
+  id: number;
+  iban: string;
+  account_number: string;
+  account_name: string;
+  bic: string;
+  bank_name: string;
+  currency: string;
+  type: string;
+  bank_connection_id: number;
+  account_id: number | null;
+  account?: Account;
+  inserted_at: string;
+  updated_at: string;
+}
+
+export interface FintsBalance {
+  iban: string;
+  balance: number;
+  currency: string;
+  date: string;
+}
+
+export interface FintsTestResult {
+  success: boolean;
+  message?: string;
+  account_count?: number;
+  error?: string;
+}
+
+export interface FintsFetchAccountsResult {
+  success: boolean;
+  accounts?: Array<{
+    iban: string;
+    account_number: string;
+    account_name: string;
+    bic: string;
+    bank_name: string;
+    currency: string;
+    type: string;
+  }>;
+  error?: string;
 }
 
 export interface NetWorthResponse {
