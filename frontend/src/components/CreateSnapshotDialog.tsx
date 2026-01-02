@@ -52,25 +52,30 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
     setLoading(true);
 
     try {
-      const endpoint = snapshotType === 'account' 
-        ? '/snapshots/accounts' 
-        : '/snapshots/assets';
-
-      const payload = snapshotType === 'account'
-        ? {
+      if (snapshotType === 'account') {
+        // Account snapshot
+        const payload = {
+          account_snapshot: {
             account_id: parseInt(formData.entity_id),
-            balance: formData.value,
+            balance: parseFloat(formData.value),
             currency: formData.currency,
             snapshot_date: formData.snapshot_date,
-          }
-        : {
+            source: 'manual',
+          },
+        };
+        await apiClient.post('/snapshots', payload);
+      } else {
+        // Asset snapshot
+        const payload = {
+          asset_snapshot: {
             asset_id: parseInt(formData.entity_id),
-            value: formData.value,
-            quantity: formData.quantity || undefined,
+            value: parseFloat(formData.value),
+            quantity: formData.quantity ? parseFloat(formData.quantity) : null,
             snapshot_date: formData.snapshot_date,
-          };
-
-      await apiClient.post(endpoint, payload);
+          },
+        };
+        await apiClient.post('/asset_snapshots', payload);
+      }
 
       setOpen(false);
       setFormData({
