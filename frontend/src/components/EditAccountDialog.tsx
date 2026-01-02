@@ -50,7 +50,7 @@ const CURRENCIES = [
 
 export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps) {
   const { userId } = useUser();
-  const { institutions, loading: institutionsLoading, refetch: refetchInstitutions } = useInstitutions({ userId: userId! });
+  const { data: institutions, isLoading: institutionsLoading, refetch: refetchInstitutions } = useInstitutions();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState(account.name);
