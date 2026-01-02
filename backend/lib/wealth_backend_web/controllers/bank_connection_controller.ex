@@ -98,7 +98,7 @@ defmodule WealthBackendWeb.BankConnectionController do
   Fetch accounts from FinTS server.
   POST /api/bank_connections/:id/fetch_accounts
   """
-  def fetch_accounts(conn, %{"id" => id}) do
+  def fetch_accounts(conn, %{"bank_connection_id" => id}) do
     user_id = conn.assigns.current_user_id
     bank_connection = FinTS.get_bank_connection!(id)
 
@@ -151,7 +151,7 @@ defmodule WealthBackendWeb.BankConnectionController do
   Sync balances from FinTS server and create snapshots.
   POST /api/bank_connections/:id/sync_balances
   """
-  def sync_balances(conn, %{"id" => id}) do
+  def sync_balances(conn, %{"bank_connection_id" => id}) do
     user_id = conn.assigns.current_user_id
     bank_connection = FinTS.get_bank_connection!(id)
 
