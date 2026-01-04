@@ -14,6 +14,10 @@ defmodule YappmaWeb.BankConnectionController do
       {:ok, banks} ->
         json(conn, banks)
 
+      {:error, {:request_failed, :econnrefused}} ->
+        # Styx not running - return mock data for UI testing
+        json(conn, mock_banks())
+
       {:error, reason} ->
         conn
         |> put_status(:service_unavailable)
@@ -29,6 +33,18 @@ defmodule YappmaWeb.BankConnectionController do
     case BankConnections.get_bank(aspsp_id) do
       {:ok, bank} ->
         json(conn, bank)
+
+      {:error, {:request_failed, :econnrefused}} ->
+        # Styx not running - return mock data
+        bank = Enum.find(mock_banks(), &(&1.aspsp_id == aspsp_id))
+
+        if bank do
+          json(conn, bank)
+        else
+          conn
+          |> put_status(:not_found)
+          |> json(%{error: "Bank not found"})
+        end
 
       {:error, reason} ->
         conn
@@ -153,5 +169,67 @@ defmodule YappmaWeb.BankConnectionController do
         |> put_status(:unprocessable_entity)
         |> json(%{error: "Failed to sync accounts", reason: inspect(reason)})
     end
+  end
+
+  # Mock banks for UI testing when Styx is unavailable
+  defp mock_banks do
+    [
+      %{
+        aspsp_id: "COBADEFFXXX",
+        name: "Commerzbank",
+        bic: "COBADEFFXXX",
+        logo_url: "https://logo.clearbit.com/commerzbank.de",
+        supported_services: ["accounts", "payments", "funds-confirmations"],
+        supported_sca_methods: ["REDIRECT"]
+      },
+      %{
+        aspsp_id: "DEUTDEFFXXX",
+        name: "Deutsche Bank",
+        bic: "DEUTDEFFXXX",
+        logo_url: "https://logo.clearbit.com/deutsche-bank.de",
+        supported_services: ["accounts", "payments"],
+        supported_sca_methods: ["REDIRECT", "DECOUPLED"]
+      },
+      %{
+        aspsp_id: "HYVEDEMM488",
+        name: "HypoVereinsbank",
+        bic: "HYVEDEMM488",
+        logo_url: "https://logo.clearbit.com/hypovereinsbank.de",
+        supported_services: ["accounts", "payments"],
+        supported_sca_methods: ["REDIRECT"]
+      },
+      %{
+        aspsp_id: "GENODEF1S06",
+        name: "Sparkasse",
+        bic: "GENODEF1S06",
+        logo_url: "https://logo.clearbit.com/sparkasse.de",
+        supported_services: ["accounts", "payments"],
+        supported_sca_methods: ["REDIRECT"]
+      },
+      %{
+        aspsp_id: "BYLADEM1001",
+        name: "Postbank",
+        bic: "BYLADEM1001",
+        logo_url: "https://logo.clearbit.com/postbank.de",
+        supported_services: ["accounts"],
+        supported_sca_methods: ["REDIRECT"]
+      },
+      %{
+        aspsp_id: "DRESDEFF",
+        name: "N26",
+        bic: "DRESDEFF",
+        logo_url: "https://logo.clearbit.com/n26.com",
+        supported_services: ["accounts", "payments"],
+        supported_sca_methods: ["REDIRECT", "DECOUPLED"]
+      },
+      %{
+        aspsp_id: "INGDDEFFXXX",
+        name: "ING",
+        bic: "INGDDEFFXXX",
+        logo_url: "https://logo.clearbit.com/ing.de",
+        supported_services: ["accounts", "payments"],
+        supported_sca_methods: ["REDIRECT"]
+      }
+    ]
   end
 end
