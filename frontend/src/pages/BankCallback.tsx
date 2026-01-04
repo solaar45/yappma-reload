@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { completeConsent } from '../lib/api/bankConnections';
+import { apiClient } from '../lib/api/client';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 export function BankCallback() {
@@ -59,7 +59,10 @@ export function BankCallback() {
 
       // Handle real consent completion
       try {
-        await completeConsent(consentId, authCode || undefined);
+        await apiClient.bankConnections.completeConsent({
+          consentId,
+          authorizationCode: authCode || undefined,
+        });
         setStatus('success');
         setMessage('Autorisierung erfolgreich!');
 
