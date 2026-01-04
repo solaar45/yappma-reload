@@ -51,16 +51,14 @@ export interface SyncResult {
  * Lists all available banks (ASPSPs) configured in Styx
  */
 export async function listBanks(): Promise<Bank[]> {
-  const response = await apiClient.get('bank-connections/banks');
-  return response.data;
+  return await apiClient.get<Bank[]>('bank-connections/banks');
 }
 
 /**
  * Gets details for a specific bank
  */
 export async function getBank(aspspId: string): Promise<Bank> {
-  const response = await apiClient.get(`bank-connections/banks/${aspspId}`);
-  return response.data;
+  return await apiClient.get<Bank>(`bank-connections/banks/${aspspId}`);
 }
 
 /**
@@ -71,11 +69,10 @@ export async function initiateConsent(
   aspspId: string,
   redirectUrl: string
 ): Promise<ConsentInitResponse> {
-  const response = await apiClient.post('bank-connections/consents', {
+  return await apiClient.post<ConsentInitResponse>('bank-connections/consents', {
     aspsp_id: aspspId,
     redirect_url: redirectUrl,
   });
-  return response.data;
 }
 
 /**
@@ -86,29 +83,26 @@ export async function completeConsent(
   consentId: string,
   authCode?: string
 ): Promise<BankConsent> {
-  const response = await apiClient.post(
+  return await apiClient.post<BankConsent>(
     `bank-connections/consents/${consentId}/complete`,
     { authorization_code: authCode }
   );
-  return response.data;
 }
 
 /**
  * Lists all bank consents for current user
  */
 export async function listConsents(): Promise<BankConsent[]> {
-  const response = await apiClient.get('bank-connections/consents');
-  return response.data;
+  return await apiClient.get<BankConsent[]>('bank-connections/consents');
 }
 
 /**
  * Gets consent status
  */
 export async function getConsentStatus(consentId: string): Promise<BankConsent> {
-  const response = await apiClient.get(
+  return await apiClient.get<BankConsent>(
     `bank-connections/consents/${consentId}`
   );
-  return response.data;
 }
 
 /**
@@ -122,18 +116,16 @@ export async function revokeConsent(consentId: string): Promise<void> {
  * Lists accounts accessible via a consent
  */
 export async function listAccounts(consentId: string): Promise<BankAccount[]> {
-  const response = await apiClient.get(
+  return await apiClient.get<BankAccount[]>(
     `bank-connections/consents/${consentId}/accounts`
   );
-  return response.data;
 }
 
 /**
  * Syncs accounts and transactions for a consent
  */
 export async function syncAccounts(consentId: string): Promise<SyncResult> {
-  const response = await apiClient.post(
+  return await apiClient.post<SyncResult>(
     `bank-connections/consents/${consentId}/sync`
   );
-  return response.data;
 }
