@@ -51,6 +51,24 @@ defmodule WealthBackendWeb.Router do
     get "/dashboard/net_worth", DashboardController, :net_worth
     get "/dashboard/account_snapshots", DashboardController, :account_snapshots
     get "/dashboard/asset_snapshots", DashboardController, :asset_snapshots
+
+    # Bank Connections (PSD2 Integration)
+    scope "/bank-connections" do
+      # Banks/ASPSPs
+      get "/banks", BankConnectionController, :list_banks
+      get "/banks/:id", BankConnectionController, :get_bank
+
+      # Consents
+      get "/consents", BankConnectionController, :list_consents
+      post "/consents", BankConnectionController, :create_consent
+      get "/consents/:id", BankConnectionController, :get_consent
+      post "/consents/:id/complete", BankConnectionController, :complete_consent
+      delete "/consents/:id", BankConnectionController, :delete_consent
+
+      # Accounts & Sync
+      get "/consents/:id/accounts", BankConnectionController, :list_accounts
+      post "/consents/:id/sync", BankConnectionController, :sync_accounts
+    end
   end
 
   # Enable LiveDashboard in development
