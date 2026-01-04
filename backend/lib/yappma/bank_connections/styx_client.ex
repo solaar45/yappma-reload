@@ -1,124 +1,107 @@
 defmodule Yappma.BankConnections.StyxClient do
   @moduledoc """
-  HTTP client for Styx PSD2 XS2A API.
+  HTTP client for Styx PSD2 middleware.
   
-  This module handles all communication with the Styx server.
+  Styx provides a unified API for accessing multiple banks via PSD2.
   """
 
   require Logger
 
-  @styx_base_url Application.compile_env(:yappma, :styx_base_url, "http://localhost:8093")
-  @http_client Application.compile_env(:yappma, :http_client, HTTPoison)
+  @base_url Application.compile_env(:yappma, :styx_base_url, "http://localhost:8093")
+
+  # ASPSP (Bank) Management
 
   @doc """
-  Lists all configured ASPSPs (banks).
+  Lists all available ASPSPs (banks) configured in Styx.
   """
   def list_aspsps do
-    with {:ok, response} <- get("/aspsps"),
-         {:ok, body} <- Jason.decode(response.body) do
-      {:ok, body["aspsps"]}
-    end
+    get("/aspsps")
   end
 
   @doc """
-  Gets details for a specific ASPSP.
+  Gets details for a specific ASPSP by ID or BIC.
   """
   def get_aspsp(aspsp_id) do
-    with {:ok, response} <- get("/aspsps/#{aspsp_id}"),
-         {:ok, body} <- Jason.decode(response.body) do
-      {:ok, body}
-    end
+    get("/aspsps/#{aspsp_id}")
   end
 
+  # Consent Management
+
   @doc """
-  Creates a new consent request.
+  Creates a new consent for accessing bank accounts.
   
   ## Parameters
   
     - aspsp_id: Bank identifier
-    - params: Map with consent parameters
-      - redirect_url: Callback URL after authorization
-      - accounts: Optional list of specific IBANs to access
-      - valid_until: Optional expiry date (default: 90 days from now)
+    - redirect_url: URL to redirect user after authorization
+    - opts: Additional options (access scope, validity, etc.)
   """
-  def create_consent(aspsp_id, params) do
+  def create_consent(aspsp_id, redirect_url, opts \\ []) do
     body = %{
-      access: %{
-        accounts: params[:accounts] || [],
-        balances: params[:accounts] || [],
-        transactions: params[:accounts] || [],
-        availableAccounts: if(params[:accounts] == [], do: "allAccounts", else: nil)
-      },
-      recurringIndicator: true,
-      validUntil: params[:valid_until] || calculate_expiry_date(),
-      frequencyPerDay: 4
+      aspspId: aspsp_id,
+      redirectUrl: redirect_url,
+      access: Keyword.get(opts, :access, %{
+        accounts: [],
+        balances: [],
+        transactions: []
+      }),
+      frequencyPerDay: Keyword.get(opts, :frequency_per_day, 4),
+      recurringIndicator: Keyword.get(opts, :recurring, true),
+      validUntil: Keyword.get(opts, :valid_until, default_valid_until())
     }
 
-    headers = [
-      {"PSU-ID", params[:psu_id]},
-      {"TPP-Redirect-URI", params[:redirect_url]}
-    ]
-
-    with {:ok, response} <- post("/consents/#{aspsp_id}", body, headers),
-         {:ok, result} <- Jason.decode(response.body) do
-      {:ok, result}
-    end
+    post("/consents", body)
   end
 
   @doc """
-  Gets consent status.
+  Completes a consent after user authorization.
+  """
+  def complete_consent(consent_id, authorization_code) do
+    body = %{
+      authorizationCode: authorization_code
+    }
+
+    post("/consents/#{consent_id}/complete", body)
+  end
+
+  @doc """
+  Gets the current status of a consent.
   """
   def get_consent_status(consent_id) do
-    with {:ok, response} <- get("/consents/#{consent_id}"),
-         {:ok, body} <- Jason.decode(response.body) do
-      {:ok, body}
-    end
+    get("/consents/#{consent_id}")
   end
 
   @doc """
-  Deletes (revokes) a consent.
+  Revokes a consent.
   """
-  def delete_consent(consent_id) do
-    with {:ok, _response} <- delete("/consents/#{consent_id}") do
-      {:ok, %{status: "revoked"}}
-    end
+  def revoke_consent(consent_id) do
+    delete("/consents/#{consent_id}")
   end
 
+  # Account Information
+
   @doc """
-  Gets all accounts for a consent.
+  Lists all accounts accessible with a consent.
   """
   def get_accounts(consent_id) do
-    headers = [{"Consent-ID", consent_id}]
-
-    with {:ok, response} <- get("/accounts", headers),
-         {:ok, body} <- Jason.decode(response.body) do
-      {:ok, body["accounts"]}
-    end
+    get("/consents/#{consent_id}/accounts")
   end
 
   @doc """
-  Gets detailed account information including balance.
+  Gets detailed information for a specific account.
   """
   def get_account_details(consent_id, account_id) do
-    headers = [{"Consent-ID", consent_id}]
-
-    with {:ok, response} <- get("/accounts/#{account_id}", headers),
-         {:ok, body} <- Jason.decode(response.body) do
-      {:ok, body}
-    end
+    get("/consents/#{consent_id}/accounts/#{account_id}")
   end
 
   @doc """
-  Gets account balance.
+  Gets the balance for an account.
   """
   def get_balance(consent_id, account_id) do
-    headers = [{"Consent-ID", consent_id}]
-
-    with {:ok, response} <- get("/accounts/#{account_id}/balances", headers),
-         {:ok, body} <- Jason.decode(response.body) do
-      {:ok, body["balances"]}
-    end
+    get("/consents/#{consent_id}/accounts/#{account_id}/balances")
   end
+
+  # Transaction Information
 
   @doc """
   Gets transactions for an account.
@@ -127,107 +110,96 @@ defmodule Yappma.BankConnections.StyxClient do
   
     - date_from: Start date (Date)
     - date_to: End date (Date)
-    - booking_status: "booked" | "pending" | "both" (default: "booked")
+    - booking_status: "booked", "pending", or "both"
   """
   def get_transactions(consent_id, account_id, opts \\ []) do
-    headers = [{"Consent-ID", consent_id}]
-    
-    query_params = build_transaction_query(opts)
-    path = "/accounts/#{account_id}/transactions?#{URI.encode_query(query_params)}"
+    query_params =
+      opts
+      |> Enum.map(fn
+        {:date_from, %Date{} = date} -> {"dateFrom", Date.to_iso8601(date)}
+        {:date_to, %Date{} = date} -> {"dateTo", Date.to_iso8601(date)}
+        {:booking_status, status} -> {"bookingStatus", status}
+        {key, value} -> {to_string(key), to_string(value)}
+      end)
+      |> URI.encode_query()
 
-    with {:ok, response} <- get(path, headers),
-         {:ok, body} <- Jason.decode(response.body) do
-      transactions = 
-        body["transactions"]
-        |> Map.get("booked", [])
-        |> Kernel.++(Map.get(body["transactions"], "pending", []))
+    path = "/consents/#{consent_id}/accounts/#{account_id}/transactions"
+    path = if query_params != "", do: "#{path}?#{query_params}", else: path
+
+    get(path)
+  end
+
+  # HTTP Client Implementation
+
+  defp get(path) do
+    url = "#{@base_url}#{path}"
+    
+    Logger.debug("GET #{url}")
+
+    case HTTPoison.get(url, headers()) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        Jason.decode(body)
       
-      {:ok, transactions}
+      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
+        Logger.error("Styx API error: #{code} - #{body}")
+        {:error, {:http_error, code, body}}
+      
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        Logger.error("HTTP request failed: #{inspect(reason)}")
+        {:error, {:request_failed, reason}}
     end
   end
 
-  # Private HTTP helpers
-
-  defp get(path, headers \\ []) do
-    url = "#{@styx_base_url}#{path}"
-    headers = default_headers() ++ headers
-
-    Logger.debug("Styx GET: #{url}")
-    
-    case @http_client.get(url, headers) do
-      {:ok, %{status_code: status} = response} when status in 200..299 ->
-        {:ok, response}
-      
-      {:ok, %{status_code: status, body: body}} ->
-        Logger.error("Styx API error: #{status} - #{body}")
-        {:error, {:http_error, status, body}}
-      
-      {:error, reason} ->
-        Logger.error("Styx connection error: #{inspect(reason)}")
-        {:error, {:connection_error, reason}}
-    end
-  end
-
-  defp post(path, body, headers \\ []) do
-    url = "#{@styx_base_url}#{path}"
-    headers = default_headers() ++ [{"Content-Type", "application/json"}] ++ headers
+  defp post(path, body) do
+    url = "#{@base_url}#{path}"
     json_body = Jason.encode!(body)
-
-    Logger.debug("Styx POST: #{url}")
     
-    case @http_client.post(url, json_body, headers) do
-      {:ok, %{status_code: status} = response} when status in 200..299 ->
-        {:ok, response}
+    Logger.debug("POST #{url}")
+
+    case HTTPoison.post(url, json_body, headers()) do
+      {:ok, %HTTPoison.Response{status_code: code, body: response_body}} when code in 200..299 ->
+        Jason.decode(response_body)
       
-      {:ok, %{status_code: status, body: body}} ->
-        Logger.error("Styx API error: #{status} - #{body}")
-        {:error, {:http_error, status, body}}
+      {:ok, %HTTPoison.Response{status_code: code, body: response_body}} ->
+        Logger.error("Styx API error: #{code} - #{response_body}")
+        {:error, {:http_error, code, response_body}}
       
-      {:error, reason} ->
-        {:error, {:connection_error, reason}}
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        Logger.error("HTTP request failed: #{inspect(reason)}")
+        {:error, {:request_failed, reason}}
     end
   end
 
-  defp delete(path, headers \\ []) do
-    url = "#{@styx_base_url}#{path}"
-    headers = default_headers() ++ headers
-
-    Logger.debug("Styx DELETE: #{url}")
+  defp delete(path) do
+    url = "#{@base_url}#{path}"
     
-    case @http_client.delete(url, headers) do
-      {:ok, %{status_code: status} = response} when status in 200..299 ->
-        {:ok, response}
+    Logger.debug("DELETE #{url}")
+
+    case HTTPoison.delete(url, headers()) do
+      {:ok, %HTTPoison.Response{status_code: code}} when code in 200..299 ->
+        {:ok, %{status: "deleted"}}
       
-      {:error, reason} ->
-        {:error, {:connection_error, reason}}
+      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
+        Logger.error("Styx API error: #{code} - #{body}")
+        {:error, {:http_error, code, body}}
+      
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        Logger.error("HTTP request failed: #{inspect(reason)}")
+        {:error, {:request_failed, reason}}
     end
   end
 
-  defp default_headers do
+  defp headers do
     [
-      {"X-Request-ID", generate_request_id()},
+      {"Content-Type", "application/json"},
       {"Accept", "application/json"}
     ]
   end
 
-  defp generate_request_id do
-    UUID.uuid4()
+  defp default_valid_until do
+    # PSD2 consents are typically valid for 90 days
+    DateTime.utc_now()
+    |> DateTime.add(90, :day)
+    |> DateTime.to_iso8601()
   end
-
-  defp calculate_expiry_date do
-    Date.utc_today()
-    |> Date.add(90)
-    |> Date.to_iso8601()
-  end
-
-  defp build_transaction_query(opts) do
-    %{}
-    |> maybe_add(:dateFrom, opts[:date_from])
-    |> maybe_add(:dateTo, opts[:date_to])
-    |> maybe_add(:bookingStatus, opts[:booking_status] || "booked")
-  end
-
-  defp maybe_add(map, _key, nil), do: map
-  defp maybe_add(map, key, %Date{} = value), do: Map.put(map, key, Date.to_iso8601(value))
-  defp maybe_add(map, key, value), do: Map.put(map, key, value)
 end

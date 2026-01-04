@@ -1,57 +1,52 @@
 defmodule Yappma.BankConnections.ConsentManager do
   @moduledoc """
-  Manages consent lifecycle for bank connections.
-  
-  Stores consent information in the database and handles
-  the OAuth2-like flow for PSD2 account access.
+  Manages bank consent lifecycle:
+  - Creating consent requests
+  - Handling OAuth callbacks
+  - Refreshing consents
+  - Revoking consents
   """
 
-  import Ecto.Query
+  require Logger
   alias Yappma.Repo
-  alias Yappma.BankConnections.StyxClient
   alias Yappma.Accounts.BankConsent
+  alias Yappma.BankConnections.StyxClient
 
   @doc """
-  Creates a new consent request.
+  Creates a new consent request for a user to access a specific bank.
+  
+  Returns the consent record with an authorization URL that the user needs to visit.
   """
-  def create_consent(user_id, aspsp_id, opts) do
-    redirect_url = Keyword.get(opts, :redirect_url)
+  def create_consent(user_id, aspsp_id, opts \\ []) do
+    redirect_url = Keyword.get(opts, :redirect_url, default_redirect_url())
     
-    # Get bank info first
-    {:ok, bank_info} = StyxClient.get_aspsp(aspsp_id)
-    
-    params = %{
-      psu_id: "user_#{user_id}",
-      redirect_url: redirect_url,
-      accounts: Keyword.get(opts, :accounts, []),
-      valid_until: Keyword.get(opts, :valid_until)
-    }
-
-    with {:ok, styx_response} <- StyxClient.create_consent(aspsp_id, params) do
-      # Store consent in database
+    # Get bank details
+    with {:ok, aspsp} <- StyxClient.get_aspsp(aspsp_id),
+         # Create consent request in Styx
+         {:ok, styx_consent} <- StyxClient.create_consent(aspsp_id, redirect_url) do
+      
       consent_attrs = %{
         user_id: user_id,
         aspsp_id: aspsp_id,
-        aspsp_name: bank_info["name"],
-        aspsp_bic: bank_info["bic"],
-        consent_id: styx_response["consentId"],
-        status: "pending",
-        authorization_url: get_in(styx_response, ["_links", "scaRedirect", "href"]),
+        aspsp_name: aspsp["name"],
+        aspsp_bic: aspsp["bic"],
+        consent_id: styx_consent["consentId"],
+        authorization_url: styx_consent["authorizationUrl"],
         redirect_url: redirect_url,
-        valid_until: parse_datetime(styx_response["validUntil"]),
-        access_scope: styx_response["access"]
+        status: "pending",
+        valid_until: parse_valid_until(styx_consent["validUntil"]),
+        access_scope: styx_consent["access"],
+        frequency_per_day: styx_consent["frequencyPerDay"] || 4,
+        recurring_indicator: styx_consent["recurringIndicator"] || true
       }
 
       case BankConsent.create_changeset(consent_attrs) |> Repo.insert() do
         {:ok, consent} ->
-          {:ok, %{
-            id: consent.id,
-            consent_id: consent.consent_id,
-            authorization_url: consent.authorization_url,
-            status: consent.status
-          }}
+          Logger.info("Created consent #{consent.consent_id} for user #{user_id}")
+          {:ok, consent}
         
         {:error, changeset} ->
+          Logger.error("Failed to create consent: #{inspect(changeset.errors)}")
           {:error, changeset}
       end
     end
@@ -62,114 +57,122 @@ defmodule Yappma.BankConnections.ConsentManager do
   """
   def list_user_consents(user_id) do
     BankConsent
-    |> where([c], c.user_id == ^user_id)
-    |> order_by([c], desc: c.inserted_at)
+    |> Ecto.Query.where(user_id: ^user_id)
+    |> Ecto.Query.order_by(desc: :inserted_at)
     |> Repo.all()
   end
 
   @doc """
-  Gets a consent by consent_id.
+  Gets a consent by its Styx consent ID.
   """
   def get_by_consent_id(consent_id) do
     Repo.get_by(BankConsent, consent_id: consent_id)
   end
 
   @doc """
-  Completes consent after user authorization.
+  Completes a consent after the user has authorized it at their bank.
+  
+  This is called after the OAuth callback with the authorization code.
   """
-  def complete_consent(consent_id, _authorization_code) do
-    consent = get_by_consent_id(consent_id)
-
-    if consent do
-      # Check consent status with Styx
-      with {:ok, styx_status} <- StyxClient.get_consent_status(consent_id) do
-        if styx_status["consentStatus"] == "valid" do
-          # Update consent in database
-          consent
-          |> BankConsent.authorize_changeset()
-          |> Repo.update()
-
-          # Fetch accounts to verify access
-          {:ok, accounts} = StyxClient.get_accounts(consent_id)
-          
-          {:ok, %{
-            consent_id: consent_id,
-            consent_status: "valid",
-            accounts: accounts
-          }}
-        else
-          # Update status
-          consent
-          |> Ecto.Changeset.change(%{status: styx_status["consentStatus"]})
-          |> Repo.update()
-
-          {:error, {:consent_not_valid, styx_status["consentStatus"]}}
-        end
-      end
+  def complete_consent(consent_id, authorization_code) do
+    with consent when not is_nil(consent) <- get_by_consent_id(consent_id),
+         {:ok, styx_consent} <- StyxClient.complete_consent(consent_id, authorization_code) do
+      
+      # Update consent with completion data
+      consent
+      |> BankConsent.complete_changeset(%{
+        status: styx_consent["status"],
+        valid_until: parse_valid_until(styx_consent["validUntil"]),
+        access_scope: styx_consent["access"]
+      })
+      |> Repo.update()
     else
-      {:error, :consent_not_found}
+      nil ->
+        {:error, :consent_not_found}
+      
+      {:error, reason} ->
+        # Mark consent as rejected/failed
+        case get_by_consent_id(consent_id) do
+          nil -> {:error, :consent_not_found}
+          consent ->
+            consent
+            |> BankConsent.changeset(%{status: "rejected"})
+            |> Repo.update()
+            {:error, reason}
+        end
     end
   end
 
   @doc """
-  Revokes a consent.
+  Revokes a consent, terminating access to bank accounts.
   """
   def revoke_consent(consent_id) do
-    consent = get_by_consent_id(consent_id)
-
-    if consent do
-      with {:ok, _result} <- StyxClient.delete_consent(consent_id) do
-        consent
-        |> BankConsent.revoke_changeset()
-        |> Repo.update()
-
-        {:ok, %{status: "revoked"}}
-      end
+    with consent when not is_nil(consent) <- get_by_consent_id(consent_id),
+         {:ok, _styx_response} <- StyxClient.revoke_consent(consent_id) do
+      
+      consent
+      |> BankConsent.revoke_changeset()
+      |> Repo.update()
     else
-      {:error, :consent_not_found}
+      nil -> {:error, :consent_not_found}
+      error -> error
     end
   end
 
   @doc """
-  Checks if a consent is still valid.
+  Checks if a consent is still valid and updates its status if needed.
   """
-  def valid_consent?(consent_id) do
-    case get_by_consent_id(consent_id) do
-      %BankConsent{} = consent -> BankConsent.valid?(consent)
-      nil -> false
+  def check_consent_validity(consent) do
+    cond do
+      # Already expired/revoked
+      consent.status in ["expired", "revoked"] ->
+        {:ok, consent}
+      
+      # Check expiration date
+      consent.valid_until && DateTime.compare(consent.valid_until, DateTime.utc_now()) == :lt ->
+        consent
+        |> BankConsent.expire_changeset()
+        |> Repo.update()
+      
+      # Still valid
+      true ->
+        {:ok, consent}
     end
   end
 
   @doc """
-  Gets consent status from Styx and updates database.
+  Refreshes consent status from Styx.
   """
   def refresh_consent_status(consent_id) do
-    consent = get_by_consent_id(consent_id)
-
-    if consent do
-      case StyxClient.get_consent_status(consent_id) do
-        {:ok, styx_status} ->
-          consent
-          |> Ecto.Changeset.change(%{
-            status: styx_status["consentStatus"],
-            last_used_at: DateTime.utc_now()
-          })
-          |> Repo.update()
-
-          {:ok, styx_status}
-        
-        error -> error
-      end
+    with consent when not is_nil(consent) <- get_by_consent_id(consent_id),
+         {:ok, styx_consent} <- StyxClient.get_consent_status(consent_id) do
+      
+      consent
+      |> BankConsent.changeset(%{
+        status: styx_consent["status"],
+        valid_until: parse_valid_until(styx_consent["validUntil"])
+      })
+      |> Repo.update()
     else
-      {:error, :consent_not_found}
+      nil -> {:error, :consent_not_found}
+      error -> error
     end
   end
 
-  defp parse_datetime(nil), do: nil
-  defp parse_datetime(date_string) when is_binary(date_string) do
-    case DateTime.from_iso8601(date_string <> "T00:00:00Z") do
-      {:ok, datetime, _} -> datetime
+  # Private helpers
+
+  defp default_redirect_url do
+    # Get from config or use default
+    Application.get_env(:yappma, :psd2_redirect_url, "http://localhost:5173/bank-callback")
+  end
+
+  defp parse_valid_until(nil), do: nil
+  defp parse_valid_until(datetime_string) when is_binary(datetime_string) do
+    case DateTime.from_iso8601(datetime_string) do
+      {:ok, datetime, _offset} -> datetime
       _ -> nil
     end
   end
+  defp parse_valid_until(%DateTime{} = datetime), do: datetime
+  defp parse_valid_until(_), do: nil
 end

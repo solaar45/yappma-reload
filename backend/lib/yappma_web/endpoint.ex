@@ -27,9 +27,8 @@ defmodule YappmaWeb.Endpoint do
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do
-    socket "/phoenix/live_reload/socket", Phoenix.LiveReload.Socket
-    plug Phoenix.LiveReload
     plug Phoenix.CodeReloader
+    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :yappma
   end
 
   plug Phoenix.LiveDashboard.RequestLogger,
