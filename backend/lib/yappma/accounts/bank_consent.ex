@@ -13,7 +13,8 @@ defmodule Yappma.Accounts.BankConsent do
     field :aspsp_name, :string
     field :aspsp_bic, :string
     
-    field :consent_id, :string
+    # External consent ID from Styx/Bank
+    field :external_id, :string
     field :status, :string, default: "pending"
     
     field :authorization_url, :string
@@ -31,20 +32,20 @@ defmodule Yappma.Accounts.BankConsent do
     timestamps(type: :utc_datetime)
   end
 
-  @statuses ~w(pending valid expired revoked rejected)
+  @statuses ~w(pending authorized valid expired revoked rejected)
 
   @doc false
   def changeset(consent, attrs) do
     consent
     |> cast(attrs, [
       :user_id, :aspsp_id, :aspsp_name, :aspsp_bic,
-      :consent_id, :status, :authorization_url, :redirect_url,
+      :external_id, :status, :authorization_url, :redirect_url,
       :valid_until, :last_used_at, :access_scope,
       :frequency_per_day, :recurring_indicator
     ])
-    |> validate_required([:user_id, :aspsp_id, :consent_id, :status])
+    |> validate_required([:user_id, :aspsp_id, :status])
     |> validate_inclusion(:status, @statuses)
-    |> unique_constraint(:consent_id)
+    |> unique_constraint(:external_id)
     |> foreign_key_constraint(:user_id)
   end
 
@@ -88,7 +89,7 @@ defmodule Yappma.Accounts.BankConsent do
   Checks if a consent is still valid.
   """
   def valid?(consent) do
-    consent.status == "valid" &&
+    consent.status in ["valid", "authorized"] &&
       (consent.valid_until == nil || DateTime.compare(consent.valid_until, DateTime.utc_now()) == :gt)
   end
 
