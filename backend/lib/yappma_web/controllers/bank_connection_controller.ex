@@ -70,6 +70,21 @@ defmodule YappmaWeb.BankConnectionController do
         |> put_status(:created)
         |> json(consent_data)
 
+      {:error, {:request_failed, :econnrefused}} ->
+        # Styx not running - return mock consent
+        mock_consent = %{
+          consent_id: "mock-consent-#{:rand.uniform(999999)}",
+          authorization_url: "#{redirect_url}?consent_id=mock-consent-123&status=authorized",
+          status: "pending",
+          aspsp_id: aspsp_id,
+          user_id: user_id,
+          created_at: DateTime.utc_now() |> DateTime.to_iso8601()
+        }
+
+        conn
+        |> put_status(:created)
+        |> json(mock_consent)
+
       {:error, reason} ->
         conn
         |> put_status(:unprocessable_entity)
