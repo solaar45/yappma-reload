@@ -3,7 +3,6 @@ defmodule YappmaWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
-    plug CORSPlug, origin: ["http://localhost:5173", "http://localhost:3000"]
   end
 
   pipeline :authenticated do
@@ -13,9 +12,6 @@ defmodule YappmaWeb.Router do
 
   scope "/api", YappmaWeb do
     pipe_through :api
-
-    # CORS Preflight - match all OPTIONS requests
-    options "/*path", CORSController, :preflight
 
     # Health check
     get "/health", HealthController, :index
