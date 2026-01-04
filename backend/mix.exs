@@ -35,6 +35,7 @@ defmodule Yappma.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1"},
       {:bandit, "~> 1.5"},
+      {:gettext, "~> 0.20"},
       
       # PSD2/Bank Integration
       {:httpoison, "~> 2.0"},
