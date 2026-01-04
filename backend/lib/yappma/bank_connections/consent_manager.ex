@@ -102,20 +102,19 @@ defmodule Yappma.BankConnections.ConsentManager do
 
       _ ->
         # Create or get test user
-        get_or_create_test_user(user_id)
+        get_or_create_test_user()
     end
   end
 
-  defp get_or_create_test_user(external_id) do
-    case Repo.one(from u in User, where: u.email == ^"test@example.com") do
+  defp get_or_create_test_user do
+    case Repo.one(from u in User, where: u.email == ^"test@yappma.local") do
       nil ->
-        # Create test user
+        # Create test user with correct schema fields
         {:ok, user} =
           %User{}
           |> User.changeset(%{
-            email: "test@example.com",
-            username: "testuser",
-            password: "test123456"
+            name: "Test User",
+            email: "test@yappma.local"
           })
           |> Repo.insert()
 
