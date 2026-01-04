@@ -3,40 +3,22 @@ defmodule Yappma.Repo.Migrations.AddPsd2FieldsToAccounts do
 
   def change do
     alter table(:accounts) do
-      # PSD2 identification
-      add :external_id, :string  # From bank's XS2A API (resourceId)
+      # PSD2 Integration Fields
+      add :external_id, :string  # Styx/Bank account ID
       add :iban, :string
       add :bic, :string
-      
-      # Bank information
       add :bank_name, :string
-      add :bank_logo_url, :text
+      add :account_product, :string  # e.g., "Girokonto", "Sparkonto"
       
-      # Consent reference
-      add :consent_id, references(:bank_consents, 
-        type: :binary_id, 
-        column: :id,
-        on_delete: :nilify_all
-      )
-      
-      # Sync tracking
+      # Sync metadata
       add :last_synced_at, :utc_datetime
       add :sync_enabled, :boolean, default: true
-      add :sync_frequency, :string, default: "daily"  # daily, twice_daily, manual
-      
-      # Account capabilities from PSD2
-      add :supports_transactions, :boolean, default: true
-      add :supports_balances, :boolean, default: true
-      
-      # Product information from bank
-      add :product_name, :string  # e.g., "Girokonto", "Visa Card"
-      add :product_type, :string  # From PSD2 cashAccountType
+      add :bank_consent_id, references(:bank_consents, on_delete: :nilify_all)
     end
 
-    create unique_index(:accounts, [:external_id], where: "external_id IS NOT NULL")
-    create unique_index(:accounts, [:iban], where: "iban IS NOT NULL")
-    create index(:accounts, [:consent_id])
-    create index(:accounts, [:bank_name])
-    create index(:accounts, [:last_synced_at])
+    create index(:accounts, [:external_id])
+    create index(:accounts, [:iban])
+    create index(:accounts, [:bank_consent_id])
+    create unique_index(:accounts, [:external_id, :bank_consent_id], where: "external_id IS NOT NULL")
   end
 end
