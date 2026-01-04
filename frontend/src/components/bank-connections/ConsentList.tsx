@@ -13,6 +13,7 @@ import { BankConsent } from '@/lib/api/types';
 import { formatDistance } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { logger } from '@/lib/logger';
+import { useUser } from '@/contexts/UserContext';
 
 interface ConsentListProps {
   consents: BankConsent[];
@@ -21,12 +22,15 @@ interface ConsentListProps {
 export function ConsentList({ consents }: ConsentListProps) {
   const revokeConsent = useRevokeConsent();
   const syncAccounts = useSyncAccounts();
+  const { refreshBankStatus } = useUser();
 
   const handleSync = async (consentId: string) => {
     logger.info('Syncing consent', { consentId });
     try {
       const result = await syncAccounts.mutateAsync(consentId);
       logger.info('Sync completed', result);
+      // Refresh bank status in UserContext
+      await refreshBankStatus();
     } catch (error) {
       logger.error('Sync failed', error);
     }
@@ -40,6 +44,8 @@ export function ConsentList({ consents }: ConsentListProps) {
     logger.info('Revoking consent', { consentId });
     try {
       await revokeConsent.mutateAsync(consentId);
+      // Refresh bank status in UserContext
+      await refreshBankStatus();
     } catch (error) {
       logger.error('Revoke failed', error);
     }
