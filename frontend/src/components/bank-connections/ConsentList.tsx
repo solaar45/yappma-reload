@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useRevokeConsent, useSyncAccounts } from '@/lib/api/hooks/useBankConnections';
-import { BankConsent } from '@/lib/api/types';
+import type { BankConsent } from '@/lib/api/types';
 import { formatDistance } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { logger } from '@/lib/logger';
