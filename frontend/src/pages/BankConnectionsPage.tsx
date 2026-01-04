@@ -1,47 +1,69 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BankConnectionWizard } from '../components/BankConnections';
-import { CheckCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useConsents } from '@/lib/api/hooks/useBankConnections';
+import { BankSelectionDialog } from '@/components/bank-connections/BankSelectionDialog';
+import { ConsentList } from '@/components/bank-connections/ConsentList';
+import { logger } from '@/lib/logger';
 
 export function BankConnectionsPage() {
-  const navigate = useNavigate();
-  const [showWizard, setShowWizard] = useState(true);
-  const [completed, setCompleted] = useState(false);
+  const [showBankSelection, setShowBankSelection] = useState(false);
+  const { data: consents, isLoading, error } = useConsents();
 
-  const handleClose = () => {
-    setShowWizard(false);
-    navigate('/accounts');
-  };
-
-  const handleComplete = () => {
-    setCompleted(true);
-    // Show success message briefly, then redirect
-    setTimeout(() => {
-      navigate('/accounts');
-    }, 2000);
-  };
-
-  if (completed) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-center">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Konten erfolgreich verbunden!
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Sie werden zur Kontenübersicht weitergeleitet...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  logger.debug('BankConnectionsPage render', { consentsCount: consents?.length });
 
   return (
-    <div className="px-4 sm:px-0">
-      {showWizard && (
-        <BankConnectionWizard onClose={handleClose} onComplete={handleComplete} />
-      )}
+    <div className="container mx-auto py-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Bankverbindungen</h1>
+          <p className="text-muted-foreground mt-2">
+            Verbinde deine Bankkonten über PSD2 für automatische Synchronisation
+          </p>
+        </div>
+        <Button onClick={() => setShowBankSelection(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Bank verbinden
+        </Button>
+      </div>
+
+      {/* Active Connections */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Verbundene Banken</CardTitle>
+          <CardDescription>
+            Verwalte deine aktiven Bankverbindungen und synchronisiere Kontodaten
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Lade Verbindungen...
+            </div>
+          ) : error ? (
+            <div className="text-center py-8 text-destructive">
+              Fehler beim Laden der Verbindungen
+            </div>
+          ) : consents && consents.length > 0 ? (
+            <ConsentList consents={consents} />
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="mb-4">Noch keine Bankverbindungen</p>
+              <Button onClick={() => setShowBankSelection(true)} variant="outline">
+                Erste Bank verbinden
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Bank Selection Dialog */}
+      <BankSelectionDialog
+        open={showBankSelection}
+        onOpenChange={setShowBankSelection}
+      />
     </div>
   );
 }
