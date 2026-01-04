@@ -6,7 +6,6 @@ defmodule WealthBackend.BankConnections.AccountSync do
   """
 
   alias WealthBackend.Repo
-  alias WealthBackend.Accounts
   alias WealthBackend.Accounts.Account
   alias WealthBackend.BankConnections.StyxClient
   alias WealthBackend.Analytics.AccountSnapshot
