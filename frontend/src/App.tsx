@@ -17,12 +17,12 @@ import {
 } from '@/components/ui/sidebar';
 import { useLocation } from 'react-router-dom';
 
-// Main Pages
-import DashboardPage from '@/pages/DashboardPage';
-import AccountsPage from '@/pages/AccountsPage';
-import AssetsPage from '@/pages/AssetsPage';
-import InstitutionsPage from '@/pages/InstitutionsPage';
-import SnapshotsPage from '@/pages/SnapshotsPage';
+// Main Pages - NAMED IMPORTS
+import { DashboardPage } from '@/pages/DashboardPage';
+import { AccountsPage } from '@/pages/AccountsPage';
+import { AssetsPage } from '@/pages/AssetsPage';
+import { InstitutionsPage } from '@/pages/InstitutionsPage';
+import { SnapshotsPage } from '@/pages/SnapshotsPage';
 
 // Bank Connections (PSD2)
 import { BankConnectionsPage } from '@/pages/BankConnectionsPage';
