@@ -8,6 +8,7 @@ defmodule Yappma.BankConnections.ConsentManager do
   """
 
   require Logger
+  import Ecto.Query
   alias Yappma.Repo
   alias Yappma.Accounts.BankConsent
   alias Yappma.BankConnections.StyxClient
@@ -57,8 +58,8 @@ defmodule Yappma.BankConnections.ConsentManager do
   """
   def list_user_consents(user_id) do
     BankConsent
-    |> Ecto.Query.where(user_id: ^user_id)
-    |> Ecto.Query.order_by(desc: :inserted_at)
+    |> where(user_id: ^user_id)
+    |> order_by(desc: :inserted_at)
     |> Repo.all()
   end
 
