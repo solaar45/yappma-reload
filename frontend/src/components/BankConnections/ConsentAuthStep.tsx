@@ -23,6 +23,31 @@ export function ConsentAuthStep({
   const [consentId, setConsentId] = useState<string | null>(null);
   const [polling, setPolling] = useState(false);
 
+  // Listen for messages from popup window
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Verify origin
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      if (event.data.type === 'BANK_AUTH_SUCCESS') {
+        setPolling(false);
+        
+        // For mock consents, directly call onAuthorized
+        if (event.data.mock) {
+          onAuthorized(event.data.consentId);
+        } else {
+          // For real consents, verify status then proceed
+          onAuthorized(event.data.consentId);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onAuthorized]);
+
   const handleInitiateConsent = async () => {
     try {
       setLoading(true);
@@ -41,8 +66,12 @@ export function ConsentAuthStep({
         'width=600,height=800'
       );
 
-      // Start polling for consent status
-      startPolling(response.consent_id);
+      // For mock consents, don't poll (wait for postMessage)
+      if (!response.consent_id.startsWith('mock-consent-')) {
+        startPolling(response.consent_id);
+      } else {
+        setPolling(true); // Show waiting state
+      }
     } catch (err) {
       setError('Consent konnte nicht erstellt werden');
       console.error('Failed to initiate consent:', err);
