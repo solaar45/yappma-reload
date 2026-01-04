@@ -10,7 +10,7 @@
 {:ok, _} = Application.ensure_all_started(:ecto_sql)
 
 # Start the Repo manually if not already started
-Yappma.Repo.start_link()
+WealthBackend.Repo.start_link()
 
 alias WealthBackend.Repo
 alias WealthBackend.Accounts
