@@ -1,18 +1,6 @@
 defmodule YappmaWeb.Router do
   use YappmaWeb, :router
 
-  # Alias WealthBackendWeb controllers to YappmaWeb namespace
-  alias WealthBackendWeb.{
-    UserController,
-    InstitutionController,
-    AccountController,
-    AssetController,
-    AssetTypeController,
-    AccountSnapshotController,
-    AssetSnapshotController,
-    DashboardController
-  }
-
   pipeline :api do
     plug :accepts, ["json"]
   end
@@ -33,52 +21,56 @@ defmodule YappmaWeb.Router do
     # ...
   end
 
-  scope "/api", YappmaWeb do
+  scope "/api" do
     pipe_through [:api, :authenticated]
 
     # Users
-    resources "/users", UserController, except: [:new, :edit]
+    resources "/users", WealthBackendWeb.UserController, except: [:new, :edit]
 
     # Institutions (filtered by user_id via query param)
-    get "/institutions", InstitutionController, :index
-    resources "/institutions", InstitutionController, except: [:new, :edit, :index]
+    get "/institutions", WealthBackendWeb.InstitutionController, :index
+    resources "/institutions", WealthBackendWeb.InstitutionController, except: [:new, :edit, :index]
 
     # Accounts (filtered by user_id via query param)
-    get "/accounts", AccountController, :index
-    resources "/accounts", AccountController, except: [:new, :edit, :index]
+    get "/accounts", WealthBackendWeb.AccountController, :index
+    resources "/accounts", WealthBackendWeb.AccountController, except: [:new, :edit, :index]
 
     # Asset Types
-    resources "/asset_types", AssetTypeController, only: [:index, :show]
+    resources "/asset_types", WealthBackendWeb.AssetTypeController, only: [:index, :show]
 
     # Assets (filtered by user_id via query param)
-    get "/assets", AssetController, :index
-    resources "/assets", AssetController, except: [:new, :edit, :index]
+    get "/assets", WealthBackendWeb.AssetController, :index
+    resources "/assets", WealthBackendWeb.AssetController, except: [:new, :edit, :index]
 
     # Account Snapshots (filtered by account_id via query param)
-    get "/account_snapshots", AccountSnapshotController, :index
-    resources "/account_snapshots", AccountSnapshotController, except: [:new, :edit, :index]
+    get "/account_snapshots", WealthBackendWeb.AccountSnapshotController, :index
+    resources "/account_snapshots", WealthBackendWeb.AccountSnapshotController, except: [:new, :edit, :index]
 
     # Asset Snapshots (filtered by asset_id via query param)
-    get "/asset_snapshots", AssetSnapshotController, :index
-    resources "/asset_snapshots", AssetSnapshotController, except: [:new, :edit, :index]
+    get "/asset_snapshots", WealthBackendWeb.AssetSnapshotController, :index
+    resources "/asset_snapshots", WealthBackendWeb.AssetSnapshotController, except: [:new, :edit, :index]
 
     # Snapshots API (frontend-friendly routes)
     scope "/snapshots" do
       # Account snapshots
-      post "/accounts", AccountSnapshotController, :create
-      put "/accounts/:id", AccountSnapshotController, :update
-      delete "/accounts/:id", AccountSnapshotController, :delete
+      post "/accounts", WealthBackendWeb.AccountSnapshotController, :create
+      put "/accounts/:id", WealthBackendWeb.AccountSnapshotController, :update
+      delete "/accounts/:id", WealthBackendWeb.AccountSnapshotController, :delete
 
       # Asset snapshots  
-      post "/assets", AssetSnapshotController, :create
-      put "/assets/:id", AssetSnapshotController, :update
-      delete "/assets/:id", AssetSnapshotController, :delete
+      post "/assets", WealthBackendWeb.AssetSnapshotController, :create
+      put "/assets/:id", WealthBackendWeb.AssetSnapshotController, :update
+      delete "/assets/:id", WealthBackendWeb.AssetSnapshotController, :delete
     end
 
     # Dashboard / Analytics
-    get "/dashboard/net_worth", DashboardController, :net_worth
-    get "/dashboard/account_snapshots", DashboardController, :account_snapshots
-    get "/dashboard/asset_snapshots", DashboardController, :asset_snapshots
+    get "/dashboard/net_worth", WealthBackendWeb.DashboardController, :net_worth
+    get "/dashboard/account_snapshots", WealthBackendWeb.DashboardController, :account_snapshots
+    get "/dashboard/asset_snapshots", WealthBackendWeb.DashboardController, :asset_snapshots
+  end
+
+  scope "/api", YappmaWeb do
+    pipe_through [:api, :authenticated]
 
     # Bank Connections (PSD2)
     scope "/bank-connections" do
