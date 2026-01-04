@@ -3,6 +3,7 @@ defmodule YappmaWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug CORSPlug, origin: ["http://localhost:5173", "http://localhost:3000"]
   end
 
   pipeline :authenticated do

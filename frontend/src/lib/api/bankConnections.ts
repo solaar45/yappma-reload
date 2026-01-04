@@ -51,7 +51,7 @@ export interface SyncResult {
  * Lists all available banks (ASPSPs) configured in Styx
  */
 export async function listBanks(): Promise<Bank[]> {
-  const response = await apiClient.get('/api/bank_connections/banks');
+  const response = await apiClient.get('bank-connections/banks');
   return response.data;
 }
 
@@ -59,7 +59,7 @@ export async function listBanks(): Promise<Bank[]> {
  * Gets details for a specific bank
  */
 export async function getBank(aspspId: string): Promise<Bank> {
-  const response = await apiClient.get(`/api/bank_connections/banks/${aspspId}`);
+  const response = await apiClient.get(`bank-connections/banks/${aspspId}`);
   return response.data;
 }
 
@@ -71,7 +71,7 @@ export async function initiateConsent(
   aspspId: string,
   redirectUrl: string
 ): Promise<ConsentInitResponse> {
-  const response = await apiClient.post('/api/bank_connections/consents', {
+  const response = await apiClient.post('bank-connections/consents', {
     aspsp_id: aspspId,
     redirect_url: redirectUrl,
   });
@@ -87,7 +87,7 @@ export async function completeConsent(
   authCode?: string
 ): Promise<BankConsent> {
   const response = await apiClient.post(
-    `/api/bank_connections/consents/${consentId}/complete`,
+    `bank-connections/consents/${consentId}/complete`,
     { authorization_code: authCode }
   );
   return response.data;
@@ -97,7 +97,7 @@ export async function completeConsent(
  * Lists all bank consents for current user
  */
 export async function listConsents(): Promise<BankConsent[]> {
-  const response = await apiClient.get('/api/bank_connections/consents');
+  const response = await apiClient.get('bank-connections/consents');
   return response.data;
 }
 
@@ -106,7 +106,7 @@ export async function listConsents(): Promise<BankConsent[]> {
  */
 export async function getConsentStatus(consentId: string): Promise<BankConsent> {
   const response = await apiClient.get(
-    `/api/bank_connections/consents/${consentId}`
+    `bank-connections/consents/${consentId}`
   );
   return response.data;
 }
@@ -115,7 +115,7 @@ export async function getConsentStatus(consentId: string): Promise<BankConsent> 
  * Revokes a consent
  */
 export async function revokeConsent(consentId: string): Promise<void> {
-  await apiClient.delete(`/api/bank_connections/consents/${consentId}`);
+  await apiClient.delete(`bank-connections/consents/${consentId}`);
 }
 
 /**
@@ -123,7 +123,7 @@ export async function revokeConsent(consentId: string): Promise<void> {
  */
 export async function listAccounts(consentId: string): Promise<BankAccount[]> {
   const response = await apiClient.get(
-    `/api/bank_connections/consents/${consentId}/accounts`
+    `bank-connections/consents/${consentId}/accounts`
   );
   return response.data;
 }
@@ -133,7 +133,7 @@ export async function listAccounts(consentId: string): Promise<BankAccount[]> {
  */
 export async function syncAccounts(consentId: string): Promise<SyncResult> {
   const response = await apiClient.post(
-    `/api/bank_connections/consents/${consentId}/sync`
+    `bank-connections/consents/${consentId}/sync`
   );
   return response.data;
 }

@@ -39,6 +39,7 @@ defmodule Yappma.MixProject do
       {:bandit, "~> 1.5"},
       {:gettext, "~> 0.20"},
       {:finch, "~> 0.13"},
+      {:cors_plug, "~> 3.0"},
       
       # PSD2/Bank Integration
       {:httpoison, "~> 2.0"},
