@@ -24,7 +24,7 @@ defmodule YappmaWeb.Router do
     pipe_through [:api, :authenticated]
 
     # Bank Connections (PSD2)
-    scope "/bank_connections" do
+    scope "/bank-connections" do
       # Banks/ASPSPs
       get "/banks", BankConnectionController, :list_banks
       get "/banks/:id", BankConnectionController, :get_bank
