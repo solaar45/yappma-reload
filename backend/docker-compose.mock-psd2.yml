@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  mock-psd2:
+    build:
+      context: ./mock-psd2-server
+      dockerfile: Dockerfile
+    container_name: yappma-mock-psd2
+    ports:
+      - "8093:8093"
+    environment:
+      - NODE_ENV=development
+      - PORT=8093
+    volumes:
+      - ./styx-config:/config:ro
+    networks:
+      - yappma-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8093/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  yappma-network:
+    driver: bridge
