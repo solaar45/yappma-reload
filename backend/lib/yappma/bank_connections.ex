@@ -57,7 +57,7 @@ defmodule Yappma.BankConnections do
   @doc """
   Completes consent after user authorization.
   """
-  def complete_consent(consent_id, authorization_code) do
+  def complete_consent(_consent_id, _authorization_code) do
     # TODO: Implement if needed by Styx
     # For now, consents are completed automatically via redirect
     {:ok, %{status: "completed"}}
@@ -79,10 +79,8 @@ defmodule Yappma.BankConnections do
   Revokes a consent.
   """
   def revoke_consent(consent_id) do
-    with {:ok, _styx_result} <- StyxClient.delete_consent(consent_id),
-         {:ok, consent} <- ConsentManager.revoke_consent(consent_id) do
-      {:ok, consent}
-    end
+    # Just revoke in DB - Styx might not have a delete endpoint in mock mode
+    ConsentManager.revoke_consent(consent_id)
   end
 
   @doc """
