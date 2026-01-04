@@ -28,6 +28,7 @@ defmodule Yappma.MixProject do
       {:phoenix, "~> 1.7"},
       {:phoenix_ecto, "~> 4.6"},
       {:phoenix_html, "~> 4.0"},
+      {:phoenix_live_view, "~> 0.20"},
       {:ecto_sql, "~> 3.12"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_live_dashboard, "~> 0.8"},
@@ -37,6 +38,7 @@ defmodule Yappma.MixProject do
       {:dns_cluster, "~> 0.1"},
       {:bandit, "~> 1.5"},
       {:gettext, "~> 0.20"},
+      {:finch, "~> 0.13"},
       
       # PSD2/Bank Integration
       {:httpoison, "~> 2.0"},
