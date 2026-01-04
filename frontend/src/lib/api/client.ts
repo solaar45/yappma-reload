@@ -1,5 +1,12 @@
 import { logger } from '@/lib/logger';
 import { sanitizeEndpoint, rateLimiter } from './sanitizer';
+import type {
+  Bank,
+  BankConsent,
+  BankAccount,
+  ConsentStatus,
+  SyncResult,
+} from './types';
 
 /**
  * API Error Class
@@ -293,6 +300,94 @@ class ApiClient {
   getActiveRequestCount(): number {
     return this.activeRequests.size;
   }
+
+  // ========================================
+  // Bank Connections API (PSD2)
+  // ========================================
+
+  /**
+   * Bank Connections namespace
+   * Consolidated API methods for PSD2 integration
+   */
+  bankConnections = {
+    /**
+     * List all available banks (ASPSPs)
+     */
+    listBanks: async (): Promise<Bank[]> => {
+      return this.get<Bank[]>('bank-connections/banks');
+    },
+
+    /**
+     * Get details for a specific bank
+     */
+    getBank: async (aspspId: string): Promise<Bank> => {
+      return this.get<Bank>(`bank-connections/banks/${aspspId}`);
+    },
+
+    /**
+     * List all consents for the current user
+     */
+    listConsents: async (): Promise<BankConsent[]> => {
+      return this.get<BankConsent[]>('bank-connections/consents');
+    },
+
+    /**
+     * Create a new consent with a bank
+     */
+    createConsent: async (params: {
+      aspspId: string;
+      redirectUrl: string;
+    }): Promise<{
+      consent_id: string;
+      authorization_url: string;
+      status: string;
+    }> => {
+      return this.post('bank-connections/consents', {
+        aspsp_id: params.aspspId,
+        redirect_url: params.redirectUrl,
+      });
+    },
+
+    /**
+     * Get consent status
+     */
+    getConsentStatus: async (consentId: string): Promise<ConsentStatus> => {
+      return this.get<ConsentStatus>(`bank-connections/consents/${consentId}`);
+    },
+
+    /**
+     * Complete consent after user authorization
+     */
+    completeConsent: async (params: {
+      consentId: string;
+      authorizationCode?: string;
+    }): Promise<{ status: string }> => {
+      return this.post(`bank-connections/consents/${params.consentId}/complete`, {
+        authorization_code: params.authorizationCode,
+      });
+    },
+
+    /**
+     * Revoke a consent
+     */
+    revokeConsent: async (consentId: string): Promise<void> => {
+      return this.delete(`bank-connections/consents/${consentId}`);
+    },
+
+    /**
+     * List accounts for a consent
+     */
+    listAccounts: async (consentId: string): Promise<BankAccount[]> => {
+      return this.get<BankAccount[]>(`bank-connections/consents/${consentId}/accounts`);
+    },
+
+    /**
+     * Sync accounts and transactions for a consent
+     */
+    syncAccounts: async (consentId: string): Promise<SyncResult> => {
+      return this.post<SyncResult>(`bank-connections/consents/${consentId}/sync`);
+    },
+  };
 }
 
 // Export singleton instance
