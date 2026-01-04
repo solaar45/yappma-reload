@@ -54,6 +54,14 @@ export interface Account {
   institution_id: number;
   institution?: Institution;
   snapshots?: AccountSnapshot[];
+  // PSD2 fields
+  iban?: string;
+  external_id?: string;
+  bank_consent_id?: number;
+  is_synced?: boolean;
+  last_synced_at?: string;
+  sync_enabled?: boolean;
+  metadata?: Record<string, any>;
   inserted_at: string;
   updated_at: string;
 }
@@ -145,6 +153,58 @@ export interface DashboardAccountSnapshotsResponse {
 export interface DashboardAssetSnapshotsResponse {
   snapshots: DashboardAssetSnapshot[];
   date: string;
+}
+
+// PSD2 Bank Connections Types
+export interface Bank {
+  aspsp_id: string;
+  name: string;
+  bic: string;
+  logo_url?: string;
+  supported_services?: string[];
+  supported_sca_methods?: string[];
+}
+
+export interface BankConsent {
+  id: number;
+  external_id: string;
+  aspsp_id: string;
+  aspsp_name?: string;
+  aspsp_bic?: string;
+  status: 'pending' | 'authorized' | 'valid' | 'expired' | 'revoked' | 'rejected';
+  authorization_url?: string;
+  redirect_url?: string;
+  valid_until?: string;
+  last_used_at?: string;
+  user_id: number;
+  inserted_at: string;
+  updated_at: string;
+}
+
+export interface BankAccount {
+  resource_id: string;
+  iban?: string;
+  name: string;
+  currency: string;
+  account_type: string;
+  balance?: {
+    amount: number;
+    currency: string;
+  };
+  cash_account_type?: string;
+  product?: string;
+}
+
+export interface ConsentStatus {
+  consent_id: string;
+  status: string;
+  valid_until?: string;
+  aspsp_id: string;
+}
+
+export interface SyncResult {
+  accounts_synced: number;
+  transactions_imported: number;
 }
 
 // API Response Wrapper
