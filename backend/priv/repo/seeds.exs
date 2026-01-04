@@ -4,8 +4,13 @@
 #
 # Or as part of mix ecto.setup/reset
 
-# Ensure the app is started (needed for Repo access)
-Application.ensure_all_started(:yappma)
+# Ensure all required apps are started before accessing Repo
+{:ok, _} = Application.ensure_all_started(:postgrex)
+{:ok, _} = Application.ensure_all_started(:ecto)
+{:ok, _} = Application.ensure_all_started(:ecto_sql)
+
+# Start the Repo manually if not already started
+Yappma.Repo.start_link()
 
 alias WealthBackend.Repo
 alias WealthBackend.Accounts
