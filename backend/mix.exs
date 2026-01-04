@@ -25,15 +25,15 @@ defmodule Yappma.MixProject do
 
   defp deps do
     [
-      {:phoenix, "~> 1.7.22"},
+      {:phoenix, "~> 1.7"},
       {:phoenix_ecto, "~> 4.6"},
       {:ecto_sql, "~> 3.12"},
       {:postgrex, ">= 0.0.0"},
-      {:phoenix_live_dashboard, "~> 0.8.5"},
+      {:phoenix_live_dashboard, "~> 0.8"},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
-      {:dns_cluster, "~> 0.1.1"},
+      {:dns_cluster, "~> 0.1"},
       {:bandit, "~> 1.5"},
       
       # PSD2/Bank Integration
