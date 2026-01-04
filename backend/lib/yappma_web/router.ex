@@ -1,6 +1,18 @@
 defmodule YappmaWeb.Router do
   use YappmaWeb, :router
 
+  # Alias WealthBackendWeb controllers to YappmaWeb namespace
+  alias WealthBackendWeb.{
+    UserController,
+    InstitutionController,
+    AccountController,
+    AssetController,
+    AssetTypeController,
+    AccountSnapshotController,
+    AssetSnapshotController,
+    DashboardController
+  }
+
   pipeline :api do
     plug :accepts, ["json"]
   end
