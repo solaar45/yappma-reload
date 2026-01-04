@@ -6,8 +6,9 @@ defmodule YappmaWeb.Router do
   end
 
   pipeline :authenticated do
-    # TODO: Add authentication plug
-    # plug YappmaWeb.Plugs.Authenticate
+    # TODO: Add real authentication plug
+    # For now, use mock user for testing
+    plug YappmaWeb.Plugs.MockUser
   end
 
   scope "/api", YappmaWeb do
