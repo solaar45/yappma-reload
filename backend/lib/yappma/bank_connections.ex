@@ -25,7 +25,7 @@ defmodule Yappma.BankConnections do
   def initiate_consent(user_id, aspsp_id, opts \\ []) do
     redirect_url = Keyword.fetch!(opts, :redirect_url)
     
-    case StyxClient.create_consent(aspsp_id, redirect_url: redirect_url) do
+    case StyxClient.create_consent(aspsp_id, redirect_url) do
       {:ok, styx_response} ->
         # Store consent in DB
         consent_attrs = %{
