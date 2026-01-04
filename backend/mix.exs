@@ -27,6 +27,7 @@ defmodule Yappma.MixProject do
     [
       {:phoenix, "~> 1.7"},
       {:phoenix_ecto, "~> 4.6"},
+      {:phoenix_html, "~> 4.0"},
       {:ecto_sql, "~> 3.12"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_live_dashboard, "~> 0.8"},
