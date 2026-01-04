@@ -99,10 +99,12 @@ defmodule Yappma.BankConnections do
   3. Fetches and stores transactions (TODO)
   """
   def sync_accounts(user_id, external_consent_id) when is_binary(external_consent_id) do
-    # Get or create internal DB consent ID
+    # Get or create internal DB consent ID (also ensures user_id is valid integer)
     case ConsentManager.get_or_create_consent_id(external_consent_id, user_id) do
       {:ok, internal_consent_id} ->
-        AccountSync.sync_user_accounts(user_id, internal_consent_id, external_consent_id)
+        # Get the consent to retrieve the validated user_id
+        consent = ConsentManager.get_consent(internal_consent_id)
+        AccountSync.sync_user_accounts(consent.user_id, internal_consent_id, external_consent_id)
       
       {:error, reason} ->
         {:error, reason}
