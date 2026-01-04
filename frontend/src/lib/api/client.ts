@@ -1,12 +1,8 @@
 import { logger } from '@/lib/logger';
 import { sanitizeEndpoint, rateLimiter } from './sanitizer';
-import type {
-  Bank,
-  BankConsent,
-  BankAccount,
-  ConsentStatus,
-  SyncResult,
-} from './types';
+
+// Import types locally to avoid conflicts with browser extensions
+import type * as Types from './types';
 
 /**
  * API Error Class
@@ -313,22 +309,22 @@ class ApiClient {
     /**
      * List all available banks (ASPSPs)
      */
-    listBanks: async (): Promise<Bank[]> => {
-      return this.get<Bank[]>('bank-connections/banks');
+    listBanks: async (): Promise<Types.Bank[]> => {
+      return this.get<Types.Bank[]>('bank-connections/banks');
     },
 
     /**
      * Get details for a specific bank
      */
-    getBank: async (aspspId: string): Promise<Bank> => {
-      return this.get<Bank>(`bank-connections/banks/${aspspId}`);
+    getBank: async (aspspId: string): Promise<Types.Bank> => {
+      return this.get<Types.Bank>(`bank-connections/banks/${aspspId}`);
     },
 
     /**
      * List all consents for the current user
      */
-    listConsents: async (): Promise<BankConsent[]> => {
-      return this.get<BankConsent[]>('bank-connections/consents');
+    listConsents: async (): Promise<Types.BankConsent[]> => {
+      return this.get<Types.BankConsent[]>('bank-connections/consents');
     },
 
     /**
@@ -351,8 +347,8 @@ class ApiClient {
     /**
      * Get consent status
      */
-    getConsentStatus: async (consentId: string): Promise<ConsentStatus> => {
-      return this.get<ConsentStatus>(`bank-connections/consents/${consentId}`);
+    getConsentStatus: async (consentId: string): Promise<Types.ConsentStatus> => {
+      return this.get<Types.ConsentStatus>(`bank-connections/consents/${consentId}`);
     },
 
     /**
@@ -377,15 +373,15 @@ class ApiClient {
     /**
      * List accounts for a consent
      */
-    listAccounts: async (consentId: string): Promise<BankAccount[]> => {
-      return this.get<BankAccount[]>(`bank-connections/consents/${consentId}/accounts`);
+    listAccounts: async (consentId: string): Promise<Types.BankAccount[]> => {
+      return this.get<Types.BankAccount[]>(`bank-connections/consents/${consentId}/accounts`);
     },
 
     /**
      * Sync accounts and transactions for a consent
      */
-    syncAccounts: async (consentId: string): Promise<SyncResult> => {
-      return this.post<SyncResult>(`bank-connections/consents/${consentId}/sync`);
+    syncAccounts: async (consentId: string): Promise<Types.SyncResult> => {
+      return this.post<Types.SyncResult>(`bank-connections/consents/${consentId}/sync`);
     },
   };
 }
