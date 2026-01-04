@@ -8,6 +8,7 @@ defmodule Yappma.Accounts.BankConsent do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @derive {Jason.Encoder, except: [:__meta__, :user]}
   schema "bank_consents" do
     field :aspsp_id, :string
     field :aspsp_name, :string
