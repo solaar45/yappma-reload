@@ -47,12 +47,8 @@ defmodule YappmaWeb.Endpoint do
   plug Plug.Head
   plug Plug.Session, @session_options
   
-  # CORS Headers
-  plug CORSPlug,
-    origin: ["http://localhost:5173", "http://localhost:3000"],
-    credentials: true,
-    max_age: 86400,
-    headers: ["Authorization", "Content-Type", "Accept", "X-CSRF-Token"]
+  # CORS - must be before router
+  plug YappmaWeb.Plugs.CORS
   
   plug YappmaWeb.Router
 end
