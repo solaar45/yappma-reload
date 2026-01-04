@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useBanks, useCreateConsent } from '@/lib/api/hooks/useBankConnections';
-import { Bank } from '@/lib/api/types';
+import type { Bank } from '@/lib/api/types';
 import { logger } from '@/lib/logger';
 
 interface BankSelectionDialogProps {
