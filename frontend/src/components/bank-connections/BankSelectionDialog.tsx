@@ -24,7 +24,10 @@ export function BankSelectionDialog({ open, onOpenChange }: BankSelectionDialogP
   const { data: banks, isLoading } = useBanks();
   const createConsent = useCreateConsent();
 
-  const filteredBanks = banks?.filter((bank) =>
+  // Defensive: Ensure banks is an array
+  const banksList = Array.isArray(banks) ? banks : [];
+
+  const filteredBanks = banksList.filter((bank) =>
     bank.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -32,7 +35,7 @@ export function BankSelectionDialog({ open, onOpenChange }: BankSelectionDialogP
     logger.info('Bank selected', { bank: bank.name });
     
     try {
-      const redirectUrl = `${window.location.origin}/bank-connections/callback`;
+      const redirectUrl = `${window.location.origin}/bank-callback`;
       const result = await createConsent.mutateAsync({
         aspspId: bank.aspsp_id,
         redirectUrl,
@@ -75,7 +78,7 @@ export function BankSelectionDialog({ open, onOpenChange }: BankSelectionDialogP
               <div className="text-center py-8 text-muted-foreground">
                 Lade Banken...
               </div>
-            ) : filteredBanks && filteredBanks.length > 0 ? (
+            ) : filteredBanks.length > 0 ? (
               <div className="space-y-2">
                 {filteredBanks.map((bank) => (
                   <button
@@ -109,7 +112,7 @@ export function BankSelectionDialog({ open, onOpenChange }: BankSelectionDialogP
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                Keine Banken gefunden
+                {banksList.length === 0 ? 'Keine Banken verfügbar' : 'Keine Banken gefunden'}
               </div>
             )}
           </ScrollArea>
