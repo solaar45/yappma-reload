@@ -5,20 +5,25 @@ defmodule Yappma.BankConnections.AccountSync do
 
   alias Yappma.Repo
   alias Yappma.Accounts.Account
-  alias Yappma.BankConnections.{StyxClient, ConsentManager}
+  alias Yappma.BankConnections.StyxClient
   import Ecto.Query
   require Logger
 
   @doc """
   Syncs accounts for a user's consent.
   
-  Creates/updates accounts in YAPPMA database based on Styx data.
+  - user_id: Internal YAPPMA user ID
+  - internal_consent_id: Internal DB consent ID (integer)
+  - external_consent_id: External Styx consent ID (string)
   """
-  def sync_user_accounts(user_id, consent_id) do
-    Logger.info("Starting account sync for user=#{user_id}, consent=#{consent_id}")
+  def sync_user_accounts(user_id, internal_consent_id, external_consent_id) do
+    Logger.info(
+      "Starting account sync for user=#{user_id}, internal_consent=#{internal_consent_id}, external_consent=#{external_consent_id}"
+    )
 
-    with {:ok, styx_accounts} <- get_styx_accounts(consent_id),
-         {:ok, synced_count} <- sync_accounts_to_db(user_id, consent_id, styx_accounts) do
+    with {:ok, styx_accounts} <- get_styx_accounts(external_consent_id),
+         {:ok, synced_count} <-
+           sync_accounts_to_db(user_id, internal_consent_id, styx_accounts) do
       {:ok,
        %{
          accounts_synced: synced_count,
@@ -31,8 +36,8 @@ defmodule Yappma.BankConnections.AccountSync do
     end
   end
 
-  defp get_styx_accounts(consent_id) do
-    case StyxClient.get_accounts(consent_id) do
+  defp get_styx_accounts(external_consent_id) do
+    case StyxClient.get_accounts(external_consent_id) do
       {:ok, accounts} ->
         {:ok, accounts}
 
@@ -46,10 +51,10 @@ defmodule Yappma.BankConnections.AccountSync do
     end
   end
 
-  defp sync_accounts_to_db(user_id, consent_id, styx_accounts) do
+  defp sync_accounts_to_db(user_id, internal_consent_id, styx_accounts) do
     synced_count =
       Enum.reduce(styx_accounts, 0, fn styx_account, count ->
-        case upsert_account(user_id, consent_id, styx_account) do
+        case upsert_account(user_id, internal_consent_id, styx_account) do
           {:ok, _account} ->
             count + 1
 
@@ -62,18 +67,18 @@ defmodule Yappma.BankConnections.AccountSync do
     {:ok, synced_count}
   end
 
-  defp upsert_account(user_id, consent_id, styx_account) do
+  defp upsert_account(user_id, internal_consent_id, styx_account) do
     external_id = styx_account[:resource_id] || styx_account["resource_id"]
     iban = styx_account[:iban] || styx_account["iban"]
     name = styx_account[:name] || styx_account["name"] || "Imported Account"
     currency = styx_account[:currency] || styx_account["currency"] || "EUR"
     account_type = styx_account[:account_type] || styx_account["account_type"] || "checking"
 
-    # Find existing account by external_id + consent_id
+    # Find existing account by external_id + consent_id (internal DB ID)
     existing_account =
       Repo.one(
         from a in Account,
-          where: a.external_id == ^external_id and a.bank_consent_id == ^consent_id
+          where: a.external_id == ^external_id and a.bank_consent_id == ^internal_consent_id
       )
 
     attrs = %{
@@ -83,7 +88,7 @@ defmodule Yappma.BankConnections.AccountSync do
       currency: currency,
       iban: iban,
       external_id: external_id,
-      bank_consent_id: consent_id,
+      bank_consent_id: internal_consent_id,
       last_synced_at: DateTime.utc_now(),
       sync_enabled: true,
       is_active: true
