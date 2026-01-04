@@ -161,6 +161,10 @@ defmodule YappmaWeb.BankConnectionController do
       {:ok, accounts} ->
         json(conn, accounts)
 
+      {:error, {:request_failed, :econnrefused}} ->
+        # Styx not running - return mock accounts
+        json(conn, mock_accounts())
+
       {:error, reason} ->
         conn
         |> put_status(:service_unavailable)
@@ -244,6 +248,45 @@ defmodule YappmaWeb.BankConnectionController do
         logo_url: "https://logo.clearbit.com/ing.de",
         supported_services: ["accounts", "payments"],
         supported_sca_methods: ["REDIRECT"]
+      }
+    ]
+  end
+
+  # Mock accounts for UI testing when Styx is unavailable
+  defp mock_accounts do
+    [
+      %{
+        resource_id: "account-1",
+        iban: "DE89370400440532013000",
+        name: "Girokonto",
+        currency: "EUR",
+        balance: %{
+          amount: 2543.89,
+          currency: "EUR"
+        },
+        account_type: "checking"
+      },
+      %{
+        resource_id: "account-2",
+        iban: "DE89370400440532013001",
+        name: "Sparkonto",
+        currency: "EUR",
+        balance: %{
+          amount: 15789.42,
+          currency: "EUR"
+        },
+        account_type: "savings"
+      },
+      %{
+        resource_id: "account-3",
+        iban: "DE89370400440532013002",
+        name: "Tagesgeldkonto",
+        currency: "EUR",
+        balance: %{
+          amount: 8234.15,
+          currency: "EUR"
+        },
+        account_type: "savings"
       }
     ]
   end
