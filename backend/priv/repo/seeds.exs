@@ -79,7 +79,7 @@ IO.puts("✅ Creating institutions...")
   user_id: user.id
 })
 
-{:ok, insurance_company} = Accounts.create_institution(%{
+{:ok, _insurance_company} = Accounts.create_institution(%{
   name: "Allianz",
   type: :insurance,
   country: "DE",
@@ -254,13 +254,6 @@ IO.puts("✅ Creating assets...")
 # 6. Create Account Snapshots
 # ============================================================================
 IO.puts("✅ Creating account snapshots...")
-
-# Snapshots für verschiedene Zeitpunkte
-dates = [
-  ~D[2025-10-31],
-  ~D[2025-11-30],
-  ~D[2025-12-30]
-]
 
 # Girokonto Snapshots
 Enum.each([
