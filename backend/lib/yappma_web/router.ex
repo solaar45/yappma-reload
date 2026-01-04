@@ -14,6 +14,9 @@ defmodule YappmaWeb.Router do
   scope "/api", YappmaWeb do
     pipe_through :api
 
+    # CORS Preflight - match all OPTIONS requests
+    options "/*path", CORSController, :preflight
+
     # Health check
     get "/health", HealthController, :index
 
