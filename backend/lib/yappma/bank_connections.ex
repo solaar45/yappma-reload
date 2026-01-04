@@ -13,7 +13,6 @@ defmodule Yappma.BankConnections do
   alias Yappma.BankConnections.StyxClient
   alias Yappma.BankConnections.ConsentManager
   alias Yappma.BankConnections.AccountSync
-  alias Yappma.Repo
 
   @doc """
   Lists all available banks (ASPSPs) configured in Styx.
@@ -74,6 +73,18 @@ defmodule Yappma.BankConnections do
   """
   def complete_consent(consent_id, authorization_code) do
     ConsentManager.complete_consent(consent_id, authorization_code)
+  end
+
+  @doc """
+  Lists all bank consents for a user.
+  
+  ## Examples
+  
+      iex> list_user_consents(user_id)
+      [%Yappma.Accounts.BankConsent{}, ...]
+  """
+  def list_user_consents(user_id) do
+    ConsentManager.list_user_consents(user_id)
   end
 
   @doc """

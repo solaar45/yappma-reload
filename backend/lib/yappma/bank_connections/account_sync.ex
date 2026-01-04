@@ -11,7 +11,6 @@ defmodule Yappma.BankConnections.AccountSync do
   require Logger
   alias Yappma.BankConnections.StyxClient
   alias Yappma.BankConnections.TransactionMapper
-  alias Yappma.Repo
   # TODO: Add proper schema imports
   # alias Yappma.Accounts.Account
   # alias Yappma.Transactions.Transaction
