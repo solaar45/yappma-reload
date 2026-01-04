@@ -7,6 +7,7 @@ defmodule WealthBackend.BankConnections.AccountSync do
 
   alias WealthBackend.Repo
   alias WealthBackend.Accounts
+  alias WealthBackend.Accounts.Account
   alias WealthBackend.BankConnections.StyxClient
   alias WealthBackend.Analytics.AccountSnapshot
   import Ecto.Query
@@ -77,13 +78,12 @@ defmodule WealthBackend.BankConnections.AccountSync do
     currency = styx_account[:currency] || styx_account["currency"] || "EUR"
     account_type = map_account_type(styx_account[:account_type] || styx_account["account_type"])
 
-    # Try to find existing account by IBAN for this user
-    # (Accounts in main branch don't have external_id or bank_consent_id yet)
+    # Try to find existing account by external_id and consent_id
     existing_account =
-      if iban do
+      if external_id do
         Repo.one(
-          from a in WealthBackend.Accounts.Account,
-            where: a.user_id == ^user_id and fragment("? ->> 'iban' = ?", a.metadata, ^iban)
+          from a in Account,
+            where: a.external_id == ^external_id and a.bank_consent_id == ^internal_consent_id
         )
       else
         nil
@@ -92,20 +92,27 @@ defmodule WealthBackend.BankConnections.AccountSync do
     # Extract balance if present
     balance = extract_balance(styx_account)
 
-    # Build account attributes compatible with WealthBackend.Accounts.Account schema
+    # Build account attributes with PSD2 fields
     attrs = %{
       user_id: user_id,
       name: name,
       type: account_type,
       currency: currency,
       is_active: true,
-      # Store PSD2-specific data in a metadata field (we'll need to add this to schema)
-      # For now, we'll work with existing schema and add metadata in a future migration
+      # PSD2 fields
+      iban: iban,
+      external_id: external_id,
+      bank_consent_id: internal_consent_id,
+      sync_enabled: true,
+      # Store additional PSD2 data in metadata
+      metadata: build_metadata(styx_account)
     }
 
     if existing_account do
-      # Update existing account using Accounts context
-      case Accounts.update_account(existing_account, attrs) do
+      # Update existing account using sync_changeset
+      case existing_account
+           |> Account.sync_changeset(attrs)
+           |> Repo.update() do
         {:ok, account} ->
           # Create balance snapshot if balance is present
           if balance do
@@ -119,8 +126,10 @@ defmodule WealthBackend.BankConnections.AccountSync do
           {:error, changeset}
       end
     else
-      # Create new account using Accounts context
-      case Accounts.create_account(attrs) do
+      # Create new account using sync_changeset
+      case %Account{}
+           |> Account.sync_changeset(attrs)
+           |> Repo.insert() do
         {:ok, account} ->
           # Create initial balance snapshot
           if balance do
@@ -160,6 +169,19 @@ defmodule WealthBackend.BankConnections.AccountSync do
     end
   end
 
+  defp build_metadata(styx_account) do
+    # Store additional PSD2 data that doesn't fit in the main schema
+    %{
+      psd2_data: %{
+        cash_account_type: styx_account[:cash_account_type] || styx_account["cash_account_type"],
+        product: styx_account[:product] || styx_account["product"],
+        usage: styx_account[:usage] || styx_account["usage"],
+        details: styx_account[:details] || styx_account["details"]
+      },
+      synced_at: DateTime.utc_now() |> DateTime.to_iso8601()
+    }
+  end
+
   defp create_balance_snapshot(account_id, balance) do
     # Create a snapshot using the Analytics context
     snapshot_attrs = %{
@@ -194,7 +216,9 @@ defmodule WealthBackend.BankConnections.AccountSync do
           amount: 2543.89,
           currency: "EUR"
         },
-        account_type: "checking"
+        account_type: "checking",
+        cash_account_type: "CACC",
+        product: "Girokonto Plus"
       },
       %{
         resource_id: "account-2",
@@ -205,7 +229,9 @@ defmodule WealthBackend.BankConnections.AccountSync do
           amount: 15789.42,
           currency: "EUR"
         },
-        account_type: "savings"
+        account_type: "savings",
+        cash_account_type: "SVGS",
+        product: "Tagesgeld"
       },
       %{
         resource_id: "account-3",
@@ -216,7 +242,8 @@ defmodule WealthBackend.BankConnections.AccountSync do
           amount: 8234.15,
           currency: "EUR"
         },
-        account_type: "savings"
+        account_type: "savings",
+        cash_account_type: "SVGS"
       }
     ]
   end
