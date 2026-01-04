@@ -16,26 +16,35 @@ let aspsps = [];
 try {
   const configPath = path.join('/config', 'aspsp-config.json');
   if (fs.existsSync(configPath)) {
-    aspsps = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    // Config has aspsps array nested
+    aspsps = config.aspsps || config || [];
     console.log(`Loaded ${aspsps.length} banks from config`);
+  } else {
+    console.warn('Config file not found at', configPath);
   }
 } catch (err) {
   console.warn('Could not load ASPSP config, using defaults:', err.message);
-  // Fallback mock data
+}
+
+// Fallback mock data if config is empty
+if (aspsps.length === 0) {
   aspsps = [
     {
-      id: 'TESTBANK001',
+      aspsp_id: 'TESTBANK001',
       name: 'Test Bank',
       bic: 'TESTDE88XXX',
-      logo: 'https://via.placeholder.com/150?text=Test+Bank',
-      countries: ['DE']
+      logo_url: 'https://via.placeholder.com/150?text=Test+Bank',
+      supported_services: ['AIS', 'PIS'],
+      supported_sca_methods: ['REDIRECT']
     },
     {
-      id: 'SPARKASSE',
+      aspsp_id: 'SPARKASSE',
       name: 'Sparkasse',
       bic: 'SPARKASSEXX',
-      logo: 'https://via.placeholder.com/150?text=Sparkasse',
-      countries: ['DE']
+      logo_url: 'https://via.placeholder.com/150?text=Sparkasse',
+      supported_services: ['AIS'],
+      supported_sca_methods: ['REDIRECT']
     }
   ];
 }
@@ -57,7 +66,7 @@ app.get('/aspsps', (req, res) => {
 // Get specific ASPSP
 app.get('/aspsps/:id', (req, res) => {
   console.log(`GET /aspsps/${req.params.id}`);
-  const aspsp = aspsps.find(a => a.id === req.params.id);
+  const aspsp = aspsps.find(a => a.aspsp_id === req.params.id || a.id === req.params.id);
   if (!aspsp) {
     return res.status(404).json({ error: 'ASPSP not found' });
   }
@@ -109,8 +118,7 @@ app.get('/consents/:id', (req, res) => {
 
 // Complete authorization (mock)
 app.post('/consents/:id/authorizations', (req, res) => {
-  console.log(`POST /consents/${req.params.id}/authorizations`);
-  
+  console.log(`POST /consents/${req.params.id}/authorizations`);  
   const consent = consents.get(req.params.id);
   if (!consent) {
     return res.status(404).json({ error: 'Consent not found' });
