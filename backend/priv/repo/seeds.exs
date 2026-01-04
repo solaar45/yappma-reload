@@ -2,6 +2,10 @@
 #
 #     mix run priv/repo/seeds.exs
 #
+# Or as part of mix ecto.setup/reset
+
+# Ensure the app is started (needed for Repo access)
+Application.ensure_all_started(:yappma)
 
 alias WealthBackend.Repo
 alias WealthBackend.Accounts
