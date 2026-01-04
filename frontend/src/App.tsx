@@ -17,8 +17,8 @@ import {
 } from '@/components/ui/sidebar';
 import { useLocation } from 'react-router-dom';
 
-// Main Pages - Mixed imports (will standardize to default)
-import { DashboardPage } from '@/pages/DashboardPage';
+// Main Pages - Mixed imports (standardizing to default)
+import DashboardPage from '@/pages/DashboardPage';
 import { AccountsPage } from '@/pages/AccountsPage';
 import AssetsPage from '@/pages/AssetsPage';
 import InstitutionsPage from '@/pages/InstitutionsPage';
