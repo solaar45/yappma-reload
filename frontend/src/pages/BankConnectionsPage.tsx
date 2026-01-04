@@ -1,4 +1,4 @@
-import { BankConnectionWizard } from '../components/BankConnectionWizard';
+import { BankConnectionWizard } from '../components/BankConnections';
 
 export function BankConnectionsPage() {
   return (
