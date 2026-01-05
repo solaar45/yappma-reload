@@ -1,42 +1,47 @@
 defmodule WealthBackendWeb.TransactionJSON do
   alias WealthBackend.Banking.Transaction
 
-  @doc """
-  Renders a list of transactions.
-  """
   def index(%{transactions: transactions}) do
-    %{data: for(transaction <- transactions, do: data(transaction))}
+    %{transactions: Enum.map(transactions, &transaction_json/1)}
   end
 
-  @doc """
-  Renders a single transaction.
-  """
   def show(%{transaction: transaction}) do
-    %{data: data(transaction)}
+    %{transaction: transaction_json(transaction)}
   end
 
-  defp data(%Transaction{} = transaction) do
+  defp transaction_json(%Transaction{} = transaction) do
     %{
       id: transaction.id,
       account_id: transaction.account_id,
-      consent_id: transaction.consent_id,
+      account_name: if(Ecto.assoc_loaded?(transaction.account), do: transaction.account.name, else: nil),
       external_id: transaction.external_id,
-      end_to_end_id: transaction.end_to_end_id,
       booking_date: transaction.booking_date,
       value_date: transaction.value_date,
-      transaction_amount: transaction.transaction_amount,
-      transaction_currency: transaction.transaction_currency,
+      amount: Decimal.to_string(transaction.transaction_amount),
+      currency: transaction.transaction_currency,
       status: transaction.status,
-      remittance_information: transaction.remittance_information,
-      additional_information: transaction.additional_information,
+      description: transaction.remittance_information,
       creditor_name: transaction.creditor_name,
-      creditor_account_iban: transaction.creditor_account_iban,
+      creditor_iban: transaction.creditor_account_iban,
       debtor_name: transaction.debtor_name,
-      debtor_account_iban: transaction.debtor_account_iban,
-      bank_transaction_code: transaction.bank_transaction_code,
-      proprietary_bank_transaction_code: transaction.proprietary_bank_transaction_code,
+      debtor_iban: transaction.debtor_account_iban,
+      notes: transaction.notes,
+      category: category_json(transaction.category),
       inserted_at: transaction.inserted_at,
       updated_at: transaction.updated_at
+    }
+  end
+
+  defp category_json(nil), do: nil
+  defp category_json(category) when not is_map(category), do: nil
+  defp category_json(%Ecto.Association.NotLoaded{}), do: nil
+  defp category_json(category) do
+    %{
+      id: category.id,
+      name: category.name,
+      icon: category.icon,
+      color: category.color,
+      type: category.type
     }
   end
 end

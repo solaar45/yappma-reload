@@ -5,10 +5,26 @@ defmodule WealthBackend.Banking do
 
   import Ecto.Query, warn: false
   alias WealthBackend.Repo
-  alias WealthBackend.Banking.{BankConsent, Transaction}
+  alias WealthBackend.Banking.{BankConsent, Transaction, TransactionCategory}
   alias Yappma.Accounts.Account
 
   require Logger
+
+  ## Transaction Categories
+
+  @doc """
+  Returns the list of transaction categories.
+  """
+  def list_categories do
+    TransactionCategory
+    |> order_by([c], [c.type, c.name])
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a single category.
+  """
+  def get_category!(id), do: Repo.get!(TransactionCategory, id)
 
   ## Transactions
 
@@ -18,6 +34,7 @@ defmodule WealthBackend.Banking do
   def list_transactions(account_id, opts \\ []) do
     from(t in Transaction, where: t.account_id == ^account_id)
     |> apply_transaction_filters(opts)
+    |> preload([:category, :account])
     |> order_by([t], desc: t.booking_date, desc: t.inserted_at)
     |> Repo.all()
   end
@@ -30,7 +47,7 @@ defmodule WealthBackend.Banking do
       join: a in Account,
       on: t.account_id == a.id,
       where: a.user_id == ^user_id,
-      preload: [account: a]
+      preload: [account: a, category: :parent]
     )
     |> apply_transaction_filters(opts)
     |> order_by([t], desc: t.booking_date, desc: t.inserted_at)
@@ -47,6 +64,19 @@ defmodule WealthBackend.Banking do
 
       {:status, status}, q ->
         from(t in q, where: t.status == ^status)
+      
+      {:category_id, category_id}, q ->
+        from(t in q, where: t.category_id == ^category_id)
+      
+      {:search, search}, q when is_binary(search) and search != "" ->
+        search_term = "%#{search}%"
+        from(t in q,
+          where:
+            ilike(t.remittance_information, ^search_term) or
+            ilike(t.creditor_name, ^search_term) or
+            ilike(t.debtor_name, ^search_term) or
+            ilike(t.notes, ^search_term)
+        )
 
       {:limit, limit}, q ->
         from(t in q, limit: ^limit)
@@ -61,7 +91,7 @@ defmodule WealthBackend.Banking do
   """
   def get_transaction!(id) do
     Transaction
-    |> preload(:account)
+    |> preload([:account, :category])
     |> Repo.get!(id)
   end
 
@@ -90,11 +120,11 @@ defmodule WealthBackend.Banking do
   end
 
   @doc """
-  Updates a transaction.
+  Updates a transaction (for user edits like category, notes).
   """
   def update_transaction(%Transaction{} = transaction, attrs) do
     transaction
-    |> Transaction.changeset(attrs)
+    |> Transaction.update_changeset(attrs)
     |> Repo.update()
   end
 
