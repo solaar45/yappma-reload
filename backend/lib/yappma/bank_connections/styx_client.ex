@@ -84,7 +84,18 @@ defmodule Yappma.BankConnections.StyxClient do
   Lists all accounts accessible with a consent.
   """
   def get_accounts(consent_id) do
-    get("/consents/#{consent_id}/accounts")
+    case get("/consents/#{consent_id}/accounts") do
+      {:ok, response} ->
+        # Styx may return accounts directly or wrapped in a response object
+        accounts = case response do
+          %{"accounts" => accs} when is_list(accs) -> accs
+          accs when is_list(accs) -> accs
+          _ -> []
+        end
+        {:ok, accounts}
+      
+      error -> error
+    end
   end
 
   @doc """
@@ -138,7 +149,10 @@ defmodule Yappma.BankConnections.StyxClient do
 
     case HTTPoison.get(url, headers()) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        Jason.decode(body)
+        case Jason.decode(body) do
+          {:ok, data} -> {:ok, data}
+          {:error, reason} -> {:error, {:json_decode_error, reason}}
+        end
       
       {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
         Logger.error("Styx API error: #{code} - #{body}")
@@ -158,7 +172,10 @@ defmodule Yappma.BankConnections.StyxClient do
 
     case HTTPoison.post(url, json_body, headers()) do
       {:ok, %HTTPoison.Response{status_code: code, body: response_body}} when code in 200..299 ->
-        Jason.decode(response_body)
+        case Jason.decode(response_body) do
+          {:ok, data} -> {:ok, data}
+          {:error, reason} -> {:error, {:json_decode_error, reason}}
+        end
       
       {:ok, %HTTPoison.Response{status_code: code, body: response_body}} ->
         Logger.error("Styx API error: #{code} - #{response_body}")
