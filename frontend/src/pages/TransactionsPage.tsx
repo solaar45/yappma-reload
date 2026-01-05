@@ -272,3 +272,6 @@ export function TransactionsPage() {
     </div>
   );
 }
+
+// Default export for App.tsx compatibility
+export default TransactionsPage;
