@@ -1,3 +1,5 @@
+// Transaction Types for Banking Integration
+
 export type TransactionCategory = {
   id: number;
   name: string;
@@ -34,3 +36,6 @@ export type TransactionFilters = {
   category_id?: number;
   search?: string;
 };
+
+// Explicit exports for better module resolution
+export type { Transaction, TransactionCategory, TransactionFilters };
