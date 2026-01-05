@@ -1,4 +1,4 @@
-export interface Transaction {
+export type Transaction = {
   id: number;
   account_id: number;
   account_name: string;
@@ -17,20 +17,20 @@ export interface Transaction {
   category?: TransactionCategory;
   inserted_at: string;
   updated_at: string;
-}
+};
 
-export interface TransactionCategory {
+export type TransactionCategory = {
   id: number;
   name: string;
   icon?: string;
   color?: string;
   type: 'income' | 'expense';
-}
+};
 
-export interface TransactionFilters {
+export type TransactionFilters = {
   from_date?: string;
   to_date?: string;
   status?: 'booked' | 'pending';
   category_id?: number;
   search?: string;
-}
+};
