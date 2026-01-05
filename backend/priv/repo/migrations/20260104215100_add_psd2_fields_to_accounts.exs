@@ -6,6 +6,9 @@ defmodule WealthBackend.Repo.Migrations.AddPsd2FieldsToAccounts do
       # PSD2/Bank-specific fields
       add :iban, :string
       add :external_id, :string  # PSD2 account resource_id from bank
+      add :bic, :string
+      add :bank_name, :string
+      add :account_product, :string
       add :bank_consent_id, references(:bank_consents, on_delete: :nilify_all)
       
       # Sync status fields
