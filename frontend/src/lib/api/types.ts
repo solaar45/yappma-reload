@@ -92,7 +92,81 @@ export interface Institution {
   updated_at: string;
 }
 
+// Snapshot Types
+
+export interface AccountSnapshot {
+  id: number;
+  snapshot_date: string;
+  balance: string;
+  currency: string;
+  note: string | null;
+  account_id: number;
+  inserted_at?: string;
+  updated_at?: string;
+}
+
+export interface AssetSnapshot {
+  id: number;
+  snapshot_date: string;
+  quantity: string | null;
+  market_price_per_unit: string | null;
+  value: string;
+  note: string | null;
+  asset_id: number;
+  inserted_at?: string;
+  updated_at?: string;
+}
+
+// Asset Type
+
+export interface AssetType {
+  id: number;
+  code: 'cash' | 'security' | 'insurance' | 'loan' | 'real_estate' | 'other';
+  description: string;
+}
+
+// Account Types
+
+export interface Account {
+  id: number;
+  name: string;
+  type: 'checking' | 'savings' | 'credit_card' | 'brokerage' | 'insurance' | 'cash' | 'other';
+  currency: string;
+  is_active: boolean;
+  opened_at: string | null;
+  closed_at: string | null;
+  user_id: number;
+  institution_id: number;
+  institution?: Institution;
+  snapshots?: AccountSnapshot[];
+  inserted_at: string;
+  updated_at: string;
+}
+
 // Asset Types
+
+export interface SecurityAsset {
+  isin: string | null;
+  wkn: string | null;
+  ticker: string | null;
+  exchange: string | null;
+  sector: string | null;
+}
+
+export interface InsuranceAsset {
+  insurer_name: string;
+  policy_number: string;
+  insurance_type: string;
+  coverage_amount: string;
+  payment_frequency: string;
+}
+
+export interface RealEstateAsset {
+  address: string;
+  size_m2: string;
+  purchase_price: string;
+  purchase_date: string;
+}
 
 export interface Asset {
   id: number;
@@ -105,6 +179,16 @@ export interface Asset {
   quantity: string;
   currency: string;
   notes?: string;
+  is_active?: boolean;
+  created_at_date?: string | null;
+  closed_at?: string | null;
+  asset_type_id?: number;
+  asset_type?: AssetType;
+  account?: Account;
+  security_asset?: SecurityAsset | null;
+  insurance_asset?: InsuranceAsset | null;
+  real_estate_asset?: RealEstateAsset | null;
+  snapshots?: AssetSnapshot[];
   inserted_at: string;
   updated_at: string;
 }
