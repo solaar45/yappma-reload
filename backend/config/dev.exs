@@ -22,6 +22,11 @@ config :yappma, YappmaWeb.Endpoint,
   secret_key_base: "liJ+1Zyg7o1YqId/AE6qdDyNmFLInsbGLmFV/qfp8/mzd1vZBPy0gxcBdpC5Sjxw",
   watchers: []
 
+# Styx PSD2 API Configuration
+config :wealth_backend,
+  styx_url: "http://localhost:8093",
+  styx_api_key: "dev-api-key"
+
 # Enable dev routes for dashboard and mailbox
 config :yappma, dev_routes: true
 
