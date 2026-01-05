@@ -10,7 +10,6 @@ import {
 import { formatCurrency } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { TaxExemptionDialog } from '@/components/TaxExemptionDialog';
 import type { TaxExemption } from '@/lib/api/types';
@@ -47,6 +46,13 @@ import {
 } from "@/components/ui/tooltip";
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+
+// Fixed tax allowance limits based on tax status
+const TAX_LIMITS = {
+    single: 1000,
+    married: 2000
+} as const;
 
 export default function TaxesPage() {
     const { t } = useTranslation();
@@ -68,20 +74,17 @@ export default function TaxesPage() {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
 
-    const [settingsForm, setSettingsForm] = useState({
-        tax_status: user?.tax_status || 'single',
-        tax_allowance_limit: user?.tax_allowance_limit?.toString() || '1000',
-    });
+    const [taxStatus, setTaxStatus] = useState<'single' | 'married'>(user?.tax_status || 'single');
 
-    // Keep settings form in sync with user state
+    // Keep tax status in sync with user state
     useEffect(() => {
         if (user) {
-            setSettingsForm({
-                tax_status: user.tax_status,
-                tax_allowance_limit: user.tax_allowance_limit.toString(),
-            });
+            setTaxStatus(user.tax_status);
         }
     }, [user]);
+
+    // Compute limit automatically based on status
+    const computedLimit = TAX_LIMITS[taxStatus];
 
     const totalExemptions = useMemo(() => {
         return taxExemptions.reduce((sum, te) => sum + parseFloat(te.amount), 0);
@@ -100,36 +103,31 @@ export default function TaxesPage() {
         return yearsList;
     }, []);
 
-    const handleUpdateSettings = async () => {
+    const handleUpdateStatus = async () => {
         if (!userId) {
-            logger.error('No userId found in handleUpdateSettings');
+            logger.error('No userId found in handleUpdateStatus');
             return;
         }
 
         setSaveSuccess(false);
         setSaveError(null);
 
-        const limitVal = parseInt(settingsForm.tax_allowance_limit);
-        if (isNaN(limitVal)) {
-            setSaveError('Invalid limit amount');
-            return;
-        }
+        logger.info('Updating user tax status', { userId, tax_status: taxStatus, computed_limit: computedLimit });
 
-        logger.info('Updating user settings', { userId, ...settingsForm });
-
+        // Send only tax_status; backend will set the limit automatically
         const updatedUser = await updateUser(userId, {
-            tax_status: settingsForm.tax_status as 'single' | 'married',
-            tax_allowance_limit: limitVal,
+            tax_status: taxStatus,
+            tax_allowance_limit: computedLimit // Send computed limit to backend
         });
 
         if (updatedUser) {
-            logger.info('User settings updated successfully', { updatedUser });
+            logger.info('User tax status updated successfully', { updatedUser });
             setUser(updatedUser);
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 3000);
         } else {
-            logger.error('Failed to update user settings');
-            setSaveError('Konnte Einstellungen nicht speichern.');
+            logger.error('Failed to update user tax status');
+            setSaveError('Konnte Status nicht speichern.');
         }
     };
 
@@ -237,15 +235,15 @@ export default function TaxesPage() {
                 <Card className="flex flex-col">
                     <CardHeader>
                         <CardTitle>{t('navigation.settings')}</CardTitle>
-                        <CardDescription>Passen Sie Ihren Steuerstatus und Ihr Gesamtlimit an.</CardDescription>
+                        <CardDescription>Passen Sie Ihren Steuerstatus an. Das Limit wird automatisch gesetzt.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 flex-1">
                         <div className="grid gap-4">
                             <div className="grid gap-2">
                                 <label className="text-sm font-medium">{t('taxes.status')}</label>
                                 <Select
-                                    value={settingsForm.tax_status}
-                                    onValueChange={(v: 'single' | 'married') => setSettingsForm({ ...settingsForm, tax_status: v })}
+                                    value={taxStatus}
+                                    onValueChange={(v: 'single' | 'married') => setTaxStatus(v)}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
@@ -257,15 +255,18 @@ export default function TaxesPage() {
                                 </Select>
                             </div>
                             <div className="grid gap-2">
-                                <label className="text-sm font-medium">{t('taxes.totalLimit')} (€)</label>
-                                <Input
-                                    type="number"
-                                    value={settingsForm.tax_allowance_limit}
-                                    onChange={(e) => setSettingsForm({ ...settingsForm, tax_allowance_limit: e.target.value })}
-                                />
+                                <label className="text-sm font-medium">{t('taxes.totalLimit')}</label>
+                                <div className="flex items-center gap-3 p-3 rounded-md bg-muted/50 border">
+                                    <Badge variant="secondary" className="text-lg font-bold px-3 py-1">
+                                        {formatCurrency(computedLimit)}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground">
+                                        Automatisch basierend auf Status
+                                    </span>
+                                </div>
                             </div>
                             <Button
-                                onClick={handleUpdateSettings}
+                                onClick={handleUpdateStatus}
                                 disabled={settingsLoading}
                                 className={cn(
                                     "w-full transition-colors",
@@ -281,7 +282,7 @@ export default function TaxesPage() {
                                 ) : (
                                     <>
                                         <Save className="h-4 w-4 mr-2" />
-                                        {t('taxes.updateSettings')}
+                                        Update Status
                                     </>
                                 )}
                             </Button>
