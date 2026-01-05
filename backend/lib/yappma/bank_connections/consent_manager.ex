@@ -139,16 +139,17 @@ defmodule Yappma.BankConnections.ConsentManager do
 
   @doc """
   Updates consent status.
+  Accepts both external_id (string) and internal id (integer).
   """
   def update_consent_status(consent_id, status)
-      when status in ["pending", "authorized", "expired", "revoked"] do
+      when status in ["pending", "authorized", "valid", "expired", "revoked"] do
     case get_consent(consent_id) do
       nil ->
         {:error, :not_found}
 
       consent ->
         consent
-        |> BankConsent.changeset(%{status: status})
+        |> BankConsent.changeset(%{status: status, last_used_at: DateTime.utc_now()})
         |> Repo.update()
     end
   end
