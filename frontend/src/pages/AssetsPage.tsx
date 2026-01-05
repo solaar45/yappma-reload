@@ -27,6 +27,7 @@ import { DeleteAssetDialog } from '@/components/DeleteAssetDialog';
 import { PiggyBank, Search, Filter, Trash2, CheckCircle2, XCircle, TrendingUp } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
+import { cn } from '@/lib/utils';
 import type { Asset } from '@/lib/api/types';
 
 export default function AssetsPage() {
@@ -57,28 +58,28 @@ export default function AssetsPage() {
   // Filter and search logic
   const filteredAssets = useMemo(() => {
     if (!assets) return [];
-    
+
     return assets.filter((asset) => {
       // Search filter
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
         asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.symbol?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.security_asset?.isin?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.security_asset?.ticker?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       // Type filter
-      const matchesType = typeFilter === 'all' || 
+      const matchesType = typeFilter === 'all' ||
         (asset.asset_type?.description || 'Other') === typeFilter;
-      
+
       // Account filter
-      const matchesAccount = accountFilter === 'all' || 
+      const matchesAccount = accountFilter === 'all' ||
         asset.account_id?.toString() === accountFilter;
-      
+
       // Status filter
       const matchesStatus = statusFilter === 'all' ||
         (statusFilter === 'active' && asset.is_active) ||
         (statusFilter === 'inactive' && !asset.is_active);
-      
+
       return matchesSearch && matchesType && matchesAccount && matchesStatus;
     });
   }, [assets, searchTerm, typeFilter, accountFilter, statusFilter]);
@@ -95,11 +96,11 @@ export default function AssetsPage() {
     setIsDeleting(true);
     try {
       logger.info('Batch deleting assets', { count: selectedAssetIds.length, ids: selectedAssetIds });
-      
+
       await Promise.all(
         selectedAssetIds.map(id => apiClient.delete(`assets/${id}`))
       );
-      
+
       logger.info('Batch delete successful');
       await refetch();
       setRowSelection({});
@@ -239,11 +240,11 @@ export default function AssetsPage() {
       cell: ({ row }) => {
         const latestSnapshot = row.original.snapshots?.[0];
         const quantity = latestSnapshot?.quantity;
-        
+
         if (!quantity) {
           return <div className="text-right text-muted-foreground">-</div>;
         }
-        
+
         return (
           <div className="text-right text-sm">
             {parseFloat(quantity).toFixed(2)}
@@ -263,7 +264,7 @@ export default function AssetsPage() {
         const isin = row.original.security_asset?.isin;
         const ticker = row.original.security_asset?.ticker;
         const symbol = row.original.symbol;
-        
+
         if (isin) {
           return (
             <div className="text-xs font-mono text-muted-foreground">
@@ -271,7 +272,7 @@ export default function AssetsPage() {
             </div>
           );
         }
-        
+
         if (ticker) {
           return (
             <div className="flex items-center gap-2 text-sm">
@@ -280,7 +281,7 @@ export default function AssetsPage() {
             </div>
           );
         }
-        
+
         if (symbol) {
           return (
             <div className="text-sm text-muted-foreground">
@@ -288,7 +289,7 @@ export default function AssetsPage() {
             </div>
           );
         }
-        
+
         return <div className="text-muted-foreground">-</div>;
       },
     },
@@ -309,11 +310,11 @@ export default function AssetsPage() {
             </Badge>
           );
         }
-        
+
         const snapshotDate = new Date(latestSnapshot.snapshot_date);
         const daysSince = Math.floor((Date.now() - snapshotDate.getTime()) / (1000 * 60 * 60 * 24));
         const isOld = daysSince > 30;
-        
+
         return (
           <div className="flex flex-col gap-1">
             <span className="text-sm">
@@ -416,7 +417,7 @@ export default function AssetsPage() {
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold">{t('assets.noAssets')}</h3>
                 <p className="text-sm text-muted-foreground max-w-sm">
-                  {t('assets.addFirstDescription') || 
+                  {t('assets.addFirstDescription') ||
                     'Start tracking your investments by adding your first asset. Track stocks, bonds, real estate, and more.'}
                 </p>
               </div>
@@ -444,9 +445,14 @@ export default function AssetsPage() {
       {/* Data Table with Filters */}
       <Card>
         <CardContent className="pt-6">
-          {/* Filters */}
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          {/* Filters and Batch Actions */}
+          <div className="relative mb-6">
+            <div
+              className={cn(
+                "flex flex-col gap-4 md:flex-row md:items-center md:justify-between transition-all duration-200",
+                selectedAssetIds.length > 0 ? "opacity-0 pointer-events-none invisible" : "opacity-100 visible"
+              )}
+            >
               <div className="flex items-center gap-2 flex-1 max-w-md">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
@@ -456,10 +462,10 @@ export default function AssetsPage() {
                   className="flex-1"
                 />
               </div>
-              
+
               <div className="flex items-center gap-2 flex-wrap">
                 <Filter className="h-4 w-4 text-muted-foreground" />
-                
+
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder={t('assets.allTypes') || 'All Types'} />
@@ -471,7 +477,7 @@ export default function AssetsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                
+
                 <Select value={accountFilter} onValueChange={setAccountFilter}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder={t('assets.allAccounts') || 'All Accounts'} />
@@ -485,7 +491,7 @@ export default function AssetsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                
+
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[120px]">
                     <SelectValue placeholder={t('assets.allStatus') || 'All'} />
@@ -499,11 +505,11 @@ export default function AssetsPage() {
               </div>
             </div>
 
-            {/* Batch Actions Bar */}
+            {/* Batch Actions Overlay */}
             {selectedAssetIds.length > 0 && (
-              <div className="flex items-center justify-between bg-muted p-3 rounded-md">
+              <div className="absolute inset-0 flex items-center justify-between bg-muted p-3 rounded-md animate-in fade-in zoom-in-95 duration-200">
                 <span className="text-sm font-medium">
-                  {selectedAssetIds.length} {selectedAssetIds.length === 1 ? 
+                  {selectedAssetIds.length} {selectedAssetIds.length === 1 ?
                     t('assets.assetSelected') : t('assets.assetsSelected')
                   }
                 </span>
@@ -520,8 +526,8 @@ export default function AssetsPage() {
           </div>
 
           {/* DataTable */}
-          <DataTable 
-            columns={columns} 
+          <DataTable
+            columns={columns}
             data={filteredAssets}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
@@ -537,7 +543,7 @@ export default function AssetsPage() {
               {t('assets.deleteSelectedTitle') || 'Delete Selected Assets'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('assets.deleteSelectedConfirm') || 
+              {t('assets.deleteSelectedConfirm') ||
                 `Are you sure you want to delete ${selectedAssetIds.length} asset(s)? This action cannot be undone.`
               }
             </AlertDialogDescription>
@@ -546,7 +552,7 @@ export default function AssetsPage() {
             <AlertDialogCancel disabled={isDeleting}>
               {t('common.cancel')}
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleBatchDelete}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

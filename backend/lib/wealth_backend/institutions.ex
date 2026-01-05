@@ -18,9 +18,16 @@ defmodule WealthBackend.Institutions do
   """
   def list_institutions(user_id) do
     Institution
-    |> where([i], i.user_id == ^user_id)
+    |> where([i], i.user_id == ^user_id or i.is_system_provided == true)
     |> order_by([i], i.name)
     |> Repo.all()
+  end
+
+  @doc """
+  Returns all system-provided institutions and those belonging to a specific user.
+  """
+  def list_available_institutions(user_id) do
+    list_institutions(user_id)
   end
 
   @doc """
@@ -55,7 +62,7 @@ defmodule WealthBackend.Institutions do
   """
   def get_institution_by_user(id, user_id) do
     Institution
-    |> where([i], i.id == ^id and i.user_id == ^user_id)
+    |> where([i], i.id == ^id and (i.user_id == ^user_id or i.is_system_provided == true))
     |> Repo.one()
   end
 

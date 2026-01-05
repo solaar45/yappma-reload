@@ -21,6 +21,9 @@ defmodule WealthBackendWeb.InstitutionJSON do
       name: institution.name,
       type: institution.type,
       country: institution.country,
+      category: institution.category,
+      logo_url: institution.logo_url,
+      is_system_provided: institution.is_system_provided,
       user_id: institution.user_id,
       inserted_at: institution.inserted_at,
       updated_at: institution.updated_at

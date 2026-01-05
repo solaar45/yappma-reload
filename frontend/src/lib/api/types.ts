@@ -13,8 +13,14 @@ export interface Institution {
   id: number;
   name: string;
   type: 'bank' | 'broker' | 'insurance' | 'other';
+  category?: 'bank' | 'neobank' | 'broker' | 'insurance' | 'crypto' | 'other';
   country: string;
-  user_id: number;
+  is_system_provided: boolean;
+  user_id: number | null;
+  bic?: string;
+  logo_url?: string;
+  website?: string;
+  assets?: Asset[];
   inserted_at: string;
   updated_at: string;
 }

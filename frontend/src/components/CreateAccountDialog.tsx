@@ -21,8 +21,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, AlertCircle } from 'lucide-react';
-import { CreateInstitutionDialog } from './CreateInstitutionDialog';
+import { Plus, Check, ChevronsUpDown } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { cn } from '@/lib/utils';
+import { Badge } from './ui/badge';
 
 interface CreateAccountDialogProps {
   onSuccess?: () => void;
@@ -47,46 +57,50 @@ const CURRENCIES = [
 
 export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
   const { userId } = useUser();
-  const { institutions, loading: institutionsLoading, refetch: refetchInstitutions } = useInstitutions({ userId: userId! });
+  const { institutions, loading: institutionsLoading } = useInstitutions({ userId: userId! });
   const { createAccount, loading, error } = useCreateAccount();
   const [open, setOpen] = useState(false);
+  const [institutionOpen, setInstitutionOpen] = useState(false);
+  const [showCustomInstitution, setShowCustomInstitution] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     type: 'checking',
     currency: 'EUR',
     institution_id: '',
+    custom_institution_name: '',
     is_active: true,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userId || !formData.institution_id) return;
+    if (!userId) return;
+    if (!showCustomInstitution && !formData.institution_id) return;
+    if (showCustomInstitution && !formData.custom_institution_name) return;
 
     const result = await createAccount({
       user_id: userId,
       name: formData.name,
       type: formData.type,
       currency: formData.currency,
-      institution_id: parseInt(formData.institution_id),
+      institution_id: !showCustomInstitution ? parseInt(formData.institution_id) : undefined,
+      custom_institution_name: showCustomInstitution ? formData.custom_institution_name : undefined,
       is_active: formData.is_active,
     });
 
     if (result) {
       setOpen(false);
-      setFormData({ 
-        name: '', 
+      setFormData({
+        name: '',
         type: 'checking',
         currency: 'EUR',
         institution_id: '',
+        custom_institution_name: '',
         is_active: true,
       });
+      setShowCustomInstitution(false);
       onSuccess?.();
     }
-  };
-
-  const handleInstitutionCreated = () => {
-    // Only refetch when a new institution is created
-    refetchInstitutions();
   };
 
   return (
@@ -119,41 +133,92 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="institution">Institution *</Label>
-                <CreateInstitutionDialog compact onSuccess={handleInstitutionCreated} />
-              </div>
-              {institutionsLoading ? (
-                <div className="flex items-center justify-center h-10 border rounded-md bg-muted">
-                  <span className="text-sm text-muted-foreground">Loading institutions...</span>
-                </div>
-              ) : institutions && institutions.length > 0 ? (
-                <Select 
-                  value={formData.institution_id} 
-                  onValueChange={(value) => setFormData({ ...formData, institution_id: value })}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setShowCustomInstitution(!showCustomInstitution)}
                 >
-                  <SelectTrigger id="institution">
-                    <SelectValue placeholder="Select institution" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {institutions.map((inst) => (
-                      <SelectItem key={inst.id} value={inst.id.toString()}>
-                        {inst.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
-                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    No institutions found. Please create one first.
-                  </span>
+                  {showCustomInstitution ? "Search list" : "Not in correctly?"}
+                </Button>
+              </div>
+
+              {showCustomInstitution ? (
+                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                  <Input
+                    placeholder="Enter institution name..."
+                    value={formData.custom_institution_name}
+                    onChange={(e) => setFormData({ ...formData, custom_institution_name: e.target.value })}
+                    required={showCustomInstitution}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    This will create a new private institution for you.
+                  </p>
                 </div>
+              ) : (
+                <Popover open={institutionOpen} onOpenChange={setInstitutionOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={institutionOpen}
+                      className="w-full justify-between font-normal"
+                      disabled={institutionsLoading}
+                    >
+                      {formData.institution_id
+                        ? institutions?.find((inst) => inst.id.toString() === formData.institution_id)?.name
+                        : institutionsLoading ? "Loading..." : "Select institution..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search bank or broker..." />
+                      <CommandList>
+                        <CommandEmpty>No institution found.</CommandEmpty>
+                        <CommandGroup>
+                          {institutions?.map((inst) => (
+                            <CommandItem
+                              key={inst.id}
+                              value={inst.name}
+                              onSelect={() => {
+                                setFormData({ ...formData, institution_id: inst.id.toString() });
+                                setInstitutionOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  formData.institution_id === inst.id.toString() ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span>{inst.name}</span>
+                                {inst.category && (
+                                  <span className="text-[10px] text-muted-foreground capitalize">
+                                    {inst.category}
+                                  </span>
+                                )}
+                              </div>
+                              {inst.is_system_provided && (
+                                <Badge variant="secondary" className="ml-auto text-[8px] h-4 px-1">
+                                  System
+                                </Badge>
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="type">Account Type *</Label>
-              <Select 
-                value={formData.type} 
+              <Select
+                value={formData.type}
                 onValueChange={(value) => setFormData({ ...formData, type: value })}
               >
                 <SelectTrigger id="type">
@@ -170,8 +235,8 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="currency">Currency *</Label>
-              <Select 
-                value={formData.currency} 
+              <Select
+                value={formData.currency}
                 onValueChange={(value) => setFormData({ ...formData, currency: value })}
               >
                 <SelectTrigger id="currency">
@@ -202,16 +267,16 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               />
             </div>
             {error && (
-              <div className="text-sm text-destructive">{error}</div>
+              <div className="text-sm text-destructive">{error.message}</div>
             )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || !formData.name || !formData.institution_id || institutions?.length === 0}
+            <Button
+              type="submit"
+              disabled={loading || !formData.name || (!showCustomInstitution && !formData.institution_id) || (showCustomInstitution && !formData.custom_institution_name)}
             >
               {loading ? 'Creating...' : 'Create Account'}
             </Button>

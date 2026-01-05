@@ -13,7 +13,7 @@ defmodule WealthBackendWeb.InstitutionController do
     # TODO: Get user_id from session/auth when authentication is implemented
     user_id = 1
 
-    institutions = Institutions.list_institutions(user_id)
+    institutions = Institutions.list_available_institutions(user_id)
     render(conn, :index, institutions: institutions)
   end
 

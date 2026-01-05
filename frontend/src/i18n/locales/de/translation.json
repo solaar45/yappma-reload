@@ -19,7 +19,13 @@
     "currency": "Währung",
     "quantity": "Menge",
     "account": "Konto",
-    "asset": "Vermögenswert"
+    "asset": "Vermögenswert",
+    "snapshot": "Momentaufnahme",
+    "showing": "Zeige {{start}}-{{end}} von {{total}} Ergebnissen",
+    "noResults": "Keine Ergebnisse.",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "rowsPerPage": "Zeilen pro Seite"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -161,6 +167,11 @@
       "account": "Konto",
       "asset": "Vermögenswert"
     },
-    "errorLoading": "Fehler beim Laden der Momentaufnahmen"
+    "errorLoading": "Fehler beim Laden der Momentaufnahmen",
+    "snapshotSelected": "Momentaufnahme ausgewählt",
+    "snapshotsSelected": "Momentaufnahmen ausgewählt",
+    "deleteSelected": "Ausgewählte löschen",
+    "deleteSelectedTitle": "Ausgewählte Momentaufnahmen löschen",
+    "deleteSelectedConfirm": "Möchten Sie wirklich die ausgewählten Momentaufnahmen löschen? Diese Aktion kann nicht rückgängig gemacht werden."
   }
 }

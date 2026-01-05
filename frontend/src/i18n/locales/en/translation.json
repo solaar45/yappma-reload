@@ -19,7 +19,13 @@
     "currency": "Currency",
     "quantity": "Quantity",
     "account": "Account",
-    "asset": "Asset"
+    "asset": "Asset",
+    "snapshot": "Snapshot",
+    "showing": "Showing {{start}}-{{end}} of {{total}} results",
+    "noResults": "No results.",
+    "previous": "Previous",
+    "next": "Next",
+    "rowsPerPage": "Rows per page"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -157,6 +163,11 @@
       "account": "Account",
       "asset": "Asset"
     },
-    "errorLoading": "Error loading snapshots"
+    "errorLoading": "Error loading snapshots",
+    "snapshotSelected": "snapshot selected",
+    "snapshotsSelected": "snapshots selected",
+    "deleteSelected": "Delete Selected",
+    "deleteSelectedTitle": "Delete Selected Snapshots",
+    "deleteSelectedConfirm": "Are you sure you want to delete the selected snapshots? This action cannot be undone."
   }
 }

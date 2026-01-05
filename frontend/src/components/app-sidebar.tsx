@@ -5,7 +5,6 @@ import {
   LayoutDashboard,
   Wallet,
   PiggyBank,
-  Building2,
   Calendar,
 } from "lucide-react"
 
@@ -46,11 +45,6 @@ const data = {
       title: "Snapshots",
       url: "/snapshots",
       icon: Calendar,
-    },
-    {
-      title: "Institutions",
-      url: "/institutions",
-      icon: Building2,
     },
   ],
 }

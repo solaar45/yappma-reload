@@ -4,15 +4,19 @@ import { logger } from '@/lib/logger';
 import type { Account } from '@/lib/api/types';
 
 interface CreateAccountInput {
+  user_id: number;
   name: string;
+  type: string;
   currency: string;
-  initial_balance?: number;
-  institution_id?: string;
+  institution_id?: number;
+  custom_institution_name?: string;
+  is_active?: boolean;
+  opened_at?: string;
 }
 
 interface UseCreateAccountResult {
   createAccount: (data: CreateAccountInput) => Promise<Account>;
-  isCreating: boolean;
+  loading: boolean;
   error: Error | null;
 }
 
@@ -26,12 +30,12 @@ interface UseCreateAccountResult {
  * - Request cancellation support
  */
 export function useCreateAccount(): UseCreateAccountResult {
-  const [isCreating, setIsCreating] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const createAccount = async (data: CreateAccountInput): Promise<Account> => {
     try {
-      setIsCreating(true);
+      setLoading(true);
       setError(null);
 
       logger.debug('Creating account...', { name: data.name });
@@ -46,18 +50,18 @@ export function useCreateAccount(): UseCreateAccountResult {
       const error = err instanceof ApiError
         ? err
         : new Error('Failed to create account');
-      
+
       setError(error);
       logger.error('Failed to create account', { error, data });
       throw error;
     } finally {
-      setIsCreating(false);
+      setLoading(false);
     }
   };
 
   return {
     createAccount,
-    isCreating,
+    loading,
     error,
   };
 }
