@@ -9,7 +9,22 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
+import { DataTableColumnHeader } from '@/components/ui/data-table';
+import {
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import type { SortingState } from '@tanstack/react-table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { CreateSnapshotDialog } from '@/components/CreateSnapshotDialog';
 import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
 import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
@@ -38,6 +53,9 @@ export default function SnapshotsPage() {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+
+  // Sorting state
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const handleSnapshotChanged = () => {
     setRefreshKey((prev) => prev + 1);
@@ -151,6 +169,19 @@ export default function SnapshotsPage() {
     ],
     [t, handleSnapshotChanged]
   );
+
+  // Create table instance
+  const table = useReactTable({
+    data: paginatedSnapshots,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
+    state: {
+      sorting,
+    },
+    manualPagination: true, // We handle pagination ourselves
+  });
 
   if (loading) {
     return (
@@ -315,7 +346,47 @@ export default function SnapshotsPage() {
           </div>
 
           {/* DataTable */}
-          <DataTable columns={columns} data={paginatedSnapshots} />
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      Keine Ergebnisse.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
           {/* Pagination Controls */}
           {filteredSnapshots.length > 0 && (
@@ -328,7 +399,7 @@ export default function SnapshotsPage() {
                   value={pageSize.toString()}
                   onValueChange={(value) => setPageSize(Number(value))}
                 >
-                  <SelectTrigger className="h-8 w-[100px]">
+                  <SelectTrigger className="h-8 w-[110px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
