@@ -60,7 +60,7 @@ const mockAccounts = {
 // Generate mock transactions for an account
 function generateMockTransactions(accountId, dateFrom, dateTo) {
   const transactions = [];
-  
+
   // Sample transactions
   const sampleTransactions = [
     {
@@ -177,12 +177,16 @@ app.get('/aspsps', (req, res) => {
 });
 
 // Create consent
-app.post('/consents/create', (req, res) => {
-  console.log('[Styx Mock] POST /consents/create', req.body);
+app.post('/consents', (req, res) => {
+  console.log('[Styx Mock] POST /consents', req.body);
   const consentId = 'consent-' + Date.now();
+  const authUrl = `http://localhost:5173/bank-callback?consent=${consentId}&status=authorized`;
+
   res.json({
     consentId,
-    redirectUrl: `http://localhost:3000/bank-connections/callback?consent=${consentId}`,
+    consent_id: consentId,
+    authorization_url: authUrl,
+    redirectUrl: authUrl,  // Legacy compatibility
     status: 'created'
   });
 });
@@ -191,7 +195,7 @@ app.post('/consents/create', (req, res) => {
 app.get('/consents/:consentId/accounts', (req, res) => {
   const { consentId } = req.params;
   console.log(`[Styx Mock] GET /consents/${consentId}/accounts`);
-  
+
   res.json({
     accounts: Object.values(mockAccounts)
   });
@@ -201,12 +205,12 @@ app.get('/consents/:consentId/accounts', (req, res) => {
 app.get('/consents/:consentId/accounts/:accountId/transactions', (req, res) => {
   const { consentId, accountId } = req.params;
   const { date_from, date_to } = req.query;
-  
+
   console.log(`[Styx Mock] GET /consents/${consentId}/accounts/${accountId}/transactions`);
   console.log(`  date_from: ${date_from}, date_to: ${date_to}`);
-  
+
   const transactions = generateMockTransactions(accountId, date_from, date_to);
-  
+
   res.json({
     account: mockAccounts[accountId] || mockAccounts['ACC001'],
     transactions: {

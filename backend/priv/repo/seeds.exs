@@ -6,25 +6,25 @@
 
 # Use the application's configured repo alias
 alias Yappma.Repo
-alias WealthBackend.Accounts
-alias WealthBackend.Portfolio
-alias WealthBackend.Analytics
+alias Yappma.Accounts
+alias Yappma.Portfolio
+alias Yappma.Analytics
 
 IO.puts("\n🌱 Starting seed process...\n")
 
 # Clear existing data (only for development!)
 IO.puts("Clearing existing data...")
-Repo.delete_all(WealthBackend.Analytics.AssetSnapshot)
-Repo.delete_all(WealthBackend.Analytics.AccountSnapshot)
-Repo.delete_all(WealthBackend.Portfolio.SecurityAsset)
-Repo.delete_all(WealthBackend.Portfolio.InsuranceAsset)
-Repo.delete_all(WealthBackend.Portfolio.LoanAsset)
-Repo.delete_all(WealthBackend.Portfolio.RealEstateAsset)
-Repo.delete_all(WealthBackend.Portfolio.Asset)
-Repo.delete_all(WealthBackend.Accounts.Account)
-Repo.delete_all(WealthBackend.Accounts.Institution)
-Repo.delete_all(WealthBackend.Portfolio.AssetType)
-Repo.delete_all(WealthBackend.Accounts.User)
+Repo.delete_all(Yappma.Analytics.AssetSnapshot)
+Repo.delete_all(Yappma.Analytics.AccountSnapshot)
+Repo.delete_all(Yappma.Portfolio.SecurityAsset)
+Repo.delete_all(Yappma.Portfolio.InsuranceAsset)
+Repo.delete_all(Yappma.Portfolio.LoanAsset)
+Repo.delete_all(Yappma.Portfolio.RealEstateAsset)
+Repo.delete_all(Yappma.Portfolio.Asset)
+Repo.delete_all(Yappma.Accounts.Account)
+Repo.delete_all(Yappma.Accounts.Institution)
+Repo.delete_all(Yappma.Portfolio.AssetType)
+Repo.delete_all(Yappma.Accounts.User)
 
 # ============================================================================
 # 1. Create Asset Types
@@ -41,7 +41,7 @@ asset_types = [
 ]
 
 Enum.each(asset_types, fn attrs ->
-  WealthBackend.Portfolio.AssetType.changeset(%WealthBackend.Portfolio.AssetType{}, attrs)
+  Yappma.Portfolio.AssetType.changeset(%Yappma.Portfolio.AssetType{}, attrs)
   |> Repo.insert!()
 end)
 

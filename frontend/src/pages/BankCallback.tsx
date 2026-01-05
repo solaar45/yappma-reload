@@ -12,7 +12,8 @@ export function BankCallback() {
 
   useEffect(() => {
     const processCallback = async () => {
-      const consentId = searchParams.get('consent_id');
+      // Support both 'consent_id' and 'consent' parameters
+      const consentId = searchParams.get('consent_id') || searchParams.get('consent');
       const authCode = searchParams.get('code');
       const mockStatus = searchParams.get('status');
       const error = searchParams.get('error');
@@ -45,7 +46,7 @@ export function BankCallback() {
         });
         setStatus('success');
         setMessage('Autorisierung erfolgreich!');
-        
+
         logger.info('Consent completed successfully', { consentId });
 
         // Redirect to bank connections after success

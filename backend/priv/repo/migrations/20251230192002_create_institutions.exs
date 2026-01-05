@@ -6,6 +6,7 @@ defmodule WealthBackend.Repo.Migrations.CreateInstitutions do
       add :name, :string, null: false
       add :type, :string, null: false
       add :country, :string
+      add :bic, :string
       add :user_id, references(:users, on_delete: :delete_all), null: false
 
       timestamps(type: :utc_datetime)

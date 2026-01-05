@@ -61,7 +61,9 @@ defmodule YappmaWeb.BankConnectionController do
     - aspsp_id: Bank identifier
     - redirect_url: Callback URL after authorization
   """
-  def create_consent(conn, %{"aspsp_id" => aspsp_id, "redirect_url" => redirect_url}) do
+  def create_consent(conn, params) do
+    redirect_url = params["redirect_url"]
+    aspsp_id = params["aspsp_id"] || "MOCKBANK_DE" # Default for testing if not provided
     user_id = conn.assigns[:current_user_id] || 1  # TODO: Get from proper auth
 
     case BankConnections.initiate_consent(user_id, aspsp_id, redirect_url: redirect_url) do
