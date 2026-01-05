@@ -14,9 +14,29 @@ defmodule WealthBackend.Banking do
 
   @doc """
   Returns the list of transaction categories.
+  Optionally filter by user_id (to include custom categories) and type (income/expense).
   """
-  def list_categories do
-    TransactionCategory
+  def list_categories(opts \\ []) do
+    query = from c in TransactionCategory
+
+    query =
+      case Keyword.get(opts, :user_id) do
+        nil ->
+          # Only system categories
+          from c in query, where: c.is_system == true
+
+        user_id ->
+          # System categories + user's custom categories
+          from c in query, where: c.is_system == true or c.user_id == ^user_id
+      end
+
+    query =
+      case Keyword.get(opts, :type) do
+        nil -> query
+        type -> from c in query, where: c.type == ^type
+      end
+
+    query
     |> order_by([c], [c.type, c.name])
     |> Repo.all()
   end
@@ -25,6 +45,39 @@ defmodule WealthBackend.Banking do
   Gets a single category.
   """
   def get_category!(id), do: Repo.get!(TransactionCategory, id)
+
+  @doc """
+  Creates a custom user category.
+  """
+  def create_category(attrs \\ %{}) do
+    %TransactionCategory{}
+    |> TransactionCategory.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a category (only for custom user categories).
+  """
+  def update_category(%TransactionCategory{is_system: false} = category, attrs) do
+    category
+    |> TransactionCategory.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def update_category(%TransactionCategory{is_system: true}, _attrs) do
+    {:error, "Cannot update system category"}
+  end
+
+  @doc """
+  Deletes a category (only for custom user categories).
+  """
+  def delete_category(%TransactionCategory{is_system: false} = category) do
+    Repo.delete(category)
+  end
+
+  def delete_category(%TransactionCategory{is_system: true}) do
+    {:error, "Cannot delete system category"}
+  end
 
   ## Transactions
 
@@ -47,7 +100,7 @@ defmodule WealthBackend.Banking do
       join: a in Account,
       on: t.account_id == a.id,
       where: a.user_id == ^user_id,
-      preload: [account: a, category: :parent]
+      preload: [account: a, category: []]
     )
     |> apply_transaction_filters(opts)
     |> order_by([t], desc: t.booking_date, desc: t.inserted_at)
@@ -64,18 +117,19 @@ defmodule WealthBackend.Banking do
 
       {:status, status}, q ->
         from(t in q, where: t.status == ^status)
-      
+
       {:category_id, category_id}, q ->
         from(t in q, where: t.category_id == ^category_id)
-      
+
       {:search, search}, q when is_binary(search) and search != "" ->
         search_term = "%#{search}%"
+
         from(t in q,
           where:
             ilike(t.remittance_information, ^search_term) or
-            ilike(t.creditor_name, ^search_term) or
-            ilike(t.debtor_name, ^search_term) or
-            ilike(t.notes, ^search_term)
+              ilike(t.creditor_name, ^search_term) or
+              ilike(t.debtor_name, ^search_term) or
+              ilike(t.additional_information, ^search_term)
         )
 
       {:limit, limit}, q ->
@@ -161,7 +215,10 @@ defmodule WealthBackend.Banking do
 
           # Count successful inserts/updates
           success_count = Enum.count(results, fn {status, _} -> status == :ok end)
-          Logger.info("Synced #{success_count}/#{length(transactions)} transactions for account #{account_id}")
+
+          Logger.info(
+            "Synced #{success_count}/#{length(transactions)} transactions for account #{account_id}"
+          )
 
           {:ok, success_count}
 
@@ -253,6 +310,7 @@ defmodule WealthBackend.Banking do
   defp parse_styx_transactions(_, _), do: []
 
   defp parse_date(nil), do: nil
+
   defp parse_date(date_string) when is_binary(date_string) do
     case Date.from_iso8601(date_string) do
       {:ok, date} -> date

@@ -75,4 +75,14 @@ defmodule WealthBackend.Banking.Transaction do
     |> foreign_key_constraint(:category_id)
     |> unique_constraint([:account_id, :external_id], name: :transactions_account_external_id_index)
   end
+
+  @doc """
+  Changeset for user edits (category assignment, etc.)
+  Only allows updating certain fields that users can manually edit.
+  """
+  def update_changeset(transaction, attrs) do
+    transaction
+    |> cast(attrs, [:category_id, :additional_information])
+    |> foreign_key_constraint(:category_id)
+  end
 end
