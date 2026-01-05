@@ -2,8 +2,7 @@ defmodule WealthBackend.Banking.BankConsent do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias WealthBackend.Users.User
-  alias WealthBackend.Banking.Transaction
+  alias WealthBackend.Accounts.User
 
   @type t :: %__MODULE__{
           id: integer(),
@@ -17,7 +16,6 @@ defmodule WealthBackend.Banking.BankConsent do
           last_used_at: NaiveDateTime.t() | nil,
           redirect_url: String.t() | nil,
           user: User.t() | Ecto.Association.NotLoaded.t(),
-          transactions: [Transaction.t()] | Ecto.Association.NotLoaded.t(),
           inserted_at: NaiveDateTime.t(),
           updated_at: NaiveDateTime.t()
         }
@@ -33,7 +31,6 @@ defmodule WealthBackend.Banking.BankConsent do
     field :redirect_url, :string
 
     belongs_to :user, User
-    has_many :transactions, Transaction
 
     timestamps(type: :utc_datetime)
   end
