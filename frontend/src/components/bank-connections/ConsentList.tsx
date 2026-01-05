@@ -1,4 +1,5 @@
-import { RefreshCw, Trash2, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { RefreshCw, Trash2, CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, ArrowLeftRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -8,22 +9,35 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useRevokeConsent, useSyncAccounts } from '@/lib/api/hooks/useBankConnections';
+import { TransactionSyncButton } from '@/components/TransactionSyncButton';
 import type { BankConsent } from '@/lib/api/types';
-import { formatDistance } from 'date-fns';
+import { formatDistance, subMonths, format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { logger } from '@/lib/logger';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api/client';
 
 interface ConsentListProps {
   consents: BankConsent[];
+}
+
+interface LinkedAccount {
+  id: number;
+  name: string;
+  external_id: string;
+  iban?: string;
+  currency: string;
 }
 
 export function ConsentList({ consents }: ConsentListProps) {
   const revokeConsent = useRevokeConsent();
   const syncAccounts = useSyncAccounts();
   const { refreshBankStatus } = useUser();
+  const [expandedConsents, setExpandedConsents] = useState<Set<number>>(new Set());
 
   const handleSync = async (consentId: string, bankName: string) => {
     logger.info('Syncing consent', { consentId });
@@ -97,6 +111,18 @@ export function ConsentList({ consents }: ConsentListProps) {
     }
   };
 
+  const toggleConsent = (consentId: number) => {
+    setExpandedConsents((prev) => {
+      const next = new Set(prev);
+      if (next.has(consentId)) {
+        next.delete(consentId);
+      } else {
+        next.add(consentId);
+      }
+      return next;
+    });
+  };
+
   const getStatusBadge = (status: BankConsent['status']) => {
     const variants: Record<BankConsent['status'], { variant: 'default' | 'destructive' | 'outline' | 'secondary'; icon: any }> = {
       valid: { variant: 'default', icon: CheckCircle2 },
@@ -118,10 +144,30 @@ export function ConsentList({ consents }: ConsentListProps) {
     );
   };
 
+  // Hook to fetch linked accounts for a consent
+  const useLinkedAccounts = (consentExternalId: string) => {
+    return useQuery({
+      queryKey: ['consent-accounts', consentExternalId],
+      queryFn: async () => {
+        const response = await apiClient.get<{ data: LinkedAccount[] }>(
+          `bank-connections/consents/${consentExternalId}/accounts`
+        );
+        return Array.isArray(response) ? response : response.data || [];
+      },
+      enabled: !!consentExternalId,
+    });
+  };
+
+  // Default date range: last 90 days
+  const defaultFromDate = format(subMonths(new Date(), 3), 'yyyy-MM-dd');
+  const defaultToDate = format(new Date(), 'yyyy-MM-dd');
+
   return (
     <div className="space-y-4">
       {consents.map((consent) => {
         const bankName = consent.aspsp_name || consent.aspsp_id;
+        const isExpanded = expandedConsents.has(consent.id);
+        const { data: linkedAccounts, isLoading: accountsLoading } = useLinkedAccounts(consent.external_id);
         
         return (
           <Card key={consent.id}>
@@ -180,7 +226,7 @@ export function ConsentList({ consents }: ConsentListProps) {
                         syncAccounts.isPending ? 'animate-spin' : ''
                       }`}
                     />
-                    Synchronisieren
+                    Konten sync
                   </Button>
                   <Button
                     variant="destructive"
@@ -192,6 +238,51 @@ export function ConsentList({ consents }: ConsentListProps) {
                     Löschen
                   </Button>
                 </div>
+
+                {/* Linked Accounts - Collapsible */}
+                {linkedAccounts && linkedAccounts.length > 0 && (
+                  <Collapsible open={isExpanded} onOpenChange={() => toggleConsent(consent.id)}>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="w-full justify-between">
+                        <span className="flex items-center gap-2">
+                          <ArrowLeftRight className="h-4 w-4" />
+                          Transaktionen synchronisieren ({linkedAccounts.length} {linkedAccounts.length === 1 ? 'Konto' : 'Konten'})
+                        </span>
+                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-4 space-y-2">
+                      {accountsLoading ? (
+                        <div className="text-sm text-muted-foreground text-center py-4">
+                          Lade Konten...
+                        </div>
+                      ) : (
+                        linkedAccounts.map((account) => (
+                          <div
+                            key={account.id}
+                            className="flex items-center justify-between p-3 rounded-lg border bg-muted/50"
+                          >
+                            <div>
+                              <p className="font-medium text-sm">{account.name}</p>
+                              {account.iban && (
+                                <p className="text-xs text-muted-foreground">{account.iban}</p>
+                              )}
+                            </div>
+                            <TransactionSyncButton
+                              accountId={account.id}
+                              consentId={consent.external_id}
+                              accountName={account.name}
+                              fromDate={defaultFromDate}
+                              toDate={defaultToDate}
+                              variant="outline"
+                              size="sm"
+                            />
+                          </div>
+                        ))
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
               </div>
             </CardContent>
           </Card>
