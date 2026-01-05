@@ -1,79 +1,94 @@
-"use client"
-
-import * as React from "react"
+import * as React from 'react';
 import {
   LayoutDashboard,
+  Building2,
   Wallet,
   PiggyBank,
-  Building2,
-  Calendar,
+  Camera,
+  ArrowLeftRight,
   Link2,
-} from "lucide-react"
-
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+} from 'lucide-react';
+import { NavMain } from '@/components/nav-main';
+import { NavUser } from '@/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar';
 
 const data = {
-  user: {
-    name: "Demo User",
-    email: "demo@yappma.local",
-    avatar: "/avatars/user.jpg",
-  },
   navMain: [
     {
-      title: "Dashboard",
-      url: "/",
+      title: 'Dashboard',
+      url: '/',
       icon: LayoutDashboard,
+      isActive: true,
     },
     {
-      title: "Accounts",
-      url: "/accounts",
+      title: 'Accounts',
+      url: '/accounts',
       icon: Wallet,
     },
     {
-      title: "Assets",
-      url: "/assets",
+      title: 'Assets',
+      url: '/assets',
       icon: PiggyBank,
     },
     {
-      title: "Snapshots",
-      url: "/snapshots",
-      icon: Calendar,
+      title: 'Snapshots',
+      url: '/snapshots',
+      icon: Camera,
     },
     {
-      title: "Institutions",
-      url: "/institutions",
+      title: 'Transactions',
+      url: '/transactions',
+      icon: ArrowLeftRight,
+    },
+    {
+      title: 'Institutions',
+      url: '/institutions',
       icon: Building2,
     },
     {
-      title: "Bank Connections",
-      url: "/bank-connections",
+      title: 'Bank Connections',
+      url: '/bank-connections',
       icon: Link2,
     },
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={[{ name: "YAPPMA", logo: LayoutDashboard, plan: "Personal" }]} />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="/">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <PiggyBank className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">YAPPMA</span>
+                  <span className="truncate text-xs">Wealth Tracker</span>
+                </div>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

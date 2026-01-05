@@ -25,6 +25,7 @@ import { AccountsPage } from '@/pages/AccountsPage';
 import AssetsPage from '@/pages/AssetsPage';
 import InstitutionsPage from '@/pages/InstitutionsPage';
 import SnapshotsPage from '@/pages/SnapshotsPage';
+import TransactionsPage from '@/pages/TransactionsPage';
 
 // Bank Connections (PSD2)
 import { BankConnectionsPage } from '@/pages/BankConnectionsPage';
@@ -46,6 +47,7 @@ function getBreadcrumb(pathname: string): string {
     '/accounts': 'Accounts',
     '/assets': 'Assets',
     '/snapshots': 'Snapshots',
+    '/transactions': 'Transactions',
     '/institutions': 'Institutions',
     '/bank-connections': 'Bank Connections',
   };
@@ -97,6 +99,7 @@ function AppContent() {
                     <Route path="/accounts" element={<AccountsPage />} />
                     <Route path="/assets" element={<AssetsPage />} />
                     <Route path="/snapshots" element={<SnapshotsPage />} />
+                    <Route path="/transactions" element={<TransactionsPage />} />
                     <Route path="/institutions" element={<InstitutionsPage />} />
                     <Route path="/bank-connections" element={<BankConnectionsPage />} />
                   </Routes>
