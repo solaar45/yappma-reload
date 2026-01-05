@@ -123,7 +123,13 @@ defmodule Yappma.BankConnections.AccountSync do
   end
 
   defp upsert_account(user_id, internal_consent_id, styx_account) do
-    external_id = styx_account["resourceId"] || styx_account[:resource_id]
+    # Try multiple common field names for account ID
+    external_id = 
+      styx_account["resourceId"] || 
+      styx_account["resource_id"] || 
+      styx_account["id"] || 
+      styx_account[:resource_id] || 
+      styx_account[:id]
     iban = styx_account["iban"] || styx_account[:iban]
     name = styx_account["name"] || styx_account[:name] || "Imported Account"
     currency = styx_account["currency"] || styx_account[:currency] || "EUR"

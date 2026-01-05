@@ -27,6 +27,7 @@ const mockBanks = [
 const mockAccounts = {
   'ACC001': {
     id: 'ACC001',
+    resourceId: 'ACC001',
     iban: 'DE89370400440532013000',
     currency: 'EUR',
     name: 'Main Account',
@@ -42,6 +43,7 @@ const mockAccounts = {
   },
   'ACC002': {
     id: 'ACC002',
+    resourceId: 'ACC002',
     iban: 'DE89370400440532013001',
     currency: 'EUR',
     name: 'Savings Account',

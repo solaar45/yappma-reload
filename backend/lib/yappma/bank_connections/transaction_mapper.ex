@@ -31,7 +31,7 @@ defmodule Yappma.BankConnections.TransactionMapper do
     
     %{
       account_id: account[:id],
-      external_id: psd2_tx["transactionId"],
+      external_id: psd2_tx["transactionId"] || psd2_tx["transaction_id"] || psd2_tx["id"],
       date: parse_date(psd2_tx["bookingDate"]),
       value_date: parse_date(psd2_tx["valueDate"]),
       amount: amount,

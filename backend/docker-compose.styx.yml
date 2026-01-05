@@ -16,7 +16,8 @@ services:
       
       # Styx Configuration
       - STYX_MODE=sandbox  # Use 'production' for live banking
-      - LOG_LEVEL=INFO
+      - LOG_LEVEL=DEBUG
+      - STYX_API_KEY=local-dev-key
       
       # Optional: Add custom ASPSP configurations
       - ASPSP_CONFIG_PATH=/config/aspsp-config.json
@@ -29,9 +30,7 @@ services:
       - postgres
     
     networks:
-      - yappma-network
-    
-    restart: unless-stopped
+      - default
     
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8093/health"]

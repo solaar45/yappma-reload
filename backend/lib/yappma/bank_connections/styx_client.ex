@@ -209,7 +209,8 @@ defmodule Yappma.BankConnections.StyxClient do
   defp headers do
     [
       {"Content-Type", "application/json"},
-      {"Accept", "application/json"}
+      {"Accept", "application/json"},
+      {"x-styx-api-key", Application.get_env(:yappma, :styx_api_key, "local-dev-key")}
     ]
   end
 
