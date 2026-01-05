@@ -18,7 +18,7 @@ defmodule WealthBackend.Accounts.User do
   @doc false
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:name, :email, :currency_default, :tax_allowance_limit, :tax_status])
+    |> cast(attrs, [:name, :email, :tax_allowance_limit, :tax_status])
     |> validate_required([:name, :email])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must be a valid email")
     |> validate_inclusion(:tax_status, ~w(single married))
