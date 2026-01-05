@@ -56,11 +56,23 @@ defmodule Yappma.BankConnections do
 
   @doc """
   Completes consent after user authorization.
+  Updates the consent status to "valid" after successful authorization.
   """
-  def complete_consent(_consent_id, _authorization_code) do
-    # TODO: Implement if needed by Styx
-    # For now, consents are completed automatically via redirect
-    {:ok, %{status: "completed"}}
+  def complete_consent(consent_id, _authorization_code \\ nil) do
+    case ConsentManager.update_consent_status(consent_id, "valid") do
+      {:ok, consent} ->
+        {:ok, %{
+          status: "valid",
+          consent_id: consent.external_id,
+          valid_until: consent.valid_until
+        }}
+      
+      {:error, :not_found} ->
+        {:error, :consent_not_found}
+      
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   @doc """
