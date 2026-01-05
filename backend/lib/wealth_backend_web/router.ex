@@ -47,6 +47,12 @@ defmodule WealthBackendWeb.Router do
       delete "/assets/:id", AssetSnapshotController, :delete
     end
 
+    # Transactions
+    get "/transactions", TransactionController, :index
+    get "/transactions/:id", TransactionController, :show
+    get "/accounts/:account_id/transactions", TransactionController, :list_by_account
+    post "/transactions/sync", TransactionController, :sync
+
     # Dashboard / Analytics
     get "/dashboard/net_worth", DashboardController, :net_worth
     get "/dashboard/account_snapshots", DashboardController, :account_snapshots
