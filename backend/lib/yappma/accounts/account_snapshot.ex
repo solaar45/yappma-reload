@@ -6,7 +6,7 @@ defmodule Yappma.Accounts.AccountSnapshot do
     field :balance, :decimal
     field :currency, :string
     field :snapshot_date, :date
-    field :notes, :string
+    field :note, :string
 
     belongs_to :account, Yappma.Accounts.Account
 
@@ -21,7 +21,7 @@ defmodule Yappma.Accounts.AccountSnapshot do
       :balance,
       :currency,
       :snapshot_date,
-      :notes
+      :note
     ])
     |> validate_required([:account_id, :balance, :currency, :snapshot_date])
     |> validate_length(:currency, is: 3)
