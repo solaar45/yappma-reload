@@ -169,5 +169,27 @@
     "deleteSelected": "Delete Selected",
     "deleteSelectedTitle": "Delete Selected Snapshots",
     "deleteSelectedConfirm": "Are you sure you want to delete the selected snapshots? This action cannot be undone."
+  },
+  "taxes": {
+    "title": "Taxes",
+    "taxAllowance": "Tax Allowance",
+    "exemptionOrders": "Exemption Orders",
+    "totalLimit": "Total Limit",
+    "usedAmount": "Allocated",
+    "remainingAmount": "Available",
+    "status": "Status",
+    "single": "Single",
+    "married": "Married",
+    "addExemption": "Add Order",
+    "editExemption": "Edit Order",
+    "deleteExemption": "Delete Order",
+    "amount": "Amount",
+    "institution": "Institution",
+    "year": "Year",
+    "warningOverLimit": "Warning: The sum of your exemption orders ({{total}}) exceeds your total limit ({{limit}})!",
+    "noExemptions": "No exemption orders found for this year.",
+    "errorDuplicateExemption": "An exemption order already exists for this institution and year.",
+    "tooltipDisabledAddOrder": "New exemption orders cannot be created for past years.",
+    "updateSettings": "Update Settings"
   }
 }

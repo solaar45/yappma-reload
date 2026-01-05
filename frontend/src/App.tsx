@@ -21,6 +21,7 @@ import AccountsPage from '@/pages/AccountsPage';
 import AssetsPage from '@/pages/AssetsPage';
 import InstitutionsPage from '@/pages/InstitutionsPage';
 import SnapshotsPage from '@/pages/SnapshotsPage';
+import TaxesPage from '@/pages/TaxesPage';
 
 function getBreadcrumb(pathname: string): string {
   const breadcrumbs: Record<string, string> = {
@@ -29,8 +30,9 @@ function getBreadcrumb(pathname: string): string {
     '/assets': 'Assets',
     '/snapshots': 'Snapshots',
     '/institutions': 'Institutions',
+    '/taxes': 'Taxes',
   };
-  
+
   return breadcrumbs[pathname] || 'Dashboard';
 }
 
@@ -58,13 +60,13 @@ function AppContent() {
             </Breadcrumb>
           </div>
         </header>
-        
+
         {/* Wrap Routes with ErrorBoundary */}
         <ErrorBoundary
           onError={(error, errorInfo) => {
             // Log error for debugging
             logger.error('Route Error Caught', { error, errorInfo });
-            
+
             // TODO: Send to error tracking service
             // Example: sendToErrorTracking(error, errorInfo);
           }}
@@ -75,6 +77,7 @@ function AppContent() {
             <Route path="/assets" element={<AssetsPage />} />
             <Route path="/snapshots" element={<SnapshotsPage />} />
             <Route path="/institutions" element={<InstitutionsPage />} />
+            <Route path="/taxes" element={<TaxesPage />} />
           </Routes>
         </ErrorBoundary>
       </SidebarInset>

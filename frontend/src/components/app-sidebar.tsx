@@ -6,6 +6,7 @@ import {
   Wallet,
   PiggyBank,
   Calendar,
+  Percent,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -45,6 +46,11 @@ const data = {
       title: "Snapshots",
       url: "/snapshots",
       icon: Calendar,
+    },
+    {
+      title: "Taxes",
+      url: "/taxes",
+      icon: Percent,
     },
   ],
 }

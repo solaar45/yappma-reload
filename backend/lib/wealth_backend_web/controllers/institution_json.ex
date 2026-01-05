@@ -15,7 +15,7 @@ defmodule WealthBackendWeb.InstitutionJSON do
     %{data: data(institution)}
   end
 
-  defp data(%Institution{} = institution) do
+  def data(%Institution{} = institution) do
     %{
       id: institution.id,
       name: institution.name,

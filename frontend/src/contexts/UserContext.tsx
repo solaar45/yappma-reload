@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState } from 'react';
+import type { ReactNode } from 'react';
 import type { User } from '@/lib/api/types';
 
 interface UserContextType {
@@ -16,6 +17,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     id: 1,
     email: 'demo@yappma.local',
     name: 'Demo User',
+    currency_default: 'EUR',
+    tax_allowance_limit: 1000,
+    tax_status: 'single',
     inserted_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });

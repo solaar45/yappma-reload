@@ -8,3 +8,6 @@ export { useCreateAccount } from './useCreateAccount';
 export { useCreateAsset } from './useCreateAsset';
 export { useUpdateAccount, useUpdateAsset } from './useUpdateAccount';
 export { useDeleteAccount, useDeleteAsset } from './useDeleteAccount';
+export { useTaxExemptions } from './useTaxExemptions';
+export { useUpdateUser } from './useUpdateUser';
+export { useCreateTaxExemption, useUpdateTaxExemption, useDeleteTaxExemption } from './useTaxExemptionMutations';

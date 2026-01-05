@@ -5,6 +5,19 @@ export interface User {
   name: string;
   email: string;
   currency_default: string;
+  tax_allowance_limit: number;
+  tax_status: 'single' | 'married';
+  inserted_at: string;
+  updated_at: string;
+}
+
+export interface TaxExemption {
+  id: number;
+  amount: string;
+  year: number;
+  user_id: number;
+  institution_id: number;
+  institution?: Institution;
   inserted_at: string;
   updated_at: string;
 }

@@ -47,6 +47,10 @@ defmodule WealthBackendWeb.Router do
       delete "/assets/:id", AssetSnapshotController, :delete
     end
 
+    # Tax Exemptions
+    get "/tax_exemptions", TaxExemptionController, :index
+    resources "/tax_exemptions", TaxExemptionController, except: [:new, :edit, :index]
+
     # Dashboard / Analytics
     get "/dashboard/net_worth", DashboardController, :net_worth
     get "/dashboard/account_snapshots", DashboardController, :account_snapshots

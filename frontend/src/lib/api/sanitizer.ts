@@ -29,16 +29,25 @@ export function escapeHtml(unsafe: string): string {
  * Only allows alphanumeric, hyphens, underscores, forward slashes
  */
 export function sanitizeEndpoint(endpoint: string): string {
-  // Remove leading/trailing slashes
-  const cleaned = endpoint.replace(/^\/+|\/+$/g, '');
-  
-  // Only allow safe characters
-  const sanitized = cleaned.replace(/[^a-zA-Z0-9\-_\/]/g, '');
-  
+  // Split on query if present
+  const [path, query] = endpoint.split('?');
+
+  // Remove leading/trailing slashes from path
+  const cleanedPath = path.replace(/^\/+|\/+$/g, '');
+
+  // Only allow safe characters in path
+  const sanitizedPath = cleanedPath.replace(/[^a-zA-Z0-9\-_\/]/g, '');
+
   // Prevent path traversal
-  const parts = sanitized.split('/').filter(part => part !== '..' && part !== '.');
-  
-  return parts.join('/');
+  const parts = sanitizedPath.split('/').filter(part => part !== '..' && part !== '.');
+  const finalPath = parts.join('/');
+
+  if (query === undefined) return finalPath;
+
+  // For query, allow alphanumeric, =, &, _, -, and .
+  const sanitizedQuery = query.replace(/[^a-zA-Z0-9\-=_&\.]/g, '');
+
+  return `${finalPath}?${sanitizedQuery}`;
 }
 
 /**
@@ -87,7 +96,7 @@ class RateLimiter {
 
   canMakeRequest(key: string): boolean {
     const now = Date.now();
-    
+
     // Check if there's an active backoff
     const backoffUntil = this.backoffTimers.get(key);
     if (backoffUntil && now < backoffUntil) {
@@ -110,7 +119,7 @@ class RateLimiter {
 
     validTimestamps.push(now);
     this.requests.set(key, validTimestamps);
-    
+
     // Clear backoff if request is allowed
     this.backoffTimers.delete(key);
     return true;
