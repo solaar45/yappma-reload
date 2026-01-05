@@ -6,7 +6,7 @@ defmodule WealthBackend.Banking do
   import Ecto.Query, warn: false
   alias WealthBackend.Repo
   alias WealthBackend.Banking.{BankConsent, Transaction}
-  alias WealthBackend.Accounts.Account
+  alias Yappma.Accounts.Account
 
   require Logger
 

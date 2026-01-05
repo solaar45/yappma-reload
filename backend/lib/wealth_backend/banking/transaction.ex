@@ -2,7 +2,7 @@ defmodule WealthBackend.Banking.Transaction do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias WealthBackend.Accounts.Account
+  alias Yappma.Accounts.Account
   alias WealthBackend.Banking.BankConsent
 
   @type t :: %__MODULE__{
