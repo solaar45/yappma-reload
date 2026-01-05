@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateSnapshotDialog } from '@/components/CreateSnapshotDialog';
 import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
 import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Snapshot {
   id: number;
@@ -34,6 +35,10 @@ export default function SnapshotsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+
   const handleSnapshotChanged = () => {
     setRefreshKey((prev) => prev + 1);
   };
@@ -54,6 +59,22 @@ export default function SnapshotsPage() {
       return matchesSearch && matchesType;
     });
   }, [snapshots, searchTerm, typeFilter]);
+
+  // Paginated snapshots
+  const paginatedSnapshots = useMemo(() => {
+    const startIndex = currentPage * pageSize;
+    return filteredSnapshots.slice(startIndex, startIndex + pageSize);
+  }, [filteredSnapshots, currentPage, pageSize]);
+
+  // Calculate pagination info
+  const totalPages = Math.ceil(filteredSnapshots.length / pageSize);
+  const startIndex = currentPage * pageSize + 1;
+  const endIndex = Math.min((currentPage + 1) * pageSize, filteredSnapshots.length);
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm, typeFilter, pageSize]);
 
   // Define table columns
   const columns: ColumnDef<Snapshot>[] = useMemo(
@@ -193,7 +214,7 @@ export default function SnapshotsPage() {
 
       {/* Mobile: Card Layout */}
       <div className="grid gap-4 md:hidden">
-        {filteredSnapshots.map((snapshot) => {
+        {paginatedSnapshots.map((snapshot) => {
           const isAccount = snapshot.snapshot_type === 'account';
           const value = isAccount ? (snapshot as any).balance : (snapshot as any).value;
           const currency = isAccount ? (snapshot as any).currency : 'EUR';
@@ -228,6 +249,33 @@ export default function SnapshotsPage() {
             </Card>
           );
         })}
+
+        {/* Mobile Pagination */}
+        {filteredSnapshots.length > 0 && (
+          <div className="flex items-center justify-between px-2">
+            <div className="text-sm text-muted-foreground">
+              {startIndex}-{endIndex} von {filteredSnapshots.length}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                disabled={currentPage === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={currentPage >= totalPages - 1}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Desktop: DataTable with Filters */}
@@ -240,7 +288,7 @@ export default function SnapshotsPage() {
               <div className="flex items-center gap-2 flex-1 max-w-md">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder={t('snapshots.searchPlaceholder') || 'Search by entity name...'}
+                  placeholder={t('snapshots.searchPlaceholder') || 'Nach Entitätsnamen suchen...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="flex-1"
@@ -252,14 +300,14 @@ export default function SnapshotsPage() {
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder={t('snapshots.allTypes') || 'All Types'} />
+                    <SelectValue placeholder={t('snapshots.allTypes') || 'Alle Typen'} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('snapshots.allTypes') || 'All Types'}</SelectItem>
+                    <SelectItem value="all">{t('snapshots.allTypes') || 'Alle Typen'}</SelectItem>
                     <SelectItem value="account">
-                      {t('snapshots.types.account') || 'Account'}
+                      {t('snapshots.types.account') || 'Konto'}
                     </SelectItem>
-                    <SelectItem value="asset">{t('snapshots.types.asset') || 'Asset'}</SelectItem>
+                    <SelectItem value="asset">{t('snapshots.types.asset') || 'Vermögen'}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -267,7 +315,55 @@ export default function SnapshotsPage() {
           </div>
 
           {/* DataTable */}
-          <DataTable columns={columns} data={filteredSnapshots} />
+          <DataTable columns={columns} data={paginatedSnapshots} />
+
+          {/* Pagination Controls */}
+          {filteredSnapshots.length > 0 && (
+            <div className="flex items-center justify-between px-2 py-4">
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground">
+                  Zeige {startIndex}-{endIndex} von {filteredSnapshots.length}
+                </p>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => setPageSize(Number(value))}
+                >
+                  <SelectTrigger className="h-8 w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10 / Seite</SelectItem>
+                    <SelectItem value="25">25 / Seite</SelectItem>
+                    <SelectItem value="50">50 / Seite</SelectItem>
+                    <SelectItem value="100">100 / Seite</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Zurück
+                </Button>
+                <div className="text-sm text-muted-foreground">
+                  Seite {currentPage + 1} von {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={currentPage >= totalPages - 1}
+                >
+                  Weiter
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
