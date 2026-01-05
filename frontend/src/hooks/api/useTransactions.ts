@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Transaction, TransactionFilters, TransactionCategory } from '@/types/transaction';
+import type { Transaction, TransactionFilters, TransactionCategory } from '@/types/transaction';
 import logger from '@/lib/logger';
 
 // Fetch all transactions for user
