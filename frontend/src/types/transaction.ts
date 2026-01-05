@@ -36,6 +36,3 @@ export type TransactionFilters = {
   category_id?: number;
   search?: string;
 };
-
-// Explicit exports for better module resolution
-export type { Transaction, TransactionCategory, TransactionFilters };
