@@ -9,12 +9,18 @@ export interface Bank {
 }
 
 export interface BankConsent {
-  id: string;
+  id: number;
+  external_id: string;
   aspsp_id: string;
-  bank_name?: string;
-  status: 'created' | 'authorized' | 'active' | 'expired' | 'revoked' | 'failed';
+  aspsp_name?: string;
+  aspsp_bic?: string;
+  status: 'pending' | 'created' | 'authorized' | 'valid' | 'active' | 'expired' | 'revoked' | 'failed' | 'rejected';
+  authorization_url?: string;
+  redirect_url?: string;
   valid_until?: string;
-  created_at: string;
+  last_used_at?: string;
+  user_id: number;
+  inserted_at: string;
   updated_at: string;
 }
 

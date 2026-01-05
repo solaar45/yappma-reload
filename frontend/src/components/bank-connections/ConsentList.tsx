@@ -128,11 +128,14 @@ function ConsentItem({ consent }: { consent: BankConsent }) {
 
   const getStatusBadge = (status: BankConsent['status']) => {
     const variants: Record<BankConsent['status'], { variant: 'default' | 'destructive' | 'outline' | 'secondary'; icon: any }> = {
-      valid: { variant: 'default', icon: CheckCircle2 },
-      authorized: { variant: 'default', icon: CheckCircle2 },
       pending: { variant: 'secondary', icon: Clock },
+      created: { variant: 'secondary', icon: Clock },
+      authorized: { variant: 'default', icon: CheckCircle2 },
+      valid: { variant: 'default', icon: CheckCircle2 },
+      active: { variant: 'default', icon: CheckCircle2 },
       expired: { variant: 'outline', icon: XCircle },
       revoked: { variant: 'destructive', icon: XCircle },
+      failed: { variant: 'destructive', icon: XCircle },
       rejected: { variant: 'destructive', icon: XCircle },
     };
 
