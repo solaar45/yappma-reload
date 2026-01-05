@@ -51,7 +51,7 @@ export default function InstitutionsPage() {
   };
 
   const getTypeLabel = (type: string) => {
-    return t(`institutions.types.${type}`);
+    return String(t(`institutions.types.${type}`));
   };
 
   // Get unique types and countries for filters
@@ -155,7 +155,7 @@ export default function InstitutionsPage() {
         return (
           <div className="flex items-center gap-2">
             <Icon className="h-4 w-4 text-muted-foreground" />
-            <Badge variant="secondary">{getTypeLabel(type)}</Badge>
+            <Badge variant="secondary">{getTypeLabel(type) as React.ReactNode}</Badge>
           </div>
         );
       },
@@ -292,7 +292,7 @@ export default function InstitutionsPage() {
                   <SelectItem value="all">{t('institutions.allTypes')}</SelectItem>
                   {uniqueTypes.map((type) => (
                     <SelectItem key={type} value={type}>
-                      {getTypeLabel(type)}
+                      {getTypeLabel(type) as React.ReactNode}
                     </SelectItem>
                   ))}
                 </SelectContent>
