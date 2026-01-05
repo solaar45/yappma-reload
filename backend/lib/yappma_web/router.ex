@@ -63,6 +63,12 @@ defmodule YappmaWeb.Router do
       delete "/assets/:id", WealthBackendWeb.AssetSnapshotController, :delete
     end
 
+    # Transactions
+    get "/transactions", WealthBackendWeb.TransactionController, :index
+    get "/transactions/:id", WealthBackendWeb.TransactionController, :show
+    get "/accounts/:account_id/transactions", WealthBackendWeb.TransactionController, :list_by_account
+    post "/transactions/sync", WealthBackendWeb.TransactionController, :sync
+
     # Dashboard / Analytics
     get "/dashboard/net_worth", WealthBackendWeb.DashboardController, :net_worth
     get "/dashboard/account_snapshots", WealthBackendWeb.DashboardController, :account_snapshots
