@@ -49,7 +49,9 @@ defmodule WealthBackendWeb.Router do
 
     # Transactions
     get "/transactions", TransactionController, :index
+    get "/transactions/categories", TransactionController, :list_categories
     get "/transactions/:id", TransactionController, :show
+    put "/transactions/:id", TransactionController, :update
     get "/accounts/:account_id/transactions", TransactionController, :list_by_account
     post "/transactions/sync", TransactionController, :sync
 
