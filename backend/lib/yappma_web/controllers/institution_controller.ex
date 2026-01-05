@@ -1,8 +1,8 @@
 defmodule YappmaWeb.InstitutionController do
   use YappmaWeb, :controller
 
-  alias Yappma.Institutions
-  alias Yappma.Institutions.Institution
+  alias Yappma.Accounts
+  alias Yappma.Accounts.Institution
 
   action_fallback YappmaWeb.FallbackController
 
@@ -13,7 +13,7 @@ defmodule YappmaWeb.InstitutionController do
     # TODO: Get user_id from session/auth when authentication is implemented
     user_id = 1
 
-    institutions = Institutions.list_institutions(user_id)
+    institutions = Accounts.list_institutions(user_id)
     render(conn, :index, institutions: institutions)
   end
 
@@ -26,7 +26,7 @@ defmodule YappmaWeb.InstitutionController do
 
     institution_params = Map.put(institution_params, "user_id", user_id)
 
-    case Institutions.create_institution(institution_params) do
+    case Accounts.create_institution(institution_params) do
       {:ok, institution} ->
         conn
         |> put_status(:created)
@@ -48,7 +48,7 @@ defmodule YappmaWeb.InstitutionController do
     # TODO: Get user_id from session/auth when authentication is implemented
     user_id = 1
 
-    case Institutions.get_institution_by_user(id, user_id) do
+    case Accounts.get_institution_by_user(id, user_id) do
       nil ->
         conn
         |> put_status(:not_found)
@@ -67,7 +67,7 @@ defmodule YappmaWeb.InstitutionController do
     # TODO: Get user_id from session/auth when authentication is implemented
     user_id = 1
 
-    case Institutions.get_institution_by_user(id, user_id) do
+    case Accounts.get_institution_by_user(id, user_id) do
       nil ->
         conn
         |> put_status(:not_found)
@@ -75,7 +75,7 @@ defmodule YappmaWeb.InstitutionController do
         |> render(:"404.json")
 
       institution ->
-        case Institutions.update_institution(institution, institution_params) do
+        case Accounts.update_institution(institution, institution_params) do
           {:ok, institution} ->
             render(conn, :show, institution: institution)
 
@@ -95,7 +95,7 @@ defmodule YappmaWeb.InstitutionController do
     # TODO: Get user_id from session/auth when authentication is implemented
     user_id = 1
 
-    case Institutions.get_institution_by_user(id, user_id) do
+    case Accounts.get_institution_by_user(id, user_id) do
       nil ->
         conn
         |> put_status(:not_found)
@@ -103,7 +103,7 @@ defmodule YappmaWeb.InstitutionController do
         |> render(:"404.json")
 
       institution ->
-        with {:ok, %Institution{}} <- Institutions.delete_institution(institution) do
+        with {:ok, %Institution{}} <- Accounts.delete_institution(institution) do
           send_resp(conn, :no_content, "")
         end
     end

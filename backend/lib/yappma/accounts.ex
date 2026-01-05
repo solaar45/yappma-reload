@@ -49,6 +49,12 @@ defmodule Yappma.Accounts do
     |> Repo.all()
   end
 
+  def get_institution_by_user(id, user_id) do
+    Institution
+    |> where([i], i.id == ^id and i.user_id == ^user_id)
+    |> Repo.one()
+  end
+
   def get_institution!(id), do: Repo.get!(Institution, id)
 
   def create_institution(attrs \\ %{}) do

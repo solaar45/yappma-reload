@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { apiClient } from '../client';
+import { apiClient, ApiError } from '../client';
+import { logger } from '@/lib/logger';
 import type { Account, Asset } from '../types';
 
 interface UpdateAccountParams {
@@ -19,7 +20,7 @@ interface UpdateAssetParams {
 
 export function useUpdateAccount() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   const updateAccount = async (
     accountId: number,
@@ -29,14 +30,16 @@ export function useUpdateAccount() {
     setError(null);
 
     try {
-      const data = await apiClient<Account>(`/accounts/${accountId}`, {
-        method: 'PUT',
-        body: JSON.stringify(params),
-      });
+      logger.debug('Updating account...', { accountId, params });
+
+      const data = await apiClient.put<Account>(`accounts/${accountId}`, params);
+
+      logger.info('Account updated successfully', { accountId });
       return data;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update account';
-      setError(message);
+      const error = err instanceof ApiError ? err : new Error('Failed to update account');
+      setError(error);
+      logger.error('Failed to update account', { error, accountId });
       return null;
     } finally {
       setLoading(false);
@@ -48,7 +51,7 @@ export function useUpdateAccount() {
 
 export function useUpdateAsset() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   const updateAsset = async (
     assetId: number,
@@ -58,14 +61,16 @@ export function useUpdateAsset() {
     setError(null);
 
     try {
-      const data = await apiClient<Asset>(`/assets/${assetId}`, {
-        method: 'PUT',
-        body: JSON.stringify(params),
-      });
+      logger.debug('Updating asset...', { assetId, params });
+
+      const data = await apiClient.put<Asset>(`assets/${assetId}`, params);
+
+      logger.info('Asset updated successfully', { assetId });
       return data;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update asset';
-      setError(message);
+      const error = err instanceof ApiError ? err : new Error('Failed to update asset');
+      setError(error);
+      logger.error('Failed to update asset', { error, assetId });
       return null;
     } finally {
       setLoading(false);

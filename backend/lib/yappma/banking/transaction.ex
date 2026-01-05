@@ -2,8 +2,8 @@ defmodule Yappma.Banking.Transaction do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Yappma.Accounts.Account
-  alias Yappma.Banking.{BankConsent, TransactionCategory}
+  alias Yappma.Accounts.{Account, BankConsent}
+  alias Yappma.Banking.TransactionCategory
 
   @type t :: %__MODULE__{
           id: integer(),

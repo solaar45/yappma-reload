@@ -1,5 +1,5 @@
 defmodule YappmaWeb.InstitutionJSON do
-  alias Yappma.Institutions.Institution
+  alias Yappma.Accounts.Institution
 
   @doc """
   Renders a list of institutions.
