@@ -2,42 +2,24 @@ defmodule WealthBackendWeb.TransactionController do
   use WealthBackendWeb, :controller
 
   alias WealthBackend.Banking
+  alias WealthBackend.Banking.Transaction
 
   action_fallback WealthBackendWeb.FallbackController
 
-  # TODO: Get user_id from authenticated session/JWT token
-  @default_user_id 1
-
   @doc """
   List all transactions for the authenticated user.
-  Supports query params: from_date, to_date, status, limit
+  Query params:
+    - from_date: ISO8601 date string
+    - to_date: ISO8601 date string
+    - status: "booked" or "pending"
+    - limit: integer
   """
   def index(conn, params) do
-    user_id = Map.get(params, "user_id", @default_user_id)
+    user_id = get_user_id(conn)
 
-    opts =
-      []
-      |> maybe_add_opt(:from_date, params["from_date"], &parse_date/1)
-      |> maybe_add_opt(:to_date, params["to_date"], &parse_date/1)
-      |> maybe_add_opt(:status, params["status"])
-      |> maybe_add_opt(:limit, params["limit"], &String.to_integer/1)
-
+    opts = build_filter_opts(params)
     transactions = Banking.list_user_transactions(user_id, opts)
-    render(conn, :index, transactions: transactions)
-  end
 
-  @doc """
-  Get transactions for a specific account.
-  """
-  def list_by_account(conn, %{"account_id" => account_id} = params) do
-    opts =
-      []
-      |> maybe_add_opt(:from_date, params["from_date"], &parse_date/1)
-      |> maybe_add_opt(:to_date, params["to_date"], &parse_date/1)
-      |> maybe_add_opt(:status, params["status"])
-      |> maybe_add_opt(:limit, params["limit"], &String.to_integer/1)
-
-    transactions = Banking.list_transactions(String.to_integer(account_id), opts)
     render(conn, :index, transactions: transactions)
   end
 
@@ -46,51 +28,84 @@ defmodule WealthBackendWeb.TransactionController do
   """
   def show(conn, %{"id" => id}) do
     transaction = Banking.get_transaction!(id)
+
+    # TODO: Verify transaction belongs to user
     render(conn, :show, transaction: transaction)
   end
 
   @doc """
-  Sync transactions for a specific account.
-  Requires consent_id and account_id.
+  List transactions for a specific account.
   """
-  def sync(conn, %{"account_id" => account_id, "consent_id" => consent_id} = params) do
-    opts =
-      []
-      |> maybe_add_opt(:date_from, params["from_date"])
-      |> maybe_add_opt(:date_to, params["to_date"])
+  def list_by_account(conn, %{"account_id" => account_id} = params) do
+    opts = build_filter_opts(params)
+    transactions = Banking.list_transactions(account_id, opts)
 
-    case Banking.sync_account_transactions(String.to_integer(account_id), consent_id, opts) do
+    render(conn, :index, transactions: transactions)
+  end
+
+  @doc """
+  Trigger transaction sync for an account.
+  Body params:
+    - account_id: integer
+    - consent_external_id: string
+    - date_from: ISO8601 date string (optional)
+    - date_to: ISO8601 date string (optional)
+  """
+  def sync(conn, %{"account_id" => account_id, "consent_external_id" => consent_id} = params) do
+    sync_opts =
+      params
+      |> Map.take(["date_from", "date_to"])
+      |> Enum.map(fn {k, v} -> {String.to_atom(k), v} end)
+
+    case Banking.sync_account_transactions(account_id, consent_id, sync_opts) do
       {:ok, count} ->
-        conn
-        |> put_status(:ok)
-        |> json(%{success: true, transactions_synced: count})
+        json(conn, %{success: true, synced_count: count})
 
       {:error, reason} ->
         conn
-        |> put_status(:bad_request)
-        |> json(%{success: false, error: reason})
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: reason})
     end
   end
 
-  defp maybe_add_opt(opts, _key, nil, _parser), do: opts
-  defp maybe_add_opt(opts, key, value, parser) when is_function(parser, 1) do
-    case parser.(value) do
-      {:ok, parsed} -> Keyword.put(opts, key, parsed)
-      parsed when not is_nil(parsed) -> Keyword.put(opts, key, parsed)
-      _ -> opts
-    end
+  # Private helpers
+
+  defp get_user_id(conn) do
+    # TODO: Extract from authentication token/session
+    # For now, hardcode user_id = 1
+    1
   end
 
-  defp maybe_add_opt(opts, key, value) when not is_nil(value) do
-    Keyword.put(opts, key, value)
-  end
+  defp build_filter_opts(params) do
+    params
+    |> Map.take(["from_date", "to_date", "status", "limit"])
+    |> Enum.reduce([], fn
+      {"from_date", date_str}, acc when is_binary(date_str) ->
+        case Date.from_iso8601(date_str) do
+          {:ok, date} -> [{:from_date, date} | acc]
+          _ -> acc
+        end
 
-  defp maybe_add_opt(opts, _key, _value), do: opts
+      {"to_date", date_str}, acc when is_binary(date_str) ->
+        case Date.from_iso8601(date_str) do
+          {:ok, date} -> [{:to_date, date} | acc]
+          _ -> acc
+        end
 
-  defp parse_date(date_string) do
-    case Date.from_iso8601(date_string) do
-      {:ok, date} -> {:ok, date}
-      {:error, _} -> nil
-    end
+      {"status", status}, acc when status in ["booked", "pending"] ->
+        [{:status, status} | acc]
+
+      {"limit", limit_str}, acc when is_binary(limit_str) ->
+        case Integer.parse(limit_str) do
+          {limit, _} -> [{:limit, limit} | acc]
+          _ -> acc
+        end
+
+      {"limit", limit}, acc when is_integer(limit) ->
+        [{:limit, limit} | acc]
+
+      _, acc ->
+        acc
+    end)
   end
 end
