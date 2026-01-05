@@ -185,7 +185,7 @@ export default function SnapshotsPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">{t('snapshots.title')}</h1>
           <Badge variant="secondary" className="text-base">
-            {filteredSnapshots.length} {t('snapshots.title').toLowerCase()}
+            {snapshots.length} {t('snapshots.title').toLowerCase()}
           </Badge>
         </div>
         <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
