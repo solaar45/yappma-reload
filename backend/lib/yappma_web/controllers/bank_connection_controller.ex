@@ -6,7 +6,7 @@ defmodule YappmaWeb.BankConnectionController do
   action_fallback YappmaWeb.FallbackController
 
   @doc """
-  GET /api/bank_connections/banks
+  GET /api/bank-connections/banks
   Lists all available banks (ASPSPs)
   """
   def list_banks(conn, _params) do
@@ -26,7 +26,7 @@ defmodule YappmaWeb.BankConnectionController do
   end
 
   @doc """
-  GET /api/bank_connections/banks/:id
+  GET /api/bank-connections/banks/:id
   Get details for a specific bank
   """
   def get_bank(conn, %{"id" => aspsp_id}) do
@@ -54,7 +54,7 @@ defmodule YappmaWeb.BankConnectionController do
   end
 
   @doc """
-  POST /api/bank_connections/consents
+  POST /api/bank-connections/consents
   Initiates a new consent request
   
   Body:
@@ -62,7 +62,7 @@ defmodule YappmaWeb.BankConnectionController do
     - redirect_url: Callback URL after authorization
   """
   def create_consent(conn, %{"aspsp_id" => aspsp_id, "redirect_url" => redirect_url}) do
-    user_id = conn.assigns.current_user.id
+    user_id = conn.assigns[:current_user_id] || 1  # TODO: Get from proper auth
 
     case BankConnections.initiate_consent(user_id, aspsp_id, redirect_url: redirect_url) do
       {:ok, consent_data} ->
@@ -93,17 +93,17 @@ defmodule YappmaWeb.BankConnectionController do
   end
 
   @doc """
-  GET /api/bank_connections/consents
+  GET /api/bank-connections/consents
   Lists all consents for the current user
   """
   def list_consents(conn, _params) do
-    user_id = conn.assigns.current_user.id
+    user_id = conn.assigns[:current_user_id] || 1  # TODO: Get from proper auth
     consents = BankConnections.list_user_consents(user_id)
     json(conn, consents)
   end
 
   @doc """
-  GET /api/bank_connections/consents/:id
+  GET /api/bank-connections/consents/:id
   Gets consent status
   """
   def get_consent(conn, %{"id" => consent_id}) do
@@ -119,7 +119,7 @@ defmodule YappmaWeb.BankConnectionController do
   end
 
   @doc """
-  POST /api/bank_connections/consents/:id/complete
+  POST /api/bank-connections/consents/:id/complete
   Completes consent after user authorization
   """
   def complete_consent(conn, %{"id" => consent_id} = params) do
@@ -137,7 +137,7 @@ defmodule YappmaWeb.BankConnectionController do
   end
 
   @doc """
-  DELETE /api/bank_connections/consents/:id
+  DELETE /api/bank-connections/consents/:id
   Revokes a consent
   """
   def delete_consent(conn, %{"id" => consent_id}) do
@@ -153,7 +153,7 @@ defmodule YappmaWeb.BankConnectionController do
   end
 
   @doc """
-  GET /api/bank_connections/consents/:id/accounts
+  GET /api/bank-connections/consents/:id/accounts
   Lists accounts for a consent
   """
   def list_accounts(conn, %{"id" => consent_id}) do
@@ -173,11 +173,11 @@ defmodule YappmaWeb.BankConnectionController do
   end
 
   @doc """
-  POST /api/bank_connections/consents/:id/sync
+  POST /api/bank-connections/consents/:id/sync
   Syncs accounts and transactions
   """
   def sync_accounts(conn, %{"id" => consent_id}) do
-    user_id = conn.assigns.current_user.id
+    user_id = conn.assigns[:current_user_id] || 1  # TODO: Get from proper auth
 
     case BankConnections.sync_accounts(user_id, consent_id) do
       {:ok, stats} ->

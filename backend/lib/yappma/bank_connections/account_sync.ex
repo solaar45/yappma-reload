@@ -5,9 +5,9 @@ defmodule Yappma.BankConnections.AccountSync do
 
   alias Yappma.Repo
   alias Yappma.Accounts.Account
-  alias Yappma.Accounts.AccountSnapshot
+  alias Yappma.Analytics.AccountSnapshot
   alias Yappma.BankConnections.StyxClient
-  alias WealthBackend.Banking
+  alias Yappma.Banking
   import Ecto.Query
   require Logger
 

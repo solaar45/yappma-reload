@@ -25,62 +25,62 @@ defmodule YappmaWeb.Router do
     pipe_through [:api, :authenticated]
 
     # Users
-    resources "/users", WealthBackendWeb.UserController, except: [:new, :edit]
+    resources "/users", YappmaWeb.UserController, except: [:new, :edit]
 
     # Institutions (filtered by user_id via query param)
-    get "/institutions", WealthBackendWeb.InstitutionController, :index
-    resources "/institutions", WealthBackendWeb.InstitutionController, except: [:new, :edit, :index]
+    get "/institutions", YappmaWeb.InstitutionController, :index
+    resources "/institutions", YappmaWeb.InstitutionController, except: [:new, :edit, :index]
 
     # Accounts (filtered by user_id via query param)
-    get "/accounts", WealthBackendWeb.AccountController, :index
-    resources "/accounts", WealthBackendWeb.AccountController, except: [:new, :edit, :index]
+    get "/accounts", YappmaWeb.AccountController, :index
+    resources "/accounts", YappmaWeb.AccountController, except: [:new, :edit, :index]
 
     # Asset Types
-    resources "/asset_types", WealthBackendWeb.AssetTypeController, only: [:index, :show]
+    resources "/asset_types", YappmaWeb.AssetTypeController, only: [:index, :show]
 
     # Assets (filtered by user_id via query param)
-    get "/assets", WealthBackendWeb.AssetController, :index
-    resources "/assets", WealthBackendWeb.AssetController, except: [:new, :edit, :index]
+    get "/assets", YappmaWeb.AssetController, :index
+    resources "/assets", YappmaWeb.AssetController, except: [:new, :edit, :index]
 
     # Account Snapshots (filtered by account_id via query param)
-    get "/account_snapshots", WealthBackendWeb.AccountSnapshotController, :index
-    resources "/account_snapshots", WealthBackendWeb.AccountSnapshotController, except: [:new, :edit, :index]
+    get "/account_snapshots", YappmaWeb.AccountSnapshotController, :index
+    resources "/account_snapshots", YappmaWeb.AccountSnapshotController, except: [:new, :edit, :index]
 
     # Asset Snapshots (filtered by asset_id via query param)
-    get "/asset_snapshots", WealthBackendWeb.AssetSnapshotController, :index
-    resources "/asset_snapshots", WealthBackendWeb.AssetSnapshotController, except: [:new, :edit, :index]
+    get "/asset_snapshots", YappmaWeb.AssetSnapshotController, :index
+    resources "/asset_snapshots", YappmaWeb.AssetSnapshotController, except: [:new, :edit, :index]
 
     # Snapshots API (frontend-friendly routes)
     scope "/snapshots" do
       # Account snapshots
-      post "/accounts", WealthBackendWeb.AccountSnapshotController, :create
-      put "/accounts/:id", WealthBackendWeb.AccountSnapshotController, :update
-      delete "/accounts/:id", WealthBackendWeb.AccountSnapshotController, :delete
+      post "/accounts", YappmaWeb.AccountSnapshotController, :create
+      put "/accounts/:id", YappmaWeb.AccountSnapshotController, :update
+      delete "/accounts/:id", YappmaWeb.AccountSnapshotController, :delete
 
       # Asset snapshots  
-      post "/assets", WealthBackendWeb.AssetSnapshotController, :create
-      put "/assets/:id", WealthBackendWeb.AssetSnapshotController, :update
-      delete "/assets/:id", WealthBackendWeb.AssetSnapshotController, :delete
+      post "/assets", YappmaWeb.AssetSnapshotController, :create
+      put "/assets/:id", YappmaWeb.AssetSnapshotController, :update
+      delete "/assets/:id", YappmaWeb.AssetSnapshotController, :delete
     end
 
     # Transaction Categories
-    get "/transaction-categories", WealthBackendWeb.TransactionCategoryController, :index
-    post "/transaction-categories", WealthBackendWeb.TransactionCategoryController, :create
-    put "/transaction-categories/:id", WealthBackendWeb.TransactionCategoryController, :update
-    delete "/transaction-categories/:id", WealthBackendWeb.TransactionCategoryController, :delete
+    get "/transaction-categories", YappmaWeb.TransactionCategoryController, :index
+    post "/transaction-categories", YappmaWeb.TransactionCategoryController, :create
+    put "/transaction-categories/:id", YappmaWeb.TransactionCategoryController, :update
+    delete "/transaction-categories/:id", YappmaWeb.TransactionCategoryController, :delete
 
     # Transactions - IMPORTANT: specific routes before /:id pattern
-    get "/transactions", WealthBackendWeb.TransactionController, :index
-    get "/transactions/categories", WealthBackendWeb.TransactionController, :list_categories
-    get "/transactions/:id", WealthBackendWeb.TransactionController, :show
-    put "/transactions/:id", WealthBackendWeb.TransactionController, :update
-    get "/accounts/:account_id/transactions", WealthBackendWeb.TransactionController, :list_by_account
-    post "/transactions/sync", WealthBackendWeb.TransactionController, :sync
+    get "/transactions", YappmaWeb.TransactionController, :index
+    get "/transactions/categories", YappmaWeb.TransactionController, :list_categories
+    get "/transactions/:id", YappmaWeb.TransactionController, :show
+    put "/transactions/:id", YappmaWeb.TransactionController, :update
+    get "/accounts/:account_id/transactions", YappmaWeb.TransactionController, :list_by_account
+    post "/transactions/sync", YappmaWeb.TransactionController, :sync
 
     # Dashboard / Analytics
-    get "/dashboard/net_worth", WealthBackendWeb.DashboardController, :net_worth
-    get "/dashboard/account_snapshots", WealthBackendWeb.DashboardController, :account_snapshots
-    get "/dashboard/asset_snapshots", WealthBackendWeb.DashboardController, :asset_snapshots
+    get "/dashboard/net_worth", YappmaWeb.DashboardController, :net_worth
+    get "/dashboard/account_snapshots", YappmaWeb.DashboardController, :account_snapshots
+    get "/dashboard/asset_snapshots", YappmaWeb.DashboardController, :asset_snapshots
   end
 
   scope "/api", YappmaWeb do

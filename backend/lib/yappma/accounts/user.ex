@@ -1,15 +1,14 @@
 defmodule Yappma.Accounts.User do
-  @moduledoc """
-  User schema.
-  """
   use Ecto.Schema
   import Ecto.Changeset
 
   schema "users" do
-    field :email, :string
     field :name, :string
+    field :email, :string
+    field :currency_default, :string, default: "EUR"
 
-    # Associations
+    has_many :institutions, Yappma.Accounts.Institution
+    has_many :accounts, Yappma.Accounts.Account
     has_many :bank_consents, Yappma.Accounts.BankConsent
 
     timestamps(type: :utc_datetime)
@@ -18,8 +17,9 @@ defmodule Yappma.Accounts.User do
   @doc false
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:email, :name])
-    |> validate_required([:email])
+    |> cast(attrs, [:name, :email, :currency_default])
+    |> validate_required([:name, :email])
+    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must be a valid email")
     |> unique_constraint(:email)
   end
 end
