@@ -14,6 +14,7 @@ defmodule WealthBackend.Accounts.Account do
     belongs_to :user, WealthBackend.Accounts.User
     belongs_to :institution, WealthBackend.Institutions.Institution
     has_many :snapshots, WealthBackend.Analytics.AccountSnapshot
+    has_many :assets, WealthBackend.Portfolio.Asset
 
     timestamps(type: :utc_datetime)
   end

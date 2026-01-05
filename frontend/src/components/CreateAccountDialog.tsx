@@ -73,8 +73,8 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
 
     if (result) {
       setOpen(false);
-      setFormData({ 
-        name: '', 
+      setFormData({
+        name: '',
         type: 'checking',
         currency: 'EUR',
         institution_id: '',
@@ -126,8 +126,8 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                   <span className="text-sm text-muted-foreground">Loading institutions...</span>
                 </div>
               ) : institutions && institutions.length > 0 ? (
-                <Select 
-                  value={formData.institution_id} 
+                <Select
+                  value={formData.institution_id}
                   onValueChange={(value) => setFormData({ ...formData, institution_id: value })}
                 >
                   <SelectTrigger id="institution">
@@ -152,8 +152,8 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="type">Account Type *</Label>
-              <Select 
-                value={formData.type} 
+              <Select
+                value={formData.type}
                 onValueChange={(value) => setFormData({ ...formData, type: value })}
               >
                 <SelectTrigger id="type">
@@ -170,8 +170,8 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="currency">Currency *</Label>
-              <Select 
-                value={formData.currency} 
+              <Select
+                value={formData.currency}
                 onValueChange={(value) => setFormData({ ...formData, currency: value })}
               >
                 <SelectTrigger id="currency">
@@ -202,15 +202,15 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               />
             </div>
             {error && (
-              <div className="text-sm text-destructive">{error}</div>
+              <div className="text-sm text-destructive">{error.message}</div>
             )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={loading || !formData.name || !formData.institution_id || institutions?.length === 0}
             >
               {loading ? 'Creating...' : 'Create Account'}

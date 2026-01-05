@@ -1,28 +1,39 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useSnapshots } from '@/lib/api/hooks';
+import { useSnapshots, type CombinedSnapshot } from '@/lib/api/hooks/useSnapshots';
 import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateSnapshotDialog } from '@/components/CreateSnapshotDialog';
 import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
 import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Trash2 } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
+import { logger } from '@/lib/logger';
 
-interface Snapshot {
-  id: number;
-  snapshot_type: 'account' | 'asset';
-  snapshot_date: string;
-  entity_name: string;
-  balance?: string;
-  value?: string;
-  currency?: string;
-}
 
 export default function SnapshotsPage() {
   const { t } = useTranslation();
@@ -30,9 +41,12 @@ export default function SnapshotsPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const { snapshots, loading, error } = useSnapshots({ userId: userId!, key: refreshKey });
 
-  // Filter states
+  // Filter and Selection states
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [rowSelection, setRowSelection] = useState({});
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSnapshotChanged = () => {
     setRefreshKey((prev) => prev + 1);
@@ -55,9 +69,65 @@ export default function SnapshotsPage() {
     });
   }, [snapshots, searchTerm, typeFilter]);
 
+  // Get selected snapshots
+  const selectedSnapshots = useMemo(() => {
+    return Object.keys(rowSelection)
+      .filter((key) => rowSelection[key as keyof typeof rowSelection])
+      .map((key) => filteredSnapshots[parseInt(key)])
+      .filter(Boolean);
+  }, [rowSelection, filteredSnapshots]);
+
+  const handleBatchDelete = async () => {
+    setIsDeleting(true);
+    try {
+      logger.info('Batch deleting snapshots', {
+        count: selectedSnapshots.length,
+        ids: selectedSnapshots.map((s) => s.id),
+      });
+
+      await Promise.all(
+        selectedSnapshots.map((snapshot) => {
+          const type = snapshot.snapshot_type === 'account' ? 'accounts' : 'assets';
+          return apiClient.delete(`snapshots/${type}/${snapshot.id}`);
+        })
+      );
+
+      logger.info('Batch delete successful');
+      handleSnapshotChanged();
+      setRowSelection({});
+      setShowDeleteDialog(false);
+    } catch (error) {
+      logger.error('Error during batch delete', { error });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Define table columns
-  const columns: ColumnDef<Snapshot>[] = useMemo(
+  const columns: ColumnDef<CombinedSnapshot>[] = useMemo(
     () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && 'indeterminate')
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
       {
         accessorKey: 'snapshot_date',
         header: ({ column }) => (
@@ -95,7 +165,7 @@ export default function SnapshotsPage() {
         id: 'value',
         accessorFn: (row) => {
           const isAccount = row.snapshot_type === 'account';
-          const value = isAccount ? row.balance : row.value;
+          const value = isAccount ? (row as any).balance : (row as any).value;
           return parseFloat(value || '0');
         },
         header: ({ column }) => (
@@ -105,8 +175,8 @@ export default function SnapshotsPage() {
         ),
         cell: ({ row }) => {
           const isAccount = row.original.snapshot_type === 'account';
-          const value = isAccount ? row.original.balance : row.original.value;
-          const currency = isAccount ? row.original.currency : 'EUR';
+          const value = isAccount ? (row.original as any).balance : (row.original as any).value;
+          const currency = isAccount ? (row.original as any).currency : 'EUR';
           return (
             <div className="text-right font-medium">
               {formatCurrency(value || '0', currency || 'EUR')}
@@ -154,7 +224,7 @@ export default function SnapshotsPage() {
     return (
       <div className="flex flex-1 items-center justify-center">
         <div className="text-destructive">
-          {t('snapshots.errorLoading')}: {error}
+          {t('snapshots.errorLoading')}: {error.message}
         </div>
       </div>
     );
@@ -233,43 +303,88 @@ export default function SnapshotsPage() {
       {/* Desktop: DataTable with Filters */}
       <Card className="hidden md:block">
         <CardContent className="pt-6">
-          {/* Filters */}
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              {/* Search */}
-              <div className="flex items-center gap-2 flex-1 max-w-md">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t('snapshots.searchPlaceholder') || 'Search by entity name...'}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
+          {/* Contextual Header: Filters or Batch Actions */}
+          <div className="h-[52px] mb-6 flex items-center">
+            {selectedSnapshots.length > 0 ? (
+              <div className="flex items-center justify-between bg-muted p-3 rounded-md w-full animate-in fade-in slide-in-from-top-1 duration-200">
+                <span className="text-sm font-medium">
+                  {selectedSnapshots.length}{' '}
+                  {selectedSnapshots.length === 1
+                    ? t('snapshots.snapshotSelected')
+                    : t('snapshots.snapshotsSelected')}
+                </span>
+                <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t('snapshots.deleteSelected') || 'Delete Selected'}
+                </Button>
               </div>
+            ) : (
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between w-full animate-in fade-in duration-200">
+                {/* Search */}
+                <div className="flex items-center gap-2 flex-1 max-w-md">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={t('snapshots.searchPlaceholder') || 'Search by entity name...'}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1"
+                  />
+                </div>
 
-              {/* Type Filter */}
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder={t('snapshots.allTypes') || 'All Types'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('snapshots.allTypes') || 'All Types'}</SelectItem>
-                    <SelectItem value="account">
-                      {t('snapshots.types.account') || 'Account'}
-                    </SelectItem>
-                    <SelectItem value="asset">{t('snapshots.types.asset') || 'Asset'}</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Type Filter */}
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder={t('snapshots.allTypes') || 'All Types'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('snapshots.allTypes') || 'All Types'}</SelectItem>
+                      <SelectItem value="account">
+                        {t('snapshots.types.account') || 'Account'}
+                      </SelectItem>
+                      <SelectItem value="asset">{t('snapshots.types.asset') || 'Asset'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* DataTable */}
-          <DataTable columns={columns} data={filteredSnapshots} />
+          <DataTable
+            columns={columns}
+            data={filteredSnapshots}
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+          />
         </CardContent>
       </Card>
+
+      {/* Batch Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('snapshots.deleteSelectedTitle') || 'Delete Selected Snapshots'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('snapshots.deleteSelectedConfirm') ||
+                `Are you sure you want to delete ${selectedSnapshots.length} snapshot(s)? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBatchDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? t('common.deleting') || 'Deleting...' : t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

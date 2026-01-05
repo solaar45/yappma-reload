@@ -11,6 +11,7 @@ defmodule WealthBackend.Institutions.Institution do
     # Associations
     belongs_to :user, WealthBackend.Accounts.User, define_field: false
     has_many :accounts, WealthBackend.Accounts.Account
+    has_many :assets, through: [:accounts, :assets]
 
     timestamps()
   end

@@ -2,14 +2,18 @@ defmodule WealthBackendWeb.AssetJSON do
   alias WealthBackend.Portfolio.Asset
 
   def index(%{assets: assets}) do
-    %{data: for(asset <- assets, do: data(asset))}
+    %{data: data(assets)}
   end
 
   def show(%{asset: asset}) do
     %{data: data(asset)}
   end
 
-  defp data(%Asset{} = asset) do
+  def data(assets) when is_list(assets) do
+    for asset <- assets, do: data(asset)
+  end
+
+  def data(%Asset{} = asset) do
     # Get isin and ticker from security_asset if available
     {isin, ticker} = case asset.security_asset do
       %Ecto.Association.NotLoaded{} -> {nil, nil}

@@ -71,20 +71,20 @@ export default function AccountsPage() {
   // Filter and search logic
   const filteredAccounts = useMemo(() => {
     if (!accounts) return [];
-    
+
     return accounts.filter((account) => {
       // Search filter
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
         account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         account.institution?.name.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       // Institution filter
-      const matchesInstitution = institutionFilter === 'all' || 
+      const matchesInstitution = institutionFilter === 'all' ||
         (account.institution?.name || 'Other') === institutionFilter;
-      
+
       // Type filter
       const matchesType = typeFilter === 'all' || account.type === typeFilter;
-      
+
       return matchesSearch && matchesInstitution && matchesType;
     });
   }, [accounts, searchTerm, institutionFilter, typeFilter]);
@@ -101,11 +101,11 @@ export default function AccountsPage() {
     setIsDeleting(true);
     try {
       logger.info('Batch deleting accounts', { count: selectedAccountIds.length, ids: selectedAccountIds });
-      
+
       await Promise.all(
         selectedAccountIds.map(id => apiClient.delete(`accounts/${id}`))
       );
-      
+
       logger.info('Batch delete successful');
       await refetch();
       setRowSelection({});
@@ -248,11 +248,11 @@ export default function AccountsPage() {
             </Badge>
           );
         }
-        
+
         const snapshotDate = new Date(latestSnapshot.snapshot_date);
         const daysSince = Math.floor((Date.now() - snapshotDate.getTime()) / (1000 * 60 * 60 * 24));
         const isOld = daysSince > 30;
-        
+
         return (
           <div className="flex flex-col gap-1">
             <span className="text-sm">
@@ -355,7 +355,7 @@ export default function AccountsPage() {
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold">{t('accounts.noAccounts')}</h3>
                 <p className="text-sm text-muted-foreground max-w-sm">
-                  {t('accounts.addFirstDescription') || 
+                  {t('accounts.addFirstDescription') ||
                     'Start tracking your wealth by adding your first account. Connect bank accounts, credit cards, or other financial accounts.'}
                 </p>
               </div>
@@ -383,54 +383,12 @@ export default function AccountsPage() {
       {/* Data Table with Filters */}
       <Card>
         <CardContent className="pt-6">
-          {/* Filters */}
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-2 flex-1 max-w-md">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t('accounts.searchPlaceholder') || 'Search accounts...'}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select value={institutionFilter} onValueChange={setInstitutionFilter}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder={t('accounts.allInstitutions') || 'All Institutions'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('accounts.allInstitutions') || 'All Institutions'}</SelectItem>
-                    {institutions.map((inst) => (
-                      <SelectItem key={inst} value={inst}>{inst}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder={t('accounts.allTypes') || 'All Types'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('accounts.allTypes') || 'All Types'}</SelectItem>
-                    {accountTypes.map((type) => (
-                      <SelectItem key={type} value={type} className="capitalize">
-                        {type.replace('_', ' ')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Batch Actions Bar */}
-            {selectedAccountIds.length > 0 && (
-              <div className="flex items-center justify-between bg-muted p-3 rounded-md">
+          {/* Contextual Header: Filters or Batch Actions */}
+          <div className="h-[52px] mb-6 flex items-center">
+            {selectedAccountIds.length > 0 ? (
+              <div className="flex items-center justify-between bg-muted p-3 rounded-md w-full animate-in fade-in slide-in-from-top-1 duration-200">
                 <span className="text-sm font-medium">
-                  {selectedAccountIds.length} {selectedAccountIds.length === 1 ? 
+                  {selectedAccountIds.length} {selectedAccountIds.length === 1 ?
                     t('accounts.accountSelected') : t('accounts.accountsSelected')
                   }
                 </span>
@@ -443,12 +401,53 @@ export default function AccountsPage() {
                   {t('accounts.deleteSelected') || 'Delete Selected'}
                 </Button>
               </div>
+            ) : (
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between w-full animate-in fade-in duration-200">
+                <div className="flex items-center gap-2 flex-1 max-w-md">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={t('accounts.searchPlaceholder') || 'Search accounts...'}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <Select value={institutionFilter} onValueChange={setInstitutionFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder={t('accounts.allInstitutions') || 'All Institutions'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('accounts.allInstitutions') || 'All Institutions'}</SelectItem>
+                      {institutions.map((inst) => (
+                        <SelectItem key={inst} value={inst}>{inst}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder={t('accounts.allTypes') || 'All Types'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('accounts.allTypes') || 'All Types'}</SelectItem>
+                      {accountTypes.map((type) => (
+                        <SelectItem key={type} value={type} className="capitalize">
+                          {type.replace('_', ' ')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             )}
           </div>
 
           {/* DataTable */}
-          <DataTable 
-            columns={columns} 
+          <DataTable
+            columns={columns}
             data={filteredAccounts}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
@@ -464,7 +463,7 @@ export default function AccountsPage() {
               {t('accounts.deleteSelectedTitle') || 'Delete Selected Accounts'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('accounts.deleteSelectedConfirm') || 
+              {t('accounts.deleteSelectedConfirm') ||
                 `Are you sure you want to delete ${selectedAccountIds.length} account(s)? This action cannot be undone.`
               }
             </AlertDialogDescription>
@@ -473,7 +472,7 @@ export default function AccountsPage() {
             <AlertDialogCancel disabled={isDeleting}>
               {t('common.cancel')}
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleBatchDelete}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

@@ -15,6 +15,7 @@ export interface Institution {
   type: 'bank' | 'broker' | 'insurance' | 'other';
   country: string;
   user_id: number;
+  assets?: Asset[];
   inserted_at: string;
   updated_at: string;
 }

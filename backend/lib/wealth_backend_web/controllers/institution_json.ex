@@ -23,7 +23,14 @@ defmodule WealthBackendWeb.InstitutionJSON do
       country: institution.country,
       user_id: institution.user_id,
       inserted_at: institution.inserted_at,
-      updated_at: institution.updated_at
+      updated_at: institution.updated_at,
+      assets: render_assets(institution)
     }
   end
+
+  defp render_assets(%{assets: assets}) when is_list(assets) do
+    WealthBackendWeb.AssetJSON.data(assets)
+  end
+
+  defp render_assets(_), do: nil
 end

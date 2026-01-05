@@ -20,6 +20,7 @@ defmodule WealthBackend.Institutions do
     Institution
     |> where([i], i.user_id == ^user_id)
     |> order_by([i], i.name)
+    |> preload([assets: [:asset_type, :security_asset]])
     |> Repo.all()
   end
 
@@ -56,6 +57,7 @@ defmodule WealthBackend.Institutions do
   def get_institution_by_user(id, user_id) do
     Institution
     |> where([i], i.id == ^id and i.user_id == ^user_id)
+    |> preload([assets: [:asset_type, :security_asset]])
     |> Repo.one()
   end
 

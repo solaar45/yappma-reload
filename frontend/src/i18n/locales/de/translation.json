@@ -132,6 +132,7 @@
     "allCountries": "Alle Länder",
     "institutionSelected": "Institution ausgewählt",
     "institutionsSelected": "Institutionen ausgewählt",
+    "assets": "Assets",
     "deleteSelected": "Ausgewählte löschen",
     "deleteSelectedTitle": "Ausgewählte Institutionen löschen",
     "deleteSelectedConfirm": "Möchten Sie wirklich die ausgewählten Institutionen löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -161,6 +162,21 @@
       "account": "Konto",
       "asset": "Vermögenswert"
     },
-    "errorLoading": "Fehler beim Laden der Momentaufnahmen"
+    "errorLoading": "Fehler beim Laden der Momentaufnahmen",
+    "snapshotSelected": "Momentaufnahme ausgewählt",
+    "snapshotsSelected": "Momentaufnahmen ausgewählt",
+    "deleteSelected": "Ausgewählte löschen",
+    "deleteSelectedTitle": "Ausgewählte Momentaufnahmen löschen",
+    "deleteSelectedConfirm": "Möchten Sie wirklich die ausgewählten Momentaufnahmen löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+  },
+  "pagination": {
+    "rowsPerPage": "Zeilen pro Seite",
+    "showingResults": "Zeige {{from}}-{{to}} von {{total}} Ergebnissen",
+    "page": "Seite {{current}} von {{total}}",
+    "first": "Erste Seite",
+    "previous": "Vorherige Seite",
+    "next": "Nächste Seite",
+    "last": "Letzte Seite",
+    "rowsSelected": "{{selected}} von {{total}} ausgewählt"
   }
 }

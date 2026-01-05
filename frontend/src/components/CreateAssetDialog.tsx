@@ -34,10 +34,17 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
   const { createAsset, loading, error } = useCreateAsset();
   const [open, setOpen] = useState(false);
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
+  const [institutions, setInstitutions] = useState<any[]>([]);
+  const [accountsList, setAccountsList] = useState<any[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(false);
+  const [loadingInstitutions, setLoadingInstitutions] = useState(false);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     asset_type_id: '',
+    institution_id: '',
+    account_id: '',
     isin: '',
     ticker: '',
     currency: 'EUR',
@@ -45,28 +52,43 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
   });
 
   useEffect(() => {
-    const fetchAssetTypes = async () => {
+    const fetchData = async () => {
       setLoadingTypes(true);
+      setLoadingInstitutions(true);
+      setLoadingAccounts(true);
       try {
-        const response = await apiClient.get<{ data: AssetType[] }>('asset_types');
+        const [typesResponse, instResponse, accountsResponse] = await Promise.all([
+          apiClient.get<{ data: AssetType[] }>('asset_types'),
+          apiClient.get<{ data: any[] }>('institutions'),
+          apiClient.get<{ data: any[] }>('accounts'),
+        ]);
+
         // Handle both response formats
-        const types = Array.isArray(response) ? response : (response.data || []);
+        const types = Array.isArray(typesResponse) ? typesResponse : (typesResponse.data || []);
         setAssetTypes(types);
-        
+
+        const insts = Array.isArray(instResponse) ? instResponse : (instResponse.data || []);
+        setInstitutions(insts);
+
+        const accs = Array.isArray(accountsResponse) ? accountsResponse : (accountsResponse.data || []);
+        setAccountsList(accs);
+
         // Set default to 'security' if available
         const securityType = types.find((t) => t.code === 'security');
         if (securityType) {
           setFormData((prev) => ({ ...prev, asset_type_id: securityType.id.toString() }));
         }
       } catch (err) {
-        console.error('Failed to load asset types:', err);
+        console.error('Failed to load form data:', err);
       } finally {
         setLoadingTypes(false);
+        setLoadingInstitutions(false);
+        setLoadingAccounts(false);
       }
     };
 
     if (open) {
-      fetchAssetTypes();
+      fetchData();
     }
   }, [open]);
 
@@ -80,18 +102,30 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       name: formData.name,
       currency: formData.currency,
       is_active: formData.is_active,
+      institution_id: !showAdvanced && formData.institution_id ? parseInt(formData.institution_id) : undefined,
+      account_id: showAdvanced && formData.account_id ? parseInt(formData.account_id) : undefined,
       security_asset:
         formData.isin || formData.ticker
           ? {
-              isin: formData.isin || undefined,
-              ticker: formData.ticker || undefined,
-            }
+            isin: formData.isin || undefined,
+            ticker: formData.ticker || undefined,
+          }
           : undefined,
     });
 
     if (result) {
       setOpen(false);
-      setFormData({ name: '', asset_type_id: '', isin: '', ticker: '', currency: 'EUR', is_active: true });
+      setFormData({
+        name: '',
+        asset_type_id: '',
+        institution_id: '',
+        account_id: '',
+        isin: '',
+        ticker: '',
+        currency: 'EUR',
+        is_active: true
+      });
+      setShowAdvanced(false);
       onSuccess?.();
     }
   };
@@ -143,6 +177,68 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {!showAdvanced ? (
+              <div className="grid gap-2">
+                <Label htmlFor="institution">Institution *</Label>
+                <Select
+                  value={formData.institution_id}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, institution_id: value })
+                  }
+                  disabled={loadingInstitutions}
+                >
+                  <SelectTrigger id="institution">
+                    <SelectValue placeholder="Select institution" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {institutions.map((inst) => (
+                      <SelectItem key={inst.id} value={inst.id.toString()}>
+                        {inst.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  An "Investment Depot" account will be created automatically if needed.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-2 animate-in fade-in duration-300">
+                <Label htmlFor="account">Specific Account (Advanced) *</Label>
+                <Select
+                  value={formData.account_id}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, account_id: value })
+                  }
+                  disabled={loadingAccounts}
+                >
+                  <SelectTrigger id="account">
+                    <SelectValue placeholder="Select specific account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* We'll need to load accounts too if advanced is used */}
+                    {/* For now, assuming accounts are loaded or added to the fetchData */}
+                    {Array.isArray(accountsList) && accountsList.map((acc: any) => (
+                      <SelectItem key={acc.id} value={acc.id.toString()}>
+                        {acc.name} ({acc.institution?.name})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="advanced-mode"
+                checked={showAdvanced}
+                onCheckedChange={setShowAdvanced}
+              />
+              <Label htmlFor="advanced-mode" className="text-sm font-normal cursor-pointer">
+                Advanced: Select specific account
+              </Label>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="ticker">Ticker Symbol (optional)</Label>

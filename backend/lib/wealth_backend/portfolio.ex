@@ -52,15 +52,67 @@ defmodule WealthBackend.Portfolio do
   """
   def create_full_asset(attrs \\ %{}) do
     Ecto.Multi.new()
-    |> Ecto.Multi.insert(:asset, Asset.changeset(%Asset{}, attrs))
+    |> Ecto.Multi.run(:account_setup, fn repo, _ ->
+      setup_account_for_asset(repo, attrs)
+    end)
+    |> Ecto.Multi.run(:asset, fn repo, %{account_setup: account_id} ->
+      attrs
+      |> Map.put("account_id", account_id)
+      |> then(&Asset.changeset(%Asset{}, &1))
+      |> repo.insert()
+    end)
     |> Ecto.Multi.run(:type_specific, fn repo, %{asset: asset} ->
       create_type_specific_asset(repo, asset, attrs)
     end)
     |> Repo.transaction()
     |> case do
       {:ok, %{asset: asset}} -> {:ok, get_asset!(asset.id)}
+      {:error, :account_setup, changeset, _} -> {:error, changeset}
       {:error, :asset, changeset, _} -> {:error, changeset}
       {:error, :type_specific, changeset, _} -> {:error, changeset}
+    end
+  end
+
+  defp setup_account_for_asset(_repo, %{"account_id" => account_id}) when not is_nil(account_id), do: {:ok, account_id}
+  defp setup_account_for_asset(_repo, %{account_id: account_id}) when not is_nil(account_id), do: {:ok, account_id}
+
+  defp setup_account_for_asset(repo, attrs) do
+    user_id = Map.get(attrs, "user_id") || Map.get(attrs, :user_id)
+    institution_id = Map.get(attrs, "institution_id") || Map.get(attrs, :institution_id)
+
+    if institution_id do
+      find_or_create_default_account(repo, user_id, institution_id)
+    else
+      # Fallback or error if neither is provided - though changeset will catch missing account_id
+      {:ok, nil}
+    end
+  end
+
+  defp find_or_create_default_account(repo, user_id, institution_id) do
+    # Try to find an existing brokerage account for this institution
+    query = from a in WealthBackend.Accounts.Account,
+      where: a.user_id == ^user_id and a.institution_id == ^institution_id and a.type == :brokerage,
+      limit: 1
+
+    case repo.one(query) do
+      %WealthBackend.Accounts.Account{id: id} ->
+        {:ok, id}
+
+      nil ->
+        # Create a new "Investment Depot" account
+        %WealthBackend.Accounts.Account{}
+        |> WealthBackend.Accounts.Account.changeset(%{
+          "name" => "Investment Depot",
+          "type" => "brokerage",
+          "user_id" => user_id,
+          "institution_id" => institution_id,
+          "currency" => "EUR" # Default currency, could be improved
+        })
+        |> repo.insert()
+        |> case do
+          {:ok, account} -> {:ok, account.id}
+          {:error, changeset} -> {:error, changeset}
+        end
     end
   end
 

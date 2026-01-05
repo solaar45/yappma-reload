@@ -51,7 +51,7 @@ export default function InstitutionsPage() {
   };
 
   const getTypeLabel = (type: string) => {
-    return t(`institutions.types.${type}`);
+    return t(`institutions.types.${type}` as any) as string;
   };
 
   // Get unique types and countries for filters
@@ -170,6 +170,30 @@ export default function InstitutionsPage() {
       ),
     },
     {
+      id: 'assets',
+      header: () => <span>{t('institutions.assets') || 'Assets'}</span>,
+      cell: ({ row }) => {
+        const assets = row.original.assets || [];
+        if (assets.length === 0) {
+          return <span className="text-muted-foreground text-xs italic">No assets</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1 max-w-[200px]">
+            {assets.slice(0, 3).map((asset) => (
+              <Badge key={asset.id} variant="secondary" className="text-[10px] px-1 h-5">
+                {asset.name}
+              </Badge>
+            ))}
+            {assets.length > 3 && (
+              <Badge variant="outline" className="text-[10px] px-1 h-5">
+                +{assets.length - 3}
+              </Badge>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       id: 'actions',
       header: () => <div className="text-right">{t('common.actions')}</div>,
       cell: ({ row }) => (
@@ -247,7 +271,7 @@ export default function InstitutionsPage() {
                   {t('institutions.addFirst')}
                 </p>
               </div>
-              <Button onClick={() => {}} size="lg">
+              <Button onClick={() => { }} size="lg">
                 <Plus className="mr-2 h-5 w-5" />
                 {t('institutions.createInstitution')}
               </Button>
@@ -273,56 +297,16 @@ export default function InstitutionsPage() {
       {/* Data Table with Filters */}
       <Card>
         <CardContent className="pt-6">
-          {/* Search and Filters */}
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder={t('institutions.searchPlaceholder')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="max-w-sm"
-                />
-              </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={t('institutions.allTypes')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('institutions.allTypes')}</SelectItem>
-                  {uniqueTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {getTypeLabel(type)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={countryFilter} onValueChange={setCountryFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={t('institutions.allCountries')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('institutions.allCountries')}</SelectItem>
-                  {uniqueCountries.map((country) => (
-                    <SelectItem key={country} value={country}>
-                      {country}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Batch Actions Bar */}
-            {selectedInstitutions.length > 0 && (
-              <div className="flex items-center justify-between rounded-lg border bg-muted/50 px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">
-                    {selectedInstitutions.length}{' '}
-                    {selectedInstitutions.length === 1
-                      ? t('institutions.institutionSelected')
-                      : t('institutions.institutionsSelected')}
-                  </span>
-                </div>
+          {/* Contextual Header: Filters or Batch Actions */}
+          <div className="h-[52px] mb-6 flex items-center">
+            {selectedInstitutions.length > 0 ? (
+              <div className="flex items-center justify-between bg-muted p-3 rounded-md w-full animate-in fade-in slide-in-from-top-1 duration-200">
+                <span className="text-sm font-medium">
+                  {selectedInstitutions.length}{' '}
+                  {selectedInstitutions.length === 1
+                    ? t('institutions.institutionSelected')
+                    : t('institutions.institutionsSelected')}
+                </span>
                 <Button
                   variant="destructive"
                   size="sm"
@@ -331,6 +315,45 @@ export default function InstitutionsPage() {
                   <Trash2 className="mr-2 h-4 w-4" />
                   {t('institutions.deleteSelected')}
                 </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full animate-in fade-in duration-200">
+                <div className="flex-1">
+                  <Input
+                    placeholder={t('institutions.searchPlaceholder')}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="max-w-sm"
+                  />
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder={t('institutions.allTypes')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('institutions.allTypes')}</SelectItem>
+                      {uniqueTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {getTypeLabel(type)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={countryFilter} onValueChange={setCountryFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder={t('institutions.allCountries')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('institutions.allCountries')}</SelectItem>
+                      {uniqueCountries.map((country) => (
+                        <SelectItem key={country} value={country}>
+                          {country}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
           </div>

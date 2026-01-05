@@ -5,33 +5,29 @@ import type { Account } from '@/lib/api/types';
 
 interface CreateAccountInput {
   name: string;
+  type: string;
   currency: string;
-  initial_balance?: number;
-  institution_id?: string;
+  is_active: boolean;
+  user_id: number;
+  institution_id: number;
 }
 
 interface UseCreateAccountResult {
-  createAccount: (data: CreateAccountInput) => Promise<Account>;
-  isCreating: boolean;
+  createAccount: (data: CreateAccountInput) => Promise<Account | null>;
+  loading: boolean;
   error: Error | null;
 }
 
 /**
  * Hook to create new accounts with proper error handling
- * 
- * Features:
- * - Loading state management
- * - Error handling
- * - Type-safe mutations
- * - Request cancellation support
  */
 export function useCreateAccount(): UseCreateAccountResult {
-  const [isCreating, setIsCreating] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const createAccount = async (data: CreateAccountInput): Promise<Account> => {
+  const createAccount = async (data: CreateAccountInput): Promise<Account | null> => {
     try {
-      setIsCreating(true);
+      setLoading(true);
       setError(null);
 
       logger.debug('Creating account...', { name: data.name });
@@ -46,18 +42,18 @@ export function useCreateAccount(): UseCreateAccountResult {
       const error = err instanceof ApiError
         ? err
         : new Error('Failed to create account');
-      
+
       setError(error);
       logger.error('Failed to create account', { error, data });
-      throw error;
+      return null;
     } finally {
-      setIsCreating(false);
+      setLoading(false);
     }
   };
 
   return {
     createAccount,
-    isCreating,
+    loading,
     error,
   };
 }
