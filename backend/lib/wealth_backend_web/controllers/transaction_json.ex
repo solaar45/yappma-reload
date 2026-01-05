@@ -25,7 +25,7 @@ defmodule WealthBackendWeb.TransactionJSON do
       creditor_iban: transaction.creditor_account_iban,
       debtor_name: transaction.debtor_name,
       debtor_iban: transaction.debtor_account_iban,
-      notes: transaction.notes,
+      additional_information: transaction.additional_information,
       category: category_json(transaction.category),
       inserted_at: transaction.inserted_at,
       updated_at: transaction.updated_at
