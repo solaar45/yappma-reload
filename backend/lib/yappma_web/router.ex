@@ -63,8 +63,13 @@ defmodule YappmaWeb.Router do
       delete "/assets/:id", WealthBackendWeb.AssetSnapshotController, :delete
     end
 
+    # Transaction Categories
+    get "/transaction-categories", WealthBackendWeb.TransactionCategoryController, :index
+    post "/transaction-categories", WealthBackendWeb.TransactionCategoryController, :create
+    put "/transaction-categories/:id", WealthBackendWeb.TransactionCategoryController, :update
+    delete "/transaction-categories/:id", WealthBackendWeb.TransactionCategoryController, :delete
+
     # Transactions
-    get "/transactions/categories", WealthBackendWeb.TransactionController, :list_categories
     get "/transactions", WealthBackendWeb.TransactionController, :index
     get "/transactions/:id", WealthBackendWeb.TransactionController, :show
     put "/transactions/:id", WealthBackendWeb.TransactionController, :update
