@@ -76,7 +76,7 @@ defmodule Yappma.BankConnections.AccountSync do
 
     # Skip if no external_id
     if is_nil(external_id) do
-      Logger.warn("Skipping account without external_id: #{inspect(styx_account)}")
+      Logger.warning("Skipping account without external_id: #{inspect(styx_account)}")
       {:error, :missing_external_id}
     else
       # Find existing account by external_id + consent_id (internal DB ID)
