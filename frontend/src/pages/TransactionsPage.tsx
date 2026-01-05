@@ -14,9 +14,9 @@ import {
 } from '@/components/ui/table';
 import { useTransactions, useTransactionCategories, useUpdateTransaction, exportTransactionsToCSV } from '@/hooks/api/useTransactions';
 import { TransactionDetailsModal } from '@/components/transactions/TransactionDetailsModal';
-import { Transaction, TransactionFilters } from '@/types/transaction';
+import type { Transaction, TransactionFilters } from '@/types/transaction';
 import { formatCurrency, formatDate } from '@/lib/formatters';
-import { Download, Search, Filter, Calendar } from 'lucide-react';
+import { Download, Search } from 'lucide-react';
 import logger from '@/lib/logger';
 
 export function TransactionsPage() {
