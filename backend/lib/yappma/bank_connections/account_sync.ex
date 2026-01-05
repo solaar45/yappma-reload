@@ -68,86 +68,112 @@ defmodule Yappma.BankConnections.AccountSync do
   end
 
   defp upsert_account(user_id, internal_consent_id, styx_account) do
-    external_id = styx_account[:resource_id] || styx_account["resource_id"]
-    iban = styx_account[:iban] || styx_account["iban"]
-    name = styx_account[:name] || styx_account["name"] || "Imported Account"
-    currency = styx_account[:currency] || styx_account["currency"] || "EUR"
-    account_type = styx_account[:account_type] || styx_account["account_type"] || "checking"
+    external_id = styx_account["resourceId"] || styx_account[:resource_id]
+    iban = styx_account["iban"] || styx_account[:iban]
+    name = styx_account["name"] || styx_account[:name] || "Imported Account"
+    currency = styx_account["currency"] || styx_account[:currency] || "EUR"
+    account_type = styx_account["product"] || styx_account["account_type"] || styx_account[:account_type] || "checking"
 
-    # Find existing account by external_id + consent_id (internal DB ID)
-    existing_account =
-      Repo.one(
-        from a in Account,
-          where: a.external_id == ^external_id and a.bank_consent_id == ^internal_consent_id
-      )
-
-    attrs = %{
-      user_id: user_id,
-      name: name,
-      type: account_type,
-      currency: currency,
-      iban: iban,
-      external_id: external_id,
-      bank_consent_id: internal_consent_id,
-      last_synced_at: DateTime.utc_now(),
-      sync_enabled: true,
-      is_active: true
-    }
-
-    # Extract balance if present
-    balance = extract_balance(styx_account)
-
-    if existing_account do
-      # Update existing account
-      existing_account
-      |> Account.changeset(attrs)
-      |> Repo.update()
-      |> case do
-        {:ok, account} ->
-          # Create balance snapshot if balance is present
-          if balance do
-            create_balance_snapshot(account.id, balance)
-          end
-
-          {:ok, account}
-
-        {:error, changeset} ->
-          {:error, changeset}
-      end
+    # Skip if no external_id
+    if is_nil(external_id) do
+      Logger.warn("Skipping account without external_id: #{inspect(styx_account)}")
+      {:error, :missing_external_id}
     else
-      # Create new account
-      %Account{}
-      |> Account.changeset(attrs)
-      |> Repo.insert()
-      |> case do
-        {:ok, account} ->
-          # Create initial balance snapshot
-          if balance do
-            create_balance_snapshot(account.id, balance)
-          end
+      # Find existing account by external_id + consent_id (internal DB ID)
+      existing_account =
+        if external_id do
+          Repo.one(
+            from a in Account,
+              where: a.external_id == ^external_id and a.bank_consent_id == ^internal_consent_id
+          )
+        else
+          nil
+        end
 
-          {:ok, account}
+      attrs = %{
+        user_id: user_id,
+        name: name,
+        type: account_type,
+        currency: currency,
+        iban: iban,
+        external_id: external_id,
+        bank_consent_id: internal_consent_id,
+        last_synced_at: DateTime.utc_now(),
+        sync_enabled: true,
+        is_active: true
+      }
 
-        {:error, changeset} ->
-          {:error, changeset}
+      # Extract balance if present
+      balance = extract_balance(styx_account)
+
+      if existing_account do
+        # Update existing account
+        existing_account
+        |> Account.changeset(attrs)
+        |> Repo.update()
+        |> case do
+          {:ok, account} ->
+            # Create balance snapshot if balance is present
+            if balance do
+              create_balance_snapshot(account.id, balance)
+            end
+
+            {:ok, account}
+
+          {:error, changeset} ->
+            {:error, changeset}
+        end
+      else
+        # Create new account
+        %Account{}
+        |> Account.changeset(attrs)
+        |> Repo.insert()
+        |> case do
+          {:ok, account} ->
+            # Create initial balance snapshot
+            if balance do
+              create_balance_snapshot(account.id, balance)
+            end
+
+            {:ok, account}
+
+          {:error, changeset} ->
+            {:error, changeset}
+        end
       end
     end
   end
 
   defp extract_balance(styx_account) do
-    balance_data = styx_account[:balance] || styx_account["balance"]
+    # Try different balance structures from Styx
+    balance_data = styx_account["balance"] || styx_account[:balance]
 
-    if balance_data do
-      amount = balance_data[:amount] || balance_data["amount"]
-      currency = balance_data[:currency] || balance_data["currency"] || "EUR"
-
-      if amount do
-        %{amount: Decimal.new(to_string(amount)), currency: currency}
-      else
+    cond do
+      # PSD2 format: balance.balanceAmount.amount
+      is_map(balance_data) && (balance_data["balanceAmount"] || balance_data[:balanceAmount]) ->
+        balance_amount = balance_data["balanceAmount"] || balance_data[:balanceAmount]
+        amount = balance_amount["amount"] || balance_amount[:amount]
+        currency = balance_amount["currency"] || balance_amount[:currency] || "EUR"
+        
+        if amount do
+          %{amount: Decimal.new(to_string(amount)), currency: currency}
+        else
+          nil
+        end
+      
+      # Simple format: balance.amount
+      is_map(balance_data) ->
+        amount = balance_data["amount"] || balance_data[:amount]
+        currency = balance_data["currency"] || balance_data[:currency] || "EUR"
+        
+        if amount do
+          %{amount: Decimal.new(to_string(amount)), currency: currency}
+        else
+          nil
+        end
+      
+      true ->
         nil
-      end
-    else
-      nil
     end
   end
 
@@ -157,14 +183,30 @@ defmodule Yappma.BankConnections.AccountSync do
       account_id: account_id,
       balance: balance.amount,
       currency: balance.currency,
-      recorded_at: DateTime.utc_now()
+      snapshot_date: Date.utc_today()
     }
 
     # Check if AccountSnapshot schema exists, otherwise skip
     try do
-      Yappma.Accounts.AccountSnapshot
-      |> struct(snapshot_attrs)
-      |> Repo.insert()
+      alias Yappma.Accounts.AccountSnapshot
+      
+      # Check if snapshot for today already exists
+      existing = Repo.one(
+        from s in AccountSnapshot,
+          where: s.account_id == ^account_id and s.snapshot_date == ^snapshot_attrs.snapshot_date
+      )
+      
+      if existing do
+        # Update existing snapshot
+        existing
+        |> AccountSnapshot.changeset(snapshot_attrs)
+        |> Repo.update()
+      else
+        # Create new snapshot
+        %AccountSnapshot{}
+        |> AccountSnapshot.changeset(snapshot_attrs)
+        |> Repo.insert()
+      end
     rescue
       _ ->
         Logger.debug("AccountSnapshot not available, skipping balance snapshot")
@@ -176,37 +218,46 @@ defmodule Yappma.BankConnections.AccountSync do
   defp mock_accounts do
     [
       %{
-        resource_id: "account-1",
-        iban: "DE89370400440532013000",
-        name: "Girokonto",
-        currency: "EUR",
-        balance: %{
-          amount: 2543.89,
-          currency: "EUR"
+        "resourceId" => "account-1",
+        "iban" => "DE89370400440532013000",
+        "name" => "Girokonto",
+        "currency" => "EUR",
+        "balance" => %{
+          "balanceAmount" => %{
+            "amount" => "2543.89",
+            "currency" => "EUR"
+          },
+          "balanceType" => "interimAvailable"
         },
-        account_type: "checking"
+        "product" => "Girokonto"
       },
       %{
-        resource_id: "account-2",
-        iban: "DE89370400440532013001",
-        name: "Sparkonto",
-        currency: "EUR",
-        balance: %{
-          amount: 15789.42,
-          currency: "EUR"
+        "resourceId" => "account-2",
+        "iban" => "DE89370400440532013001",
+        "name" => "Sparkonto",
+        "currency" => "EUR",
+        "balance" => %{
+          "balanceAmount" => %{
+            "amount" => "15789.42",
+            "currency" => "EUR"
+          },
+          "balanceType" => "interimAvailable"
         },
-        account_type: "savings"
+        "product" => "Sparkonto"
       },
       %{
-        resource_id: "account-3",
-        iban: "DE89370400440532013002",
-        name: "Tagesgeldkonto",
-        currency: "EUR",
-        balance: %{
-          amount: 8234.15,
-          currency: "EUR"
+        "resourceId" => "account-3",
+        "iban" => "DE89370400440532013002",
+        "name" => "Tagesgeldkonto",
+        "currency" => "EUR",
+        "balance" => %{
+          "balanceAmount" => %{
+            "amount" => "8234.15",
+            "currency" => "EUR"
+          },
+          "balanceType" => "interimAvailable"
         },
-        account_type: "savings"
+        "product" => "Tagesgeldkonto"
       }
     ]
   end
