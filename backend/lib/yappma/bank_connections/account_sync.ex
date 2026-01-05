@@ -7,6 +7,7 @@ defmodule Yappma.BankConnections.AccountSync do
   alias Yappma.Accounts.Account
   alias Yappma.Accounts.AccountSnapshot
   alias Yappma.BankConnections.StyxClient
+  alias WealthBackend.Banking
   import Ecto.Query
   require Logger
 
@@ -23,12 +24,14 @@ defmodule Yappma.BankConnections.AccountSync do
     )
 
     with {:ok, styx_accounts} <- get_styx_accounts(external_consent_id),
-         {:ok, synced_count} <-
-           sync_accounts_to_db(user_id, internal_consent_id, styx_accounts) do
+         {:ok, synced_accounts} <-
+           sync_accounts_to_db(user_id, internal_consent_id, styx_accounts),
+         {:ok, transactions_count} <-
+           sync_transactions_for_accounts(synced_accounts, external_consent_id) do
       {:ok,
        %{
-         accounts_synced: synced_count,
-         transactions_imported: 0
+         accounts_synced: length(synced_accounts),
+         transactions_imported: transactions_count
        }}
     else
       {:error, reason} ->
@@ -53,19 +56,63 @@ defmodule Yappma.BankConnections.AccountSync do
   end
 
   defp sync_accounts_to_db(user_id, internal_consent_id, styx_accounts) do
-    synced_count =
-      Enum.reduce(styx_accounts, 0, fn styx_account, count ->
+    synced_accounts =
+      styx_accounts
+      |> Enum.map(fn styx_account ->
         case upsert_account(user_id, internal_consent_id, styx_account) do
-          {:ok, _account} ->
-            count + 1
+          {:ok, account} ->
+            account
 
           {:error, changeset} ->
             Logger.error("Failed to sync account: #{inspect(changeset.errors)}")
-            count
+            nil
         end
       end)
+      |> Enum.reject(&is_nil/1)
 
-    {:ok, synced_count}
+    {:ok, synced_accounts}
+  end
+
+  defp sync_transactions_for_accounts(accounts, external_consent_id) do
+    Logger.info("Syncing transactions for #{length(accounts)} accounts")
+
+    # Sync transactions for last 90 days
+    date_from = Date.utc_today() |> Date.add(-90) |> Date.to_iso8601()
+    date_to = Date.utc_today() |> Date.to_iso8601()
+
+    total_count =
+      accounts
+      |> Enum.map(fn account ->
+        if account.external_id do
+          sync_opts = [date_from: date_from, date_to: date_to]
+
+          case Banking.sync_account_transactions(
+                 account.id,
+                 external_consent_id,
+                 sync_opts
+               ) do
+            {:ok, count} ->
+              Logger.info(
+                "Synced #{count} transactions for account #{account.id} (#{account.name})"
+              )
+
+              count
+
+            {:error, reason} ->
+              Logger.error(
+                "Failed to sync transactions for account #{account.id}: #{inspect(reason)}"
+              )
+
+              0
+          end
+        else
+          Logger.warning("Skipping transaction sync for account #{account.id} - no external_id")
+          0
+        end
+      end)
+      |> Enum.sum()
+
+    {:ok, total_count}
   end
 
   defp upsert_account(user_id, internal_consent_id, styx_account) do
