@@ -206,7 +206,7 @@ export default function SnapshotsPage() {
     return (
       <div className="flex flex-1 items-center justify-center">
         <div className="text-destructive">
-          {t('snapshots.errorLoading')}: {error}
+          {t('snapshots.errorLoading')}: {error instanceof Error ? error.message : String(error)}
         </div>
       </div>
     );
