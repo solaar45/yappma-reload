@@ -63,8 +63,15 @@ defmodule Yappma.BankConnections.AccountSync do
           {:ok, account} ->
             account
 
-          {:error, changeset} ->
+          {:error, changeset} when is_map(changeset) ->
             Logger.error("Failed to sync account: #{inspect(changeset.errors)}")
+            nil
+
+          {:error, reason} ->
+            Logger.error("Failed to sync account: #{inspect(reason)}")
+            nil
+
+          nil ->
             nil
         end
       end)
@@ -128,7 +135,7 @@ defmodule Yappma.BankConnections.AccountSync do
     # Skip if no external_id
     if is_nil(external_id) do
       Logger.warning("Skipping account without external_id: #{inspect(styx_account)}")
-      {:error, :missing_external_id}
+      nil
     else
       # Find existing account by external_id + consent_id (internal DB ID)
       existing_account =
