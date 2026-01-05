@@ -151,8 +151,8 @@ defmodule WealthBackend.Banking do
 
   # Fetch transactions from Styx API
   defp fetch_transactions_from_styx(consent_id, account_id, opts) do
-    styx_url = Application.get_env(:wealth_backend, :styx_url)
-    api_key = Application.get_env(:wealth_backend, :styx_api_key)
+    styx_url = Application.get_env(:yappma, :styx_url)
+    api_key = Application.get_env(:yappma, :styx_api_key)
 
     # Build query params
     query_params =

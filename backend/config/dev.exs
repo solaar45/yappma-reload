@@ -23,7 +23,7 @@ config :yappma, YappmaWeb.Endpoint,
   watchers: []
 
 # Styx PSD2 API Configuration
-config :wealth_backend,
+config :yappma,
   styx_url: "http://localhost:8093",
   styx_api_key: "dev-api-key"
 
