@@ -161,7 +161,8 @@ defmodule WealthBackend.Banking do
       |> Map.take([:date_from, :date_to])
       |> URI.encode_query()
 
-    url = "#{styx_url}/api/v2/consents/#{consent_id}/accounts/#{account_id}/transactions?#{query_params}"
+    # Styx mock uses /consents/... directly without /api/v2 prefix
+    url = "#{styx_url}/consents/#{consent_id}/accounts/#{account_id}/transactions?#{query_params}"
 
     headers = [
       {"Authorization", "Bearer #{api_key}"},
