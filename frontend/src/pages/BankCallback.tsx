@@ -39,7 +39,10 @@ export function BankCallback() {
 
       // Complete the consent (works for both mock and real)
       try {
-        await apiClient.bankConnections.completeConsent(consentId);
+        await apiClient.bankConnections.completeConsent({
+          consentId,
+          authorizationCode: authCode || undefined,
+        });
         setStatus('success');
         setMessage('Autorisierung erfolgreich!');
         
