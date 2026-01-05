@@ -116,5 +116,8 @@ class Logger {
 // Export singleton instance
 export const logger = new Logger();
 
-// Export for testing
+// Default export for compatibility
+export default logger;
+
+// Export class for testing
 export { Logger };
