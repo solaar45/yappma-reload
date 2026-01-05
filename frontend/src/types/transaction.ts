@@ -1,3 +1,11 @@
+export type TransactionCategory = {
+  id: number;
+  name: string;
+  icon?: string;
+  color?: string;
+  type: 'income' | 'expense';
+};
+
 export type Transaction = {
   id: number;
   account_id: number;
@@ -17,14 +25,6 @@ export type Transaction = {
   category?: TransactionCategory;
   inserted_at: string;
   updated_at: string;
-};
-
-export type TransactionCategory = {
-  id: number;
-  name: string;
-  icon?: string;
-  color?: string;
-  type: 'income' | 'expense';
 };
 
 export type TransactionFilters = {
