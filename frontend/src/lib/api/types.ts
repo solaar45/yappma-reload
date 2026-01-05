@@ -1,220 +1,34 @@
-// API Response Types based on backend REST_API.md
+// ... existing types ...
 
-export interface User {
+export interface Transaction {
   id: number;
-  name: string;
-  email: string;
-  currency_default: string;
-  inserted_at: string;
-  updated_at: string;
-}
-
-export interface Institution {
-  id: number;
-  name: string;
-  type: 'bank' | 'broker' | 'insurance' | 'other';
-  country: string;
-  user_id: number;
-  inserted_at: string;
-  updated_at: string;
-}
-
-export interface AccountSnapshot {
-  id: number;
-  snapshot_date: string;
-  balance: string;
-  currency: string;
-  note: string | null;
   account_id: number;
-  inserted_at?: string;
-  updated_at?: string;
-}
-
-export interface AssetSnapshot {
-  id: number;
-  snapshot_date: string;
-  quantity: string | null;
-  market_price_per_unit: string | null;
-  value: string;
-  note: string | null;
-  asset_id: number;
-  inserted_at?: string;
-  updated_at?: string;
-}
-
-export interface Account {
-  id: number;
-  name: string;
-  type: 'checking' | 'savings' | 'credit_card' | 'brokerage' | 'insurance' | 'cash' | 'other';
-  currency: string;
-  is_active: boolean;
-  opened_at: string | null;
-  closed_at: string | null;
-  user_id: number;
-  institution_id: number;
-  institution?: Institution;
-  snapshots?: AccountSnapshot[];
-  // PSD2 fields
-  iban?: string;
-  external_id?: string;
-  bank_consent_id?: number;
-  is_synced?: boolean;
-  last_synced_at?: string;
-  sync_enabled?: boolean;
-  metadata?: Record<string, any>;
-  inserted_at: string;
-  updated_at: string;
-}
-
-export interface AssetType {
-  id: number;
-  code: 'cash' | 'security' | 'insurance' | 'loan' | 'real_estate' | 'other';
-  description: string;
-}
-
-export interface SecurityAsset {
-  isin: string | null;
-  wkn: string | null;
-  ticker: string | null;
-  exchange: string | null;
-  sector: string | null;
-}
-
-export interface InsuranceAsset {
-  insurer_name: string;
-  policy_number: string;
-  insurance_type: string;
-  coverage_amount: string;
-  payment_frequency: string;
-}
-
-export interface RealEstateAsset {
-  address: string;
-  size_m2: string;
-  purchase_price: string;
-  purchase_date: string;
-}
-
-export interface Asset {
-  id: number;
-  name: string;
-  symbol: string | null;
-  isin?: string | null;
-  ticker?: string | null;
-  currency: string;
-  is_active: boolean;
-  created_at_date: string | null;
-  closed_at: string | null;
-  user_id: number;
-  account_id: number | null;
-  asset_type_id: number;
-  asset_type?: AssetType;
-  account?: Account;
-  security_asset?: SecurityAsset | null;
-  insurance_asset?: InsuranceAsset | null;
-  real_estate_asset?: RealEstateAsset | null;
-  snapshots?: AssetSnapshot[];
-  inserted_at: string;
-  updated_at: string;
-}
-
-export interface NetWorthResponse {
-  total: string;
-  accounts: string;
-  assets: string;
-  date: string;
-}
-
-// Dashboard-specific snapshot types with nested relations
-export interface DashboardAccountSnapshot extends AccountSnapshot {
-  account?: {
-    name: string;
-    institution?: {
-      name: string;
-    };
-  };
-}
-
-export interface DashboardAssetSnapshot extends AssetSnapshot {
-  asset?: {
-    name: string;
-    currency?: string;
-    asset_type?: {
-      description: string;
-    };
-  };
-}
-
-export interface DashboardAccountSnapshotsResponse {
-  snapshots: DashboardAccountSnapshot[];
-  date: string;
-}
-
-export interface DashboardAssetSnapshotsResponse {
-  snapshots: DashboardAssetSnapshot[];
-  date: string;
-}
-
-// PSD2 Bank Connections Types
-export interface Bank {
-  aspsp_id: string;
-  name: string;
-  bic: string;
-  logo_url?: string;
-  supported_services?: string[];
-  supported_sca_methods?: string[];
-}
-
-export interface BankConsent {
-  id: number;
   external_id: string;
-  aspsp_id: string;
-  aspsp_name?: string;
-  aspsp_bic?: string;
-  status: 'pending' | 'authorized' | 'valid' | 'expired' | 'revoked' | 'rejected';
-  authorization_url?: string;
-  redirect_url?: string;
-  valid_until?: string;
-  last_used_at?: string;
-  user_id: number;
+  booking_date: string;
+  value_date?: string;
+  amount: string;
+  currency: string;
+  status: 'booked' | 'pending';
+  description?: string;
+  additional_info?: string;
+  creditor_name?: string;
+  creditor_iban?: string;
+  debtor_name?: string;
+  debtor_iban?: string;
   inserted_at: string;
   updated_at: string;
 }
 
-export interface BankAccount {
-  resource_id: string;
-  iban?: string;
-  name: string;
-  currency: string;
-  account_type: string;
-  balance?: {
-    amount: number;
-    currency: string;
-  };
-  cash_account_type?: string;
-  product?: string;
+export interface TransactionListParams {
+  from_date?: string;
+  to_date?: string;
+  status?: 'booked' | 'pending';
+  limit?: number;
 }
 
-export interface ConsentStatus {
+export interface TransactionSyncParams {
+  account_id: number;
   consent_id: string;
-  status: string;
-  valid_until?: string;
-  aspsp_id: string;
+  from_date?: string;
+  to_date?: string;
 }
-
-export interface SyncResult {
-  accounts_synced: number;
-  transactions_imported: number;
-}
-
-// API Response Wrapper
-export interface ApiResponse<T> {
-  data: T;
-}
-
-export interface ApiError {
-  errors: Record<string, string[]> | { detail: string };
-}
-
-export type NetWorth = NetWorthResponse;
-export type SnapshotCollection = DashboardAccountSnapshotsResponse | DashboardAssetSnapshotsResponse;
