@@ -352,14 +352,17 @@ class ApiClient {
     },
 
     /**
-     * Complete consent after user authorization
+     * Complete consent after user authorization.
+     * Accepts either a string consentId or an object with consentId and optional authorizationCode.
      */
-    completeConsent: async (params: {
-      consentId: string;
-      authorizationCode?: string;
-    }): Promise<{ status: string }> => {
-      return this.post(`bank-connections/consents/${params.consentId}/complete`, {
-        authorization_code: params.authorizationCode,
+    completeConsent: async (
+      paramsOrId: string | { consentId: string; authorizationCode?: string }
+    ): Promise<{ status: string }> => {
+      const consentId = typeof paramsOrId === 'string' ? paramsOrId : paramsOrId.consentId;
+      const authorizationCode = typeof paramsOrId === 'object' ? paramsOrId.authorizationCode : undefined;
+      
+      return this.post(`bank-connections/consents/${consentId}/complete`, {
+        authorization_code: authorizationCode,
       });
     },
 
