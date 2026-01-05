@@ -5,6 +5,7 @@ defmodule Yappma.BankConnections.AccountSync do
 
   alias Yappma.Repo
   alias Yappma.Accounts.Account
+  alias Yappma.Accounts.AccountSnapshot
   alias Yappma.BankConnections.StyxClient
   import Ecto.Query
   require Logger
@@ -119,7 +120,10 @@ defmodule Yappma.BankConnections.AccountSync do
           {:ok, account} ->
             # Create balance snapshot if balance is present
             if balance do
-              create_balance_snapshot(account.id, balance)
+              case create_balance_snapshot(account.id, balance) do
+                {:ok, _snapshot} -> Logger.debug("Balance snapshot created/updated")
+                {:error, reason} -> Logger.error("Failed to create snapshot: #{inspect(reason)}")
+              end
             end
 
             {:ok, account}
@@ -136,7 +140,10 @@ defmodule Yappma.BankConnections.AccountSync do
           {:ok, account} ->
             # Create initial balance snapshot
             if balance do
-              create_balance_snapshot(account.id, balance)
+              case create_balance_snapshot(account.id, balance) do
+                {:ok, _snapshot} -> Logger.debug("Balance snapshot created")
+                {:error, reason} -> Logger.error("Failed to create snapshot: #{inspect(reason)}")
+              end
             end
 
             {:ok, account}
@@ -210,7 +217,6 @@ defmodule Yappma.BankConnections.AccountSync do
   end
 
   defp create_balance_snapshot(account_id, balance) do
-    # We'll use account_snapshots table for this
     snapshot_attrs = %{
       account_id: account_id,
       balance: balance.amount,
@@ -218,31 +224,22 @@ defmodule Yappma.BankConnections.AccountSync do
       snapshot_date: Date.utc_today()
     }
 
-    # Check if AccountSnapshot schema exists, otherwise skip
-    try do
-      alias Yappma.Accounts.AccountSnapshot
-      
-      # Check if snapshot for today already exists
-      existing = Repo.one(
-        from s in AccountSnapshot,
-          where: s.account_id == ^account_id and s.snapshot_date == ^snapshot_attrs.snapshot_date
-      )
-      
-      if existing do
-        # Update existing snapshot
-        existing
-        |> AccountSnapshot.changeset(snapshot_attrs)
-        |> Repo.update()
-      else
-        # Create new snapshot
-        %AccountSnapshot{}
-        |> AccountSnapshot.changeset(snapshot_attrs)
-        |> Repo.insert()
-      end
-    rescue
-      _ ->
-        Logger.debug("AccountSnapshot not available, skipping balance snapshot")
-        :ok
+    # Check if snapshot for today already exists
+    existing = Repo.one(
+      from s in AccountSnapshot,
+        where: s.account_id == ^account_id and s.snapshot_date == ^snapshot_attrs.snapshot_date
+    )
+    
+    if existing do
+      # Update existing snapshot
+      existing
+      |> AccountSnapshot.changeset(snapshot_attrs)
+      |> Repo.update()
+    else
+      # Create new snapshot
+      %AccountSnapshot{}
+      |> AccountSnapshot.changeset(snapshot_attrs)
+      |> Repo.insert()
     end
   end
 
