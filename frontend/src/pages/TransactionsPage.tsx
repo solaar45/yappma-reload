@@ -1,22 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { ColumnDef } from '@tanstack/react-table';
-import { useTransactions } from '@/lib/api/hooks';
-import { useUser } from '@/contexts/UserContext';
-import { formatCurrency, formatDate } from '@/lib/formatters';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DataTableColumnHeader } from '@/components/ui/data-table';
-import {
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import type { SortingState } from '@tanstack/react-table';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -25,464 +12,263 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, Filter, ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
-import type { Transaction } from '@/lib/api/types';
+import { useTransactions, useTransactionCategories, useUpdateTransaction, exportTransactionsToCSV } from '@/hooks/api/useTransactions';
+import { TransactionDetailsModal } from '@/components/transactions/TransactionDetailsModal';
+import { Transaction, TransactionFilters } from '@/types/transaction';
+import { formatCurrency, formatDate } from '@/lib/formatters';
+import { Download, Search, Filter, Calendar } from 'lucide-react';
+import logger from '@/lib/logger';
 
-export default function TransactionsPage() {
-  const { t } = useTranslation();
-  const { userId } = useUser();
-
-  // Filter states
+export function TransactionsPage() {
+  const [filters, setFilters] = useState<TransactionFilters>({});
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
+  const { data: transactions = [], isLoading } = useTransactions(filters);
+  const { data: categories = [] } = useTransactionCategories();
+  const updateTransaction = useUpdateTransaction();
 
-  // Sorting state
-  const [sorting, setSorting] = useState<SortingState>([]);
-
-  // Fetch transactions
-  const { data: transactions, isLoading, error } = useTransactions({
-    userId: userId!,
+  logger.debug('TransactionsPage render', {
+    transactionsCount: transactions.length,
+    filters,
   });
 
-  // Filter transactions
-  const filteredTransactions = useMemo(() => {
-    if (!transactions) return [];
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setFilters((prev) => ({ ...prev, search: value || undefined }));
+  };
 
-    return transactions.filter((tx) => {
-      // Search filter
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch =
-        searchTerm === '' ||
-        tx.description?.toLowerCase().includes(searchLower) ||
-        tx.creditor_name?.toLowerCase().includes(searchLower) ||
-        tx.debtor_name?.toLowerCase().includes(searchLower);
+  const handleCategoryFilter = (value: string) => {
+    const categoryId = value === 'all' ? undefined : parseInt(value);
+    setFilters((prev) => ({ ...prev, category_id: categoryId }));
+  };
 
-      // Status filter
-      const matchesStatus = statusFilter === 'all' || tx.status === statusFilter;
+  const handleStatusFilter = (value: string) => {
+    const status = value === 'all' ? undefined : (value as 'booked' | 'pending');
+    setFilters((prev) => ({ ...prev, status }));
+  };
 
-      // Date filters
-      const matchesFromDate = !fromDate || new Date(tx.booking_date) >= new Date(fromDate);
-      const matchesToDate = !toDate || new Date(tx.booking_date) <= new Date(toDate);
+  const handleExport = () => {
+    exportTransactionsToCSV(transactions, `transactions_${new Date().toISOString().split('T')[0]}.csv`);
+  };
 
-      return matchesSearch && matchesStatus && matchesFromDate && matchesToDate;
-    });
-  }, [transactions, searchTerm, statusFilter, fromDate, toDate]);
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setDetailsModalOpen(true);
+  };
 
-  // Paginated transactions
-  const paginatedTransactions = useMemo(() => {
-    const startIndex = currentPage * pageSize;
-    return filteredTransactions.slice(startIndex, startIndex + pageSize);
-  }, [filteredTransactions, currentPage, pageSize]);
-
-  // Calculate pagination info
-  const totalPages = Math.ceil(filteredTransactions.length / pageSize);
-  const startIndex = currentPage * pageSize + 1;
-  const endIndex = Math.min((currentPage + 1) * pageSize, filteredTransactions.length);
-
-  // Reset to first page when filters change
-  React.useEffect(() => {
-    setCurrentPage(0);
-  }, [searchTerm, statusFilter, fromDate, toDate, pageSize]);
-
-  // Define table columns
-  const columns: ColumnDef<Transaction>[] = useMemo(
-    () => [
-      {
-        accessorKey: 'booking_date',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Datum" />
-        ),
-        cell: ({ row }) => {
-          return <div className="font-medium">{formatDate(row.original.booking_date)}</div>;
-        },
-        sortingFn: 'datetime',
-      },
-      {
-        id: 'type',
-        header: () => <div className="w-8"></div>,
-        cell: ({ row }) => {
-          const isIncoming = parseFloat(row.original.amount) > 0;
-          return isIncoming ? (
-            <ArrowDownLeft className="h-4 w-4 text-green-600" />
-          ) : (
-            <ArrowUpRight className="h-4 w-4 text-red-600" />
-          );
-        },
-        enableSorting: false,
-      },
-      {
-        accessorKey: 'description',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Beschreibung" />
-        ),
-        cell: ({ row }) => {
-          const tx = row.original;
-          const counterparty = tx.creditor_name || tx.debtor_name;
-          
-          return (
-            <div>
-              <div className="font-medium">
-                {tx.description || counterparty || 'Keine Beschreibung'}
-              </div>
-              {counterparty && tx.description && (
-                <div className="text-sm text-muted-foreground">{counterparty}</div>
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'status',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Status" />
-        ),
-        cell: ({ row }) => {
-          const isBooked = row.original.status === 'booked';
-          return (
-            <Badge variant={isBooked ? 'default' : 'secondary'}>
-              {isBooked ? 'Gebucht' : 'Ausstehend'}
-            </Badge>
-          );
-        },
-      },
-      {
-        accessorKey: 'amount',
-        header: ({ column }) => (
-          <div className="text-right">
-            <DataTableColumnHeader column={column} title="Betrag" />
-          </div>
-        ),
-        cell: ({ row }) => {
-          const amount = parseFloat(row.original.amount);
-          const isIncoming = amount > 0;
-          
-          return (
-            <div className={`text-right font-medium ${
-              isIncoming ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {isIncoming ? '+' : ''}{formatCurrency(row.original.amount, row.original.currency)}
-            </div>
-          );
-        },
-      },
-    ],
-    [t]
-  );
-
-  // Create table instance
-  const table = useReactTable({
-    data: paginatedTransactions,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
-    state: {
-      sorting,
-    },
-    manualPagination: true,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Transaktionen</h1>
-        </div>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-12 animate-pulse bg-muted rounded" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-destructive">
-          Fehler beim Laden: {error.toString()}
-        </div>
-      </div>
-    );
-  }
-
-  if (!transactions || transactions.length === 0) {
-    return (
-      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Transaktionen</h1>
-        </div>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <p className="text-lg text-muted-foreground">Keine Transaktionen vorhanden</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Synchronisiere deine Bankverbindungen um Transaktionen zu laden
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const handleSaveTransaction = async (
+    id: number,
+    updates: { category_id?: number; notes?: string }
+  ) => {
+    await updateTransaction.mutateAsync({ id, updates });
+  };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">Transaktionen</h1>
-          <Badge variant="secondary" className="text-base">
-            {transactions.length} Transaktionen
-          </Badge>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
+        <p className="text-muted-foreground">View and manage your transactions</p>
       </div>
 
-      {/* Mobile: Card Layout */}
-      <div className="grid gap-4 md:hidden">
-        {paginatedTransactions.map((tx) => {
-          const amount = parseFloat(tx.amount);
-          const isIncoming = amount > 0;
-          const counterparty = tx.creditor_name || tx.debtor_name;
-
-          return (
-            <Card key={tx.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    {isIncoming ? (
-                      <ArrowDownLeft className="h-5 w-5 text-green-600 mt-0.5" />
-                    ) : (
-                      <ArrowUpRight className="h-5 w-5 text-red-600 mt-0.5" />
-                    )}
-                    <div>
-                      <CardTitle className="text-base">
-                        {tx.description || counterparty || 'Keine Beschreibung'}
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {formatDate(tx.booking_date)}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant={tx.status === 'booked' ? 'default' : 'secondary'}>
-                    {tx.status === 'booked' ? 'Gebucht' : 'Ausstehend'}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  {counterparty && tx.description && (
-                    <div className="text-sm text-muted-foreground">{counterparty}</div>
-                  )}
-                  <div className={`text-2xl font-bold ml-auto ${
-                    isIncoming ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {isIncoming ? '+' : ''}{formatCurrency(tx.amount, tx.currency)}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-
-        {/* Mobile Pagination */}
-        {filteredTransactions.length > 0 && (
-          <div className="flex items-center justify-between px-2">
-            <div className="text-sm text-muted-foreground">
-              {startIndex}-{endIndex} von {filteredTransactions.length}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>All Transactions</CardTitle>
+              <CardDescription>
+                {transactions.length} transaction{transactions.length !== 1 ? 's' : ''} found
+              </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                disabled={currentPage === 0}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
-                disabled={currentPage >= totalPages - 1}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button onClick={handleExport} variant="outline" size="sm" disabled={transactions.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
           </div>
-        )}
-      </div>
-
-      {/* Desktop: DataTable with Filters */}
-      <Card className="hidden md:block">
-        <CardContent className="pt-6">
+        </CardHeader>
+        <CardContent>
           {/* Filters */}
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              {/* Search */}
-              <div className="flex items-center gap-2 flex-1 max-w-md">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Suche nach Beschreibung oder Name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-
-              {/* Filters */}
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle Status</SelectItem>
-                    <SelectItem value="booked">Gebucht</SelectItem>
-                    <SelectItem value="pending">Ausstehend</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="grid gap-4 md:grid-cols-4 mb-6">
+            {/* Search */}
+            <div className="relative md:col-span-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search transactions..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-10"
+              />
             </div>
 
-            {/* Date Filters */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-muted-foreground whitespace-nowrap">Von:</label>
-                <Input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-[160px]"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-muted-foreground whitespace-nowrap">Bis:</label>
-                <Input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-[160px]"
-                />
-              </div>
-              {(fromDate || toDate) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setFromDate('');
-                    setToDate('');
-                  }}
-                >
-                  Zurücksetzen
-                </Button>
-              )}
-            </div>
+            {/* Category Filter */}
+            <Select onValueChange={handleCategoryFilter} defaultValue="all">
+              <SelectTrigger>
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="0">Uncategorized</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id.toString()}>
+                    {cat.icon && <span className="mr-2">{cat.icon}</span>}
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Status Filter */}
+            <Select onValueChange={handleStatusFilter} defaultValue="all">
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="booked">Booked</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* DataTable */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
+          {/* Table */}
+          {isLoading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading transactions...</div>
+          ) : transactions.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              No transactions found. Try adjusting your filters.
+            </div>
+          ) : (
+            <>
+              {/* Desktop Table */}
+              <div className="hidden md:block rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Account</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.map((transaction) => {
+                      const isExpense = parseFloat(transaction.amount) < 0;
+                      const amount = Math.abs(parseFloat(transaction.amount));
+
                       return (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
+                        <TableRow
+                          key={transaction.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => handleTransactionClick(transaction)}
+                        >
+                          <TableCell className="font-medium">
+                            {formatDate(transaction.booking_date)}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{transaction.description}</div>
+                              {transaction.notes && (
+                                <div className="text-xs text-muted-foreground">{transaction.notes}</div>
                               )}
-                        </TableHead>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {transaction.category ? (
+                              <Badge variant="outline" className="gap-1">
+                                {transaction.category.icon && <span>{transaction.category.icon}</span>}
+                                {transaction.category.name}
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Uncategorized</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {transaction.account_name}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span
+                              className={`font-medium ${isExpense ? 'text-red-600' : 'text-green-600'}`}
+                            >
+                              {isExpense ? '-' : '+'}
+                              {formatCurrency(amount, transaction.currency)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={transaction.status === 'booked' ? 'default' : 'secondary'}>
+                              {transaction.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
                       );
                     })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      Keine Ergebnisse.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableBody>
+                </Table>
+              </div>
 
-          {/* Pagination Controls */}
-          {filteredTransactions.length > 0 && (
-            <div className="flex items-center justify-between px-2 py-4">
-              <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground">
-                  Zeige {startIndex}-{endIndex} von {filteredTransactions.length}
-                </p>
-                <Select
-                  value={pageSize.toString()}
-                  onValueChange={(value) => setPageSize(Number(value))}
-                >
-                  <SelectTrigger className="h-8 w-[110px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10 / Seite</SelectItem>
-                    <SelectItem value="25">25 / Seite</SelectItem>
-                    <SelectItem value="50">50 / Seite</SelectItem>
-                    <SelectItem value="100">100 / Seite</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Mobile Cards */}
+              <div className="md:hidden space-y-4">
+                {transactions.map((transaction) => {
+                  const isExpense = parseFloat(transaction.amount) < 0;
+                  const amount = Math.abs(parseFloat(transaction.amount));
+
+                  return (
+                    <Card
+                      key={transaction.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleTransactionClick(transaction)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1 flex-1">
+                            <div className="font-medium">{transaction.description}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {formatDate(transaction.booking_date)}
+                            </div>
+                            <div className="text-sm text-muted-foreground">  
+                              {transaction.account_name}
+                            </div>
+                            {transaction.category && (
+                              <Badge variant="outline" className="gap-1 mt-2">
+                                {transaction.category.icon && <span>{transaction.category.icon}</span>}
+                                {transaction.category.name}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-right space-y-2">
+                            <div
+                              className={`font-bold text-lg ${isExpense ? 'text-red-600' : 'text-green-600'}`}
+                            >
+                              {isExpense ? '-' : '+'}
+                              {formatCurrency(amount, transaction.currency)}
+                            </div>
+                            <Badge variant={transaction.status === 'booked' ? 'default' : 'secondary'}>
+                              {transaction.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                  disabled={currentPage === 0}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Zurück
-                </Button>
-                <div className="text-sm text-muted-foreground">
-                  Seite {currentPage + 1} von {totalPages}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={currentPage >= totalPages - 1}
-                >
-                  Weiter
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
+            </>
           )}
         </CardContent>
       </Card>
+
+      {/* Transaction Details Modal */}
+      <TransactionDetailsModal
+        transaction={selectedTransaction}
+        open={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        onSave={handleSaveTransaction}
+        categories={categories}
+      />
     </div>
   );
 }
