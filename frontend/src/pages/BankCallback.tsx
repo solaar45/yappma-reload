@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../lib/api/client';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 export function BankCallback() {
   const [searchParams] = useSearchParams();
@@ -16,11 +17,13 @@ export function BankCallback() {
       const mockStatus = searchParams.get('status');
       const error = searchParams.get('error');
 
+      logger.info('Bank callback processing', { consentId, mockStatus, error });
+
       if (error) {
         setStatus('error');
         setMessage(`Fehler: ${error}`);
         setTimeout(() => {
-          window.close();
+          navigate('/bank-connections', { replace: true });
         }, 3000);
         return;
       }
@@ -29,70 +32,37 @@ export function BankCallback() {
         setStatus('error');
         setMessage('Keine Consent-ID gefunden');
         setTimeout(() => {
-          window.close();
+          navigate('/bank-connections', { replace: true });
         }, 3000);
         return;
       }
 
-      // Handle mock consent (when Styx is not running)
-      if (mockStatus === 'authorized' && consentId.startsWith('mock-consent-')) {
-        setStatus('success');
-        setMessage('Mock-Autorisierung erfolgreich!');
-        
-        // Notify parent window
-        if (window.opener) {
-          window.opener.postMessage(
-            {
-              type: 'BANK_AUTH_SUCCESS',
-              consentId,
-              mock: true,
-            },
-            window.location.origin
-          );
-        }
-        
-        setTimeout(() => {
-          window.close();
-        }, 2000);
-        return;
-      }
-
-      // Handle real consent completion
+      // Complete the consent (works for both mock and real)
       try {
-        await apiClient.bankConnections.completeConsent({
-          consentId,
-          authorizationCode: authCode || undefined,
-        });
+        await apiClient.bankConnections.completeConsent(consentId);
         setStatus('success');
         setMessage('Autorisierung erfolgreich!');
+        
+        logger.info('Consent completed successfully', { consentId });
 
-        // Notify parent window
-        if (window.opener) {
-          window.opener.postMessage(
-            {
-              type: 'BANK_AUTH_SUCCESS',
-              consentId,
-            },
-            window.location.origin
-          );
-        }
-
+        // Redirect to bank connections after success
         setTimeout(() => {
-          window.close();
+          navigate('/bank-connections', { replace: true });
         }, 2000);
       } catch (err) {
+        logger.error('Failed to complete consent', err);
         setStatus('error');
         setMessage('Fehler beim Abschließen der Autorisierung');
-        console.error('Failed to complete consent:', err);
 
+        // Redirect anyway
         setTimeout(() => {
-          window.close();
+          navigate('/bank-connections', { replace: true });
         }, 3000);
       }
     };
 
     processCallback();
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -118,7 +88,7 @@ export function BankCallback() {
               </h2>
               <p className="text-gray-600 dark:text-gray-400">{message}</p>
               <p className="text-sm text-gray-500 dark:text-gray-500 mt-4">
-                Dieses Fenster schließt sich automatisch...
+                Du wirst automatisch weitergeleitet...
               </p>
             </>
           )}
@@ -131,7 +101,7 @@ export function BankCallback() {
               </h2>
               <p className="text-gray-600 dark:text-gray-400">{message}</p>
               <p className="text-sm text-gray-500 dark:text-gray-500 mt-4">
-                Dieses Fenster schließt sich automatisch...
+                Du wirst zurück zu den Bankverbindungen geleitet...
               </p>
             </>
           )}
