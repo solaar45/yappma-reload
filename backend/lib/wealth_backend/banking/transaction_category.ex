@@ -13,7 +13,7 @@ defmodule WealthBackend.Banking.TransactionCategory do
     field :is_system, :boolean, default: false
 
     belongs_to :user, User
-    has_many :transactions, Transaction
+    has_many :transactions, Transaction, foreign_key: :category_id
 
     timestamps(type: :utc_datetime)
   end
