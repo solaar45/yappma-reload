@@ -69,8 +69,9 @@ defmodule YappmaWeb.Router do
     put "/transaction-categories/:id", WealthBackendWeb.TransactionCategoryController, :update
     delete "/transaction-categories/:id", WealthBackendWeb.TransactionCategoryController, :delete
 
-    # Transactions
+    # Transactions - IMPORTANT: specific routes before /:id pattern
     get "/transactions", WealthBackendWeb.TransactionController, :index
+    get "/transactions/categories", WealthBackendWeb.TransactionController, :list_categories
     get "/transactions/:id", WealthBackendWeb.TransactionController, :show
     put "/transactions/:id", WealthBackendWeb.TransactionController, :update
     get "/accounts/:account_id/transactions", WealthBackendWeb.TransactionController, :list_by_account
