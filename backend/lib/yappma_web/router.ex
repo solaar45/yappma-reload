@@ -64,8 +64,10 @@ defmodule YappmaWeb.Router do
     end
 
     # Transactions
+    get "/transactions/categories", WealthBackendWeb.TransactionController, :list_categories
     get "/transactions", WealthBackendWeb.TransactionController, :index
     get "/transactions/:id", WealthBackendWeb.TransactionController, :show
+    put "/transactions/:id", WealthBackendWeb.TransactionController, :update
     get "/accounts/:account_id/transactions", WealthBackendWeb.TransactionController, :list_by_account
     post "/transactions/sync", WealthBackendWeb.TransactionController, :sync
 
