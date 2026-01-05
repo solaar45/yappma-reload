@@ -22,14 +22,24 @@ interface Account {
 }
 
 export function AccountsPage() {
-  const { data: accounts, isLoading, error, refetch } = useQuery({
+  const { data: accountsData, isLoading, error, refetch } = useQuery({
     queryKey: ['accounts'],
     queryFn: async () => {
       logger.debug('Fetching accounts');
-      const response = await apiClient.get<Account[]>('accounts');
-      return response;
+      const response = await apiClient.get('accounts');
+      // Handle both array and wrapped response
+      if (Array.isArray(response)) {
+        return response as Account[];
+      } else if (response && typeof response === 'object' && 'data' in response) {
+        return (response.data || []) as Account[];
+      } else if (response && typeof response === 'object' && 'accounts' in response) {
+        return (response.accounts || []) as Account[];
+      }
+      return [] as Account[];
     },
   });
+
+  const accounts = accountsData || [];
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('de-DE', {
