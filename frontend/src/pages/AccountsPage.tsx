@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Plus, Wallet, TrendingUp, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,13 +39,6 @@ export function AccountsPage() {
   });
 
   const accounts = accountsData || [];
-
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: currency || 'EUR',
-    }).format(amount);
-  };
 
   const getAccountTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
