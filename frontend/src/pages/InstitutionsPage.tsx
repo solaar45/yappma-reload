@@ -51,7 +51,7 @@ export default function InstitutionsPage() {
   };
 
   const getTypeLabel = (type: string) => {
-    return String(t(`institutions.types.${type}`));
+    return String(t(`institutions.types.${type}` as any));
   };
 
   // Get unique types and countries for filters
