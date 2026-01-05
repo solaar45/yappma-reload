@@ -179,7 +179,7 @@ defmodule WealthBackend.Banking do
             {:ok, all_transactions}
 
           {:ok, response} ->
-            Logger.warn("Unexpected Styx transaction response format: #{inspect(response)}")
+            Logger.warning("Unexpected Styx transaction response format: #{inspect(response)}")
             {:error, "Unexpected response format"}
 
           {:error, reason} ->
