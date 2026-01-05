@@ -72,7 +72,10 @@ defmodule Yappma.BankConnections.AccountSync do
     iban = styx_account["iban"] || styx_account[:iban]
     name = styx_account["name"] || styx_account[:name] || "Imported Account"
     currency = styx_account["currency"] || styx_account[:currency] || "EUR"
-    account_type = styx_account["product"] || styx_account["account_type"] || styx_account[:account_type] || "checking"
+    
+    # Get product name and map to valid type
+    product = styx_account["product"] || styx_account["account_type"] || styx_account[:account_type]
+    account_type = map_product_to_type(product)
 
     # Skip if no external_id
     if is_nil(external_id) do
@@ -96,6 +99,7 @@ defmodule Yappma.BankConnections.AccountSync do
         type: account_type,
         currency: currency,
         iban: iban,
+        account_product: product,
         external_id: external_id,
         bank_consent_id: internal_consent_id,
         last_synced_at: DateTime.utc_now(),
@@ -143,6 +147,34 @@ defmodule Yappma.BankConnections.AccountSync do
       end
     end
   end
+
+  # Map German/PSD2 product names to internal account types
+  defp map_product_to_type(product) when is_binary(product) do
+    case String.downcase(product) do
+      # German names
+      "girokonto" -> "checking"
+      "sparkonto" -> "savings"
+      "tagesgeld" <> _ -> "savings"
+      "festgeld" <> _ -> "savings"
+      "kreditkarte" -> "credit_card"
+      "depot" -> "investment"
+      "kredit" -> "loan"
+      "darlehen" -> "loan"
+      
+      # English names
+      "checking" -> "checking"
+      "savings" -> "savings"
+      "current" -> "checking"
+      "credit_card" -> "credit_card"
+      "investment" -> "investment"
+      "loan" -> "loan"
+      
+      # Default
+      _ -> "other"
+    end
+  end
+  
+  defp map_product_to_type(_), do: "other"
 
   defp extract_balance(styx_account) do
     # Try different balance structures from Styx
