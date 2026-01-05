@@ -21,24 +21,33 @@ export function escapeHtml(unsafe: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/'/g, '&#x27;');
 }
 
 /**
  * Sanitize URL/endpoint path
- * Only allows alphanumeric, hyphens, underscores, forward slashes
+ * Only allows alphanumeric, hyphens, underscores, forward slashes, and query params
  */
 export function sanitizeEndpoint(endpoint: string): string {
   // Remove leading/trailing slashes
   const cleaned = endpoint.replace(/^\/+|\/+$/g, '');
   
-  // Only allow safe characters
-  const sanitized = cleaned.replace(/[^a-zA-Z0-9\-_\/]/g, '');
+  // Only allow safe characters (including query params ? = &)
+  const sanitized = cleaned.replace(/[^a-zA-Z0-9\-_\/\?=&]/g, '');
   
-  // Prevent path traversal
-  const parts = sanitized.split('/').filter(part => part !== '..' && part !== '.');
+  // Split into path and query string
+  const [path, ...queryParts] = sanitized.split('?');
   
-  return parts.join('/');
+  // Prevent path traversal in path only
+  const pathParts = path.split('/').filter(part => part !== '..' && part !== '.');
+  const sanitizedPath = pathParts.join('/');
+  
+  // Reconstruct with query string if present
+  if (queryParts.length > 0) {
+    return `${sanitizedPath}?${queryParts.join('?')}`;
+  }
+  
+  return sanitizedPath;
 }
 
 /**
