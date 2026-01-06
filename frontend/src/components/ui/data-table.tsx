@@ -44,6 +44,7 @@ interface DataTableProps<TData, TValue> {
 
 // Internal context to provide the table instance to column headers
 const DataTableContext = React.createContext<any>(null);
+
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -195,6 +196,8 @@ export function DataTableColumnHeader({
   column: any;
   title: string;
 }) {
+  const table = React.useContext(DataTableContext);
+
   if (!column.getCanSort()) {
     return <div>{title}</div>;
   }
@@ -204,54 +207,23 @@ export function DataTableColumnHeader({
 
   const handleClick = () => {
     const current = column.getIsSorted(); // 'asc' | 'desc' | false
-    const table = (column as any).getTable ? (column as any).getTable() : (column as any).table;
-
-    // DEBUG: inspect sorting state
-    // eslint-disable-next-line no-console
-    console.debug('[DataTable] header click', { colId: column.id, current, tableSorting: table?.getState?.()?.sorting });
 
     if (!current) {
-      // not sorted -> sort ascending
+      // Not sorted -> sort ascending
       column.toggleSorting(false);
       return;
     }
 
     if (current === 'asc') {
-      // asc -> desc
+      // Ascending -> sort descending
       column.toggleSorting(true);
       return;
     }
 
-    // desc -> clear all sorting (reliable third-click clear)
+    // Descending -> clear sorting (third click)
     if (table && typeof table.setSorting === 'function') {
-      try {
-        table.setSorting([]);
-        // eslint-disable-next-line no-console
-        console.debug('[DataTable] cleared sorting via table.setSorting', { tableKeys: Object.keys(table) });
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('[DataTable] failed to clear sorting', err);
-      }
-      return;
+      table.setSorting([]);
     }
-
-    // Fallback: try to access global table stored on column
-    try {
-      const altTable = (column as any).table || (column as any).getTable?.();
-      if (altTable && typeof altTable.setSorting === 'function') {
-        altTable.setSorting([]);
-        // eslint-disable-next-line no-console
-        console.debug('[DataTable] cleared sorting via altTable.setSorting', { altTableKeys: Object.keys(altTable) });
-        return;
-      }
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[DataTable] fallback clear sorting failed', err);
-    }
-
-    // If we reach here, unable to clear sorting programmatically
-    // eslint-disable-next-line no-console
-    console.warn('[DataTable] unable to clear sorting: table reference missing');
   };
 
   return (
