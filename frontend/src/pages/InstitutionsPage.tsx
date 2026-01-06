@@ -247,10 +247,12 @@ export default function InstitutionsPage() {
                   {t('institutions.addFirst')}
                 </p>
               </div>
-              <Button onClick={() => {}} size="lg">
-                <Plus className="mr-2 h-5 w-5" />
-                {t('institutions.createInstitution')}
-              </Button>
+              <CreateInstitutionDialog onSuccess={handleInstitutionChanged}>
+                <Button size="lg">
+                  <Plus className="mr-2 h-5 w-5" />
+                  {t('institutions.createInstitution')}
+                </Button>
+              </CreateInstitutionDialog>
             </div>
           </CardContent>
         </Card>
