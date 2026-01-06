@@ -27,6 +27,8 @@ defmodule WealthBackendWeb.AssetJSON do
       is_active: asset.is_active,
       created_at_date: asset.created_at_date,
       closed_at: asset.closed_at,
+      risk_class: asset.risk_class,
+      risk_class_source: asset.risk_class_source,
       user_id: asset.user_id,
       account_id: asset.account_id,
       asset_type_id: asset.asset_type_id,
