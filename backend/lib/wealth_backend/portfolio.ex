@@ -30,7 +30,15 @@ defmodule WealthBackend.Portfolio do
 
   def list_assets do
     Repo.all(Asset)
-    |> Repo.preload([:asset_type, :account, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset])
+    |> Repo.preload([
+      :asset_type,
+      [account: :institution],
+      :security_asset,
+      :insurance_asset,
+      :loan_asset,
+      :real_estate_asset,
+      snapshots: from(s in "snapshots", order_by: [desc: s.snapshot_date])
+    ])
   end
 
   def list_user_assets(user_id) do
@@ -39,12 +47,28 @@ defmodule WealthBackend.Portfolio do
       order_by: [desc: a.inserted_at]
     )
     |> Repo.all()
-    |> Repo.preload([:asset_type, :account, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset])
+    |> Repo.preload([
+      :asset_type,
+      [account: :institution],
+      :security_asset,
+      :insurance_asset,
+      :loan_asset,
+      :real_estate_asset,
+      snapshots: from(s in "snapshots", order_by: [desc: s.snapshot_date])
+    ])
   end
 
   def get_asset!(id) do
     Repo.get!(Asset, id)
-    |> Repo.preload([:asset_type, :account, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset])
+    |> Repo.preload([
+      :asset_type,
+      [account: :institution],
+      :security_asset,
+      :insurance_asset,
+      :loan_asset,
+      :real_estate_asset,
+      snapshots: from(s in "snapshots", order_by: [desc: s.snapshot_date])
+    ])
   end
 
   def create_asset(attrs \\ %{}) do
@@ -68,7 +92,15 @@ defmodule WealthBackend.Portfolio do
     |> Repo.transaction()
     |> case do
       {:ok, %{asset: asset}} ->
-        {:ok, Repo.preload(asset, [:asset_type, :account, :security_asset, :insurance_asset, :loan_asset, :real_estate_asset])}
+        {:ok, Repo.preload(asset, [
+          :asset_type,
+          [account: :institution],
+          :security_asset,
+          :insurance_asset,
+          :loan_asset,
+          :real_estate_asset,
+          snapshots: from(s in "snapshots", order_by: [desc: s.snapshot_date])
+        ])}
 
       {:error, _failed_operation, changeset, _changes_so_far} ->
         {:error, changeset}
