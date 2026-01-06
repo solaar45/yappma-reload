@@ -47,9 +47,13 @@ export default function AssetsPage() {
   // Get unique asset types and accounts for filters
   const assetTypes = useMemo(() => {
     if (!assets) return [];
-    const typeSet = new Set(assets.map(asset => asset.asset_type?.description || 'Other'));
+    const typeSet = new Set(assets.map(asset => {
+      // Map DB type code to translation if possible, fallback to description or 'other'
+      const code = asset.asset_type?.code || 'other';
+      return t(`assetTypes.${code}`, { defaultValue: asset.asset_type?.description || 'Other' });
+    }));
     return Array.from(typeSet).sort();
-  }, [assets]);
+  }, [assets, t]);
 
   const accountsList = useMemo(() => {
     if (!assets || !accounts) return [];
@@ -84,7 +88,7 @@ export default function AssetsPage() {
 
       // Type filter
       const matchesType = typeFilter === 'all' ||
-        (asset.asset_type?.description || 'Other') === typeFilter;
+        (t(`assetTypes.${asset.asset_type?.code || 'other'}`, { defaultValue: asset.asset_type?.description || 'Other' }) === typeFilter);
 
       // Account filter
       const matchesAccount = accountFilter === 'all' ||
@@ -97,7 +101,7 @@ export default function AssetsPage() {
 
       return matchesSearch && matchesType && matchesAccount && matchesStatus;
     });
-  }, [assets, searchTerm, typeFilter, accountFilter, statusFilter]);
+  }, [assets, searchTerm, typeFilter, accountFilter, statusFilter, t]);
 
   // Get selected asset IDs
   const selectedAssetIds = useMemo(() => {
@@ -172,10 +176,13 @@ export default function AssetsPage() {
         <DataTableColumnHeader column={column} title={t('assets.type') || 'Type'} />
       ),
       cell: ({ row }) => {
-        const type = row.original.asset_type?.description || 'Other';
+        const code = row.original.asset_type?.code || 'other';
+        const description = row.original.asset_type?.description || 'Other';
+        const translatedType = t(`assetTypes.${code}`, { defaultValue: description });
+        
         return (
           <Badge variant="outline" className="capitalize">
-            {type}
+            {translatedType}
           </Badge>
         );
       },
