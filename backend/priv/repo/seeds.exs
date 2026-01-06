@@ -30,12 +30,14 @@ Repo.delete_all(WealthBackend.Accounts.User)
 IO.puts("✅ Creating asset types...")
 
 asset_types = [
-  %{code: "cash", description: "Cash and equivalents"},
-  %{code: "security", description: "Securities (stocks, ETFs, bonds)"},
-  %{code: "insurance", description: "Insurance policies"},
-  %{code: "loan", description: "Loans and debts"},
-  %{code: "real_estate", description: "Real estate properties"},
-  %{code: "other", description: "Other assets"}
+  %{code: "cash", description: "Cash & Accounts"},
+  %{code: "security", description: "Securities"},
+  %{code: "crypto", description: "Crypto"},
+  %{code: "commodity", description: "Commodities"},
+  %{code: "real_estate", description: "Real Estate"},
+  %{code: "collectible", description: "Valuables"},
+  %{code: "insurance", description: "Insurance"},
+  %{code: "other", description: "Other Assets"}
 ]
 
 Enum.each(asset_types, fn attrs ->

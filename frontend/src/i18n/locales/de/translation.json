@@ -75,11 +75,13 @@
     "other": "Sonstiges"
   },
   "assetTypes": {
-    "cash": "Bargeld & Äquivalente",
-    "security": "Wertpapiere (Aktien, ETFs, Anleihen)",
-    "insurance": "Versicherungen",
-    "loan": "Kredite & Schulden",
+    "cash": "Cash & Konten",
+    "security": "Wertpapiere",
+    "crypto": "Krypto",
+    "commodity": "Rohstoffe",
     "real_estate": "Immobilien",
+    "collectible": "Wertsachen",
+    "insurance": "Versicherungen",
     "other": "Sonstige Vermögenswerte"
   },
   "insurance": {

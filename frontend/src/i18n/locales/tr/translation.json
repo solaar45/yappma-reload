@@ -75,11 +75,13 @@
     "other": "Diğer Hesap"
   },
   "assetTypes": {
-    "cash": "Nakit ve Benzerleri",
-    "security": "Menkul Kıymetler (Hisse, ETF, Tahvil)",
-    "insurance": "Sigorta Poliçeleri",
-    "loan": "Krediler ve Borçlar",
+    "cash": "Nakit & Hesaplar",
+    "security": "Menkul Kıymetler",
+    "crypto": "Kripto",
+    "commodity": "Emtialar",
     "real_estate": "Gayrimenkul",
+    "collectible": "Değerli Eşyalar",
+    "insurance": "Sigorta",
     "other": "Diğer Varlıklar"
   },
   "insurance": {

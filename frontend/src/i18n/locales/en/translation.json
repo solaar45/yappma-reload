@@ -75,12 +75,14 @@
     "other": "Other Account"
   },
   "assetTypes": {
-    "cash": "Cash and equivalents",
-    "security": "Securities (stocks, ETFs, bonds)",
-    "insurance": "Insurance policies",
-    "loan": "Loans and debts",
-    "real_estate": "Real estate properties",
-    "other": "Other assets"
+    "cash": "Cash & Accounts",
+    "security": "Securities",
+    "crypto": "Crypto",
+    "commodity": "Commodities",
+    "real_estate": "Real Estate",
+    "collectible": "Valuables",
+    "insurance": "Insurance",
+    "other": "Other Assets"
   },
   "insurance": {
     "types": {
