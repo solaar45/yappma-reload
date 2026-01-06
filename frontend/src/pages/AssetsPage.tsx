@@ -21,11 +21,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateAssetDialog } from '@/components/CreateAssetDialog';
 import { EditAssetDialog } from '@/components/EditAssetDialog';
 import { DeleteAssetDialog } from '@/components/DeleteAssetDialog';
-import { PiggyBank, Search, Filter, Trash2, CheckCircle2, XCircle, TrendingUp } from 'lucide-react';
+import { PiggyBank, Search, Filter, Trash2, CheckCircle2, XCircle, TrendingUp, Shield } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -73,6 +79,65 @@ export default function AssetsPage() {
     accounts.forEach(acc => map.set(acc.id, acc));
     return map;
   }, [accounts]);
+
+  // Helper function to get risk class label and color
+  const getRiskClassInfo = (riskClass: number | null | undefined) => {
+    if (!riskClass) return { label: '-', color: 'text-muted-foreground', bgColor: 'bg-muted', borderColor: 'border-muted' };
+    
+    switch (riskClass) {
+      case 1:
+        return { 
+          label: t('assets.riskVeryLow') || 'Very Low', 
+          color: 'text-green-700 dark:text-green-400', 
+          bgColor: 'bg-green-100 dark:bg-green-950', 
+          borderColor: 'border-green-200 dark:border-green-800' 
+        };
+      case 2:
+        return { 
+          label: t('assets.riskLow') || 'Low', 
+          color: 'text-lime-700 dark:text-lime-400', 
+          bgColor: 'bg-lime-100 dark:bg-lime-950', 
+          borderColor: 'border-lime-200 dark:border-lime-800' 
+        };
+      case 3:
+        return { 
+          label: t('assets.riskMedium') || 'Medium', 
+          color: 'text-yellow-700 dark:text-yellow-400', 
+          bgColor: 'bg-yellow-100 dark:bg-yellow-950', 
+          borderColor: 'border-yellow-200 dark:border-yellow-800' 
+        };
+      case 4:
+        return { 
+          label: t('assets.riskHigh') || 'High', 
+          color: 'text-orange-700 dark:text-orange-400', 
+          bgColor: 'bg-orange-100 dark:bg-orange-950', 
+          borderColor: 'border-orange-200 dark:border-orange-800' 
+        };
+      case 5:
+        return { 
+          label: t('assets.riskVeryHigh') || 'Very High', 
+          color: 'text-red-700 dark:text-red-400', 
+          bgColor: 'bg-red-100 dark:bg-red-950', 
+          borderColor: 'border-red-200 dark:border-red-800' 
+        };
+      default:
+        return { label: '-', color: 'text-muted-foreground', bgColor: 'bg-muted', borderColor: 'border-muted' };
+    }
+  };
+
+  // Helper function to get risk source label
+  const getRiskSourceLabel = (source: string | null | undefined) => {
+    switch (source) {
+      case 'auto_api':
+        return t('assets.riskSourceApi') || 'Auto (API)';
+      case 'auto_type':
+        return t('assets.riskSourceType') || 'Auto (Type)';
+      case 'manual':
+        return t('assets.riskSourceManual') || 'Manual';
+      default:
+        return t('assets.riskSourceUnknown') || 'Unknown';
+    }
+  };
 
   // Filter and search logic
   const filteredAssets = useMemo(() => {
@@ -184,6 +249,59 @@ export default function AssetsPage() {
           <Badge variant="outline" className="capitalize">
             {translatedType}
           </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: 'risk_class',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('assets.risk') || 'Risk'} />
+      ),
+      cell: ({ row }) => {
+        const riskClass = row.original.risk_class;
+        const riskSource = row.original.risk_class_source;
+        const riskInfo = getRiskClassInfo(riskClass);
+        const sourceLabel = getRiskSourceLabel(riskSource);
+
+        if (!riskClass) {
+          return <div className="text-sm text-muted-foreground">-</div>;
+        }
+
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "flex items-center gap-1.5 w-fit cursor-help",
+                    riskInfo.color,
+                    riskInfo.bgColor,
+                    riskInfo.borderColor
+                  )}
+                >
+                  <Shield className="h-3 w-3" />
+                  <span className="font-medium">{riskClass}</span>
+                  <span className="text-xs opacity-80">{riskInfo.label}</span>
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="text-xs">
+                  <div className="font-medium">{t('assets.riskSource') || 'Source'}: {sourceLabel}</div>
+                  {riskSource === 'auto_api' && (
+                    <div className="text-muted-foreground mt-1">
+                      {t('assets.riskSourceApiDesc') || 'Calculated from historical volatility'}
+                    </div>
+                  )}
+                  {riskSource === 'auto_type' && (
+                    <div className="text-muted-foreground mt-1">
+                      {t('assets.riskSourceTypeDesc') || 'Based on asset type'}
+                    </div>
+                  )}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       },
     },
