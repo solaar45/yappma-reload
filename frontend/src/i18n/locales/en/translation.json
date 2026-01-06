@@ -51,6 +51,42 @@
     "noAssetSnapshots": "No asset snapshots yet",
     "errorLoading": "Error loading dashboard"
   },
+  "accountTypes": {
+    "checking": "Checking Account",
+    "savings": "Savings Account",
+    "brokerage": "Brokerage Account",
+    "cash": "Cash Account",
+    "credit_card": "Credit Card",
+    "insurance": "Insurance Account",
+    "loan": "Loan Account",
+    "other": "Other Account"
+  },
+  "assetTypes": {
+    "cash": "Cash and equivalents",
+    "security": "Securities (stocks, ETFs, bonds)",
+    "insurance": "Insurance policies",
+    "loan": "Loans and debts",
+    "real_estate": "Real estate properties",
+    "other": "Other assets"
+  },
+  "insurance": {
+    "types": {
+      "liability": "Liability Insurance",
+      "life": "Life Insurance",
+      "health": "Health Insurance",
+      "disability": "Disability Insurance",
+      "home": "Home Insurance",
+      "vehicle": "Vehicle Insurance",
+      "legal": "Legal Insurance",
+      "other": "Other Insurance"
+    },
+    "frequency": {
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "yearly": "Yearly",
+      "one_time": "One-time"
+    }
+  },
   "accounts": {
     "title": "Accounts",
     "noAccounts": "No accounts found",
