@@ -75,36 +75,59 @@ defmodule WealthBackend.Portfolio do
     end
   end
 
-  defp enrich_with_risk_class(attrs) do
+  defp enrich_with_risk_class(attrs) when is_map(attrs) do
+    # Normalize to string keys first
+    attrs = if is_struct(attrs), do: Map.from_struct(attrs), else: attrs
+    
+    # Determine if we have string or atom keys
+    has_string_keys = Map.has_key?(attrs, "asset_type_id")
+    has_atom_keys = Map.has_key?(attrs, :asset_type_id)
+
     # Get asset type code
-    asset_type_code = case attrs do
-      %{"asset_type_id" => type_id} when not is_nil(type_id) ->
-        case get_asset_type!(type_id) do
-          %{code: code} -> code
-          _ -> nil
-        end
-      %{asset_type_id: type_id} when not is_nil(type_id) ->
-        case get_asset_type!(type_id) do
-          %{code: code} -> code
-          _ -> nil
-        end
-      _ -> nil
+    asset_type_id = cond do
+      has_string_keys -> attrs["asset_type_id"]
+      has_atom_keys -> attrs[:asset_type_id]
+      true -> nil
+    end
+
+    asset_type_code = if asset_type_id do
+      case get_asset_type!(asset_type_id) do
+        %{code: code} -> code
+        _ -> nil
+      end
+    else
+      nil
     end
 
     # Get ISIN/symbol if available
-    identifier = attrs["symbol"] || attrs[:symbol] ||
-                 get_in(attrs, ["security_asset", "isin"]) ||
-                 get_in(attrs, [:security_asset, :isin])
+    identifier = cond do
+      has_string_keys -> 
+        attrs["symbol"] || get_in(attrs, ["security_asset", "isin"])
+      has_atom_keys -> 
+        attrs[:symbol] || get_in(attrs, [:security_asset, :isin])
+      true -> nil
+    end
 
-    # Only auto-classify if risk_class not manually provided
-    if is_nil(attrs["risk_class"]) and is_nil(attrs[:risk_class]) do
+    # Check if risk_class already manually provided
+    has_manual_risk = cond do
+      has_string_keys -> Map.has_key?(attrs, "risk_class")
+      has_atom_keys -> Map.has_key?(attrs, :risk_class)
+      true -> false
+    end
+
+    if not has_manual_risk do
       {risk_class, source} = RiskClassifier.determine_risk_class(asset_type_code, identifier)
 
-      attrs
-      |> Map.put(:risk_class, risk_class)
-      |> Map.put(:risk_class_source, source)
-      |> Map.put("risk_class", risk_class)
-      |> Map.put("risk_class_source", source)
+      # Add keys in the same format as input
+      if has_string_keys do
+        attrs
+        |> Map.put("risk_class", risk_class)
+        |> Map.put("risk_class_source", source)
+      else
+        attrs
+        |> Map.put(:risk_class, risk_class)
+        |> Map.put(:risk_class_source, source)
+      end
     else
       attrs
     end
