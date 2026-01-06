@@ -51,6 +51,42 @@
     "noAssetSnapshots": "Noch keine Vermögenswertauszüge vorhanden",
     "errorLoading": "Fehler beim Laden des Dashboards"
   },
+  "accountTypes": {
+    "checking": "Girokonto",
+    "savings": "Tagesgeld / Sparkonto",
+    "brokerage": "Depot",
+    "cash": "Bargeldkonto",
+    "credit_card": "Kreditkarte",
+    "insurance": "Versicherungskonto",
+    "loan": "Kreditkonto",
+    "other": "Sonstiges Konto"
+  },
+  "assetTypes": {
+    "cash": "Bargeld und Äquivalente",
+    "security": "Wertpapiere (Aktien, ETFs, Anleihen)",
+    "insurance": "Versicherungspolicen",
+    "loan": "Kredite und Schulden",
+    "real_estate": "Immobilien",
+    "other": "Sonstige Vermögenswerte"
+  },
+  "insurance": {
+    "types": {
+      "liability": "Haftpflichtversicherung",
+      "life": "Lebensversicherung",
+      "health": "Krankenversicherung",
+      "disability": "Berufsunfähigkeitsversicherung",
+      "home": "Wohngebäudeversicherung",
+      "vehicle": "Kfz-Versicherung",
+      "legal": "Rechtsschutzversicherung",
+      "other": "Sonstige Versicherung"
+    },
+    "frequency": {
+      "monthly": "Monatlich",
+      "quarterly": "Vierteljährlich",
+      "yearly": "Jährlich",
+      "one_time": "Einmalig"
+    }
+  },
   "accounts": {
     "title": "Konten",
     "noAccounts": "Keine Konten gefunden",
