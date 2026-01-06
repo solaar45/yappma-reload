@@ -50,7 +50,26 @@ defmodule WealthBackendWeb.AssetJSON do
 
   defp account_data(%Ecto.Association.NotLoaded{}), do: nil
   defp account_data(nil), do: nil
-  defp account_data(account), do: %{id: account.id, name: account.name, type: account.type}
+  defp account_data(account) do
+    %{
+      id: account.id,
+      name: account.name,
+      type: account.type,
+      institution: institution_data(account.institution)
+    }
+  end
+
+  defp institution_data(%Ecto.Association.NotLoaded{}), do: nil
+  defp institution_data(nil), do: nil
+  defp institution_data(institution) do
+    %{
+      id: institution.id,
+      name: institution.name,
+      type: institution.type,
+      country: institution.country,
+      website: institution.website
+    }
+  end
 
   defp security_data(%Ecto.Association.NotLoaded{}), do: nil
   defp security_data(nil), do: nil
