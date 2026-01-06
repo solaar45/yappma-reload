@@ -24,6 +24,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
+import { useAccounts } from '@/lib/api/hooks';
+import InstitutionLogo from '@/components/InstitutionLogo';
 
 interface CreateAssetDialogProps {
   onSuccess?: () => void;
@@ -43,6 +45,8 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
     currency: 'EUR',
     is_active: true,
   });
+  const { accounts } = useAccounts({ userId: userId! });
+  const [accountId, setAccountId] = useState('');
 
   useEffect(() => {
     const fetchAssetTypes = async () => {
@@ -87,6 +91,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               ticker: formData.ticker || undefined,
             }
           : undefined,
+      ...(accountId ? { account_id: parseInt(accountId) } : {}),
     });
 
     if (result) {
@@ -171,6 +176,31 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                 required
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="account">Verknüpftes Konto / Depot (optional)</Label>
+              <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
+                <SelectTrigger id="account">
+                  <SelectValue placeholder="Kein Konto ausgewählt" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Kein Konto</SelectItem>
+                  {accounts
+                    ?.filter((a) => a.is_active)
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map((a) => (
+                      <SelectItem key={a.id} value={a.id.toString()}>
+                        <div className="flex items-center gap-2">
+                          <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                          <div className="flex flex-col">
+                            <span>{a.name}</span>
+                            <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">

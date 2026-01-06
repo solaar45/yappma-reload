@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Pencil } from 'lucide-react';
+import { useAccounts } from '@/lib/api/hooks';
+import InstitutionLogo from '@/components/InstitutionLogo';
 
 interface EditAssetDialogProps {
   asset: Asset;
@@ -42,6 +44,8 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
     currency: asset.currency,
     is_active: asset.is_active ?? true,
   });
+  const { accounts } = useAccounts({ userId: userId! });
+  const [accountId, setAccountId] = useState(asset.account_id?.toString() || '');
 
   // Reset form when dialog opens or asset changes
   useEffect(() => {
@@ -101,6 +105,11 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
           isin: formData.isin || undefined,
           ticker: formData.ticker || undefined,
         };
+      }
+
+      // account_id handling: include field (can be null to remove)
+      if (typeof accountId !== 'undefined') {
+        updateData.account_id = accountId === '' ? null : parseInt(accountId);
       }
 
       await apiClient.put(`assets/${asset.id}`, { asset: updateData });
@@ -172,6 +181,31 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
                 value={formData.isin}
                 onChange={(e) => setFormData({ ...formData, isin: e.target.value })}
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-account">Verknüpftes Konto / Depot (optional)</Label>
+              <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
+                <SelectTrigger id="edit-account">
+                  <SelectValue placeholder="Kein Konto ausgewählt" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Kein Konto</SelectItem>
+                  {accounts
+                    ?.filter((a) => a.is_active)
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map((a) => (
+                      <SelectItem key={a.id} value={a.id.toString()}>
+                        <div className="flex items-center gap-2">
+                          <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                          <div className="flex flex-col">
+                            <span>{a.name}</span>
+                            <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit-currency">Currency *</Label>

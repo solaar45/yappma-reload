@@ -29,7 +29,7 @@ import { PiggyBank, Search, Filter, Trash2, CheckCircle2, XCircle, TrendingUp } 
 import { apiClient } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
-import type { Asset } from '@/lib/api/types';
+import type { Asset, Account } from '@/lib/api/types';
 
 export default function AssetsPage() {
   const { t } = useTranslation();
@@ -52,8 +52,22 @@ export default function AssetsPage() {
   }, [assets]);
 
   const accountsList = useMemo(() => {
-    if (!accounts) return [];
-    return accounts.map(acc => ({ id: acc.id, name: acc.name }));
+    if (!assets || !accounts) return [];
+    const seen = new Map<number, string>();
+    assets.forEach(a => {
+      if (a.account_id) {
+        const acc = accounts.find(c => c.id === a.account_id);
+        if (acc) seen.set(acc.id, acc.name);
+      }
+    });
+    return Array.from(seen.entries()).map(([id, name]) => ({ id, name }));
+  }, [assets, accounts]);
+
+  const accountsMap = useMemo(() => {
+    const map = new Map<number, Account>();
+    if (!accounts) return map;
+    accounts.forEach(acc => map.set(acc.id, acc));
+    return map;
   }, [accounts]);
 
   // Filter and search logic
@@ -180,6 +194,26 @@ export default function AssetsPage() {
       },
     },
     {
+      id: 'provider',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('assets.provider') || 'Anbieter'} />
+      ),
+      accessorFn: (row) => {
+        const inst = row.account?.institution || (row.account_id ? accountsMap.get(row.account_id)?.institution : undefined);
+        return inst?.name || '';
+      },
+      cell: ({ row }) => {
+        const inst = row.original.account?.institution || (row.original.account_id ? accountsMap.get(row.original.account_id)?.institution : undefined);
+        if (!inst) return <div className="text-sm text-muted-foreground">-</div>;
+        return (
+          <div className="flex items-center gap-2">
+            <InstitutionLogo name={inst.name} domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+            <div className="text-sm text-muted-foreground">{inst.name}</div>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: 'is_active',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('assets.status') || 'Status'} />
@@ -258,7 +292,13 @@ export default function AssetsPage() {
     {
       id: 'identification',
       accessorFn: (row) => {
-        return row.security_asset?.isin || row.security_asset?.ticker || row.symbol;
+        const isin = row.security_asset?.isin;
+        const ticker = row.security_asset?.ticker;
+        const symbol = row.symbol;
+        if (isin) return `0:${isin.toUpperCase()}`;
+        if (ticker) return `1:${ticker.toUpperCase()}`;
+        if (symbol) return `2:${symbol.toUpperCase()}`;
+        return '';
       },
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('assets.isinTicker') || 'ISIN/Ticker'} />

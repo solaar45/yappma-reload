@@ -15,7 +15,7 @@ import type {
   RowSelectionState,
   OnChangeFn,
 } from '@tanstack/react-table';
-import { ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,8 @@ interface DataTableProps<TData, TValue> {
   rowSelection?: RowSelectionState;
 }
 
+// Internal context to provide the table instance to column headers
+const DataTableContext = React.createContext<any>(null);
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -90,7 +92,8 @@ export function DataTable<TData, TValue>({
   const end = Math.min(totalRows, (pageIndex + 1) * pageSize);
 
   return (
-    <div className="rounded-md border">
+    <DataTableContext.Provider value={table}>
+      <div className="rounded-md border">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -180,7 +183,8 @@ export function DataTable<TData, TValue>({
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </DataTableContext.Provider>
   );
 }
 
@@ -195,15 +199,80 @@ export function DataTableColumnHeader({
     return <div>{title}</div>;
   }
 
+  const sortState = column.getIsSorted(); // 'asc' | 'desc' | false
+  const isActive = Boolean(sortState);
+
+  const handleClick = () => {
+    const current = column.getIsSorted(); // 'asc' | 'desc' | false
+    const table = (column as any).getTable ? (column as any).getTable() : (column as any).table;
+
+    // DEBUG: inspect sorting state
+    // eslint-disable-next-line no-console
+    console.debug('[DataTable] header click', { colId: column.id, current, tableSorting: table?.getState?.()?.sorting });
+
+    if (!current) {
+      // not sorted -> sort ascending
+      column.toggleSorting(false);
+      return;
+    }
+
+    if (current === 'asc') {
+      // asc -> desc
+      column.toggleSorting(true);
+      return;
+    }
+
+    // desc -> clear all sorting (reliable third-click clear)
+    if (table && typeof table.setSorting === 'function') {
+      try {
+        table.setSorting([]);
+        // eslint-disable-next-line no-console
+        console.debug('[DataTable] cleared sorting via table.setSorting', { tableKeys: Object.keys(table) });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[DataTable] failed to clear sorting', err);
+      }
+      return;
+    }
+
+    // Fallback: try to access global table stored on column
+    try {
+      const altTable = (column as any).table || (column as any).getTable?.();
+      if (altTable && typeof altTable.setSorting === 'function') {
+        altTable.setSorting([]);
+        // eslint-disable-next-line no-console
+        console.debug('[DataTable] cleared sorting via altTable.setSorting', { altTableKeys: Object.keys(altTable) });
+        return;
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[DataTable] fallback clear sorting failed', err);
+    }
+
+    // If we reach here, unable to clear sorting programmatically
+    // eslint-disable-next-line no-console
+    console.warn('[DataTable] unable to clear sorting: table reference missing');
+  };
+
   return (
     <Button
       variant="ghost"
       size="sm"
-      className="-ml-3 h-8 data-[state=open]:bg-accent"
-      onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      className={"-ml-3 h-8 data-[state=open]:bg-accent " + (isActive ? 'font-semibold text-primary' : '')}
+      onClick={handleClick}
+      aria-pressed={isActive}
+      aria-label={isActive ? `${title} sorted ${sortState}` : `${title} sortable`}
     >
       <span>{title}</span>
-      <ArrowUpDown className="ml-2 h-4 w-4" />
+      <span className="ml-2 flex items-center">
+        {sortState === 'asc' ? (
+          <ArrowUp className="h-4 w-4" />
+        ) : sortState === 'desc' ? (
+          <ArrowDown className="h-4 w-4" />
+        ) : (
+          <ArrowUpDown className="h-4 w-4 opacity-60" />
+        )}
+      </span>
     </Button>
   );
 }

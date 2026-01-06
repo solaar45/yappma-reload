@@ -97,6 +97,7 @@
     "assetType": "Vermögenswerttyp",
     "type": "Typ",
     "account": "Konto",
+    "provider": "Anbieter",
     "status": "Status",
     "active": "Aktiv",
     "inactive": "Inaktiv",

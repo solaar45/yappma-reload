@@ -97,6 +97,7 @@
     "assetType": "Asset Type",
     "type": "Type",
     "account": "Account",
+    "provider": "Provider",
     "status": "Status",
     "active": "Active",
     "inactive": "Inactive",
