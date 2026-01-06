@@ -17,7 +17,7 @@ defmodule WealthBackend.Institutions.Institution do
 
     # Associations
     belongs_to :user, WealthBackend.Accounts.User, define_field: false
-    has_many :accounts, WealthBackend.Accounts.Account
+    has_many :assets, WealthBackend.Portfolio.Asset
     has_many :tax_exemptions, WealthBackend.Taxes.TaxExemption
 
     timestamps()

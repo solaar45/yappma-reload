@@ -18,23 +18,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateSnapshotDialog } from '@/components/CreateSnapshotDialog';
 import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
 import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Trash2 } from 'lucide-react';
+import { Search, Trash2 } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 
 interface Snapshot {
   id: number;
-  snapshot_type: 'account' | 'asset';
   snapshot_date: string;
   entity_name: string;
-  balance?: string;
   value?: string;
   currency?: string;
 }
@@ -47,7 +44,6 @@ export default function SnapshotsPage() {
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [rowSelection, setRowSelection] = useState({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -66,12 +62,9 @@ export default function SnapshotsPage() {
         searchTerm === '' ||
         snapshot.entity_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-      // Type filter
-      const matchesType = typeFilter === 'all' || snapshot.snapshot_type === typeFilter;
-
-      return matchesSearch && matchesType;
+      return matchesSearch;
     });
-  }, [snapshots, searchTerm, typeFilter]);
+  }, [snapshots, searchTerm]);
 
   // Get selected snapshot IDs
   const selectedSnapshotIds = useMemo(() => {
@@ -89,7 +82,7 @@ export default function SnapshotsPage() {
         ids: selectedSnapshotIds,
       });
 
-      await Promise.all(selectedSnapshotIds.map((id) => apiClient.delete(`snapshots/${id}`)));
+      await Promise.all(selectedSnapshotIds.map((id) => apiClient.delete(`asset_snapshots/${id}`)));
 
       logger.info('Batch delete successful');
       handleSnapshotChanged();
@@ -147,25 +140,9 @@ export default function SnapshotsPage() {
         },
       },
       {
-        accessorKey: 'snapshot_type',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('common.type') || 'Type'} />
-        ),
-        cell: ({ row }) => {
-          const isAccount = row.original.snapshot_type === 'account';
-          return (
-            <Badge variant={isAccount ? 'default' : 'secondary'}>
-              {t(`snapshots.types.${isAccount ? 'account' : 'asset'}`)}
-            </Badge>
-          );
-        },
-      },
-      {
         id: 'value',
         accessorFn: (row) => {
-          const isAccount = row.snapshot_type === 'account';
-          const value = isAccount ? row.balance : row.value;
-          return parseFloat(value || '0');
+          return parseFloat(row.value || '0');
         },
         header: ({ column }) => (
           <div className="text-right">
@@ -173,9 +150,8 @@ export default function SnapshotsPage() {
           </div>
         ),
         cell: ({ row }) => {
-          const isAccount = row.original.snapshot_type === 'account';
-          const value = isAccount ? row.original.balance : row.original.value;
-          const currency = isAccount ? row.original.currency : 'EUR';
+          const value = row.original.value;
+          const currency = row.original.currency;
           return (
             <div className="text-right font-medium">
               {formatCurrency(value || '0', currency || 'EUR')}
@@ -263,12 +239,11 @@ export default function SnapshotsPage() {
       {/* Mobile: Card Layout */}
       <div className="grid gap-4 md:hidden">
         {filteredSnapshots.map((snapshot) => {
-          const isAccount = snapshot.snapshot_type === 'account';
-          const value = isAccount ? (snapshot as any).balance : (snapshot as any).value;
-          const currency = isAccount ? (snapshot as any).currency : 'EUR';
+          const value = (snapshot as any).value;
+          const currency = (snapshot as any).currency || 'EUR';
 
           return (
-            <Card key={`${snapshot.snapshot_type}-${snapshot.id}`}>
+            <Card key={`asset-${snapshot.id}`}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div>
@@ -277,8 +252,8 @@ export default function SnapshotsPage() {
                       {formatDate(snapshot.snapshot_date)}
                     </p>
                   </div>
-                  <Badge variant={isAccount ? 'default' : 'secondary'}>
-                    {t(`snapshots.types.${isAccount ? 'account' : 'asset'}`)}
+                  <Badge variant="secondary">
+                    {t('snapshots.types.asset')}
                   </Badge>
                 </div>
               </CardHeader>
@@ -319,22 +294,6 @@ export default function SnapshotsPage() {
                   className="flex-1"
                 />
               </div>
-
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder={t('snapshots.allTypes') || 'All Types'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('snapshots.allTypes') || 'All Types'}</SelectItem>
-                    <SelectItem value="account">
-                      {t('snapshots.types.account') || 'Account'}
-                    </SelectItem>
-                    <SelectItem value="asset">{t('snapshots.types.asset') || 'Asset'}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             {/* Batch Actions Overlay */}
@@ -345,14 +304,23 @@ export default function SnapshotsPage() {
                     t('snapshots.snapshotSelected') : t('snapshots.snapshotsSelected')
                   }
                 </span>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {t('snapshots.deleteSelected') || 'Delete Selected'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRowSelection({})}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t('snapshots.deleteSelected') || 'Delete Selected'}
+                  </Button>
+                </div>
               </div>
             )}
           </div>

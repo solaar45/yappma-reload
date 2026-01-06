@@ -1,13 +1,11 @@
 export { useDashboard } from './useDashboard';
-export { useAccounts } from './useAccounts';
 export { useAssets } from './useAssets';
 export { useInstitutions } from './useInstitutions';
 export { useSnapshots } from './useSnapshots';
 export { useCreateSnapshot } from './useCreateSnapshot';
-export { useCreateAccount } from './useCreateAccount';
 export { useCreateAsset } from './useCreateAsset';
-export { useUpdateAccount, useUpdateAsset } from './useUpdateAccount';
-export { useDeleteAccount, useDeleteAsset } from './useDeleteAccount';
+export { useUpdateAsset } from './useUpdateAsset';
+export { useDeleteAsset } from './useDeleteAsset';
 export { useTaxExemptions } from './useTaxExemptions';
 export { useUpdateUser } from './useUpdateUser';
 export { useCreateTaxExemption, useUpdateTaxExemption, useDeleteTaxExemption } from './useTaxExemptionMutations';

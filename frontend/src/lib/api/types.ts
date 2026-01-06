@@ -38,17 +38,6 @@ export interface Institution {
   updated_at: string;
 }
 
-export interface AccountSnapshot {
-  id: number;
-  snapshot_date: string;
-  balance: string;
-  currency: string;
-  note: string | null;
-  account_id: number;
-  inserted_at?: string;
-  updated_at?: string;
-}
-
 export interface AssetSnapshot {
   id: number;
   snapshot_date: string;
@@ -59,22 +48,6 @@ export interface AssetSnapshot {
   asset_id: number;
   inserted_at?: string;
   updated_at?: string;
-}
-
-export interface Account {
-  id: number;
-  name: string;
-  type: 'checking' | 'savings' | 'credit_card' | 'brokerage' | 'insurance' | 'cash' | 'other';
-  currency: string;
-  is_active: boolean;
-  opened_at: string | null;
-  closed_at: string | null;
-  user_id: number;
-  institution_id: number;
-  institution?: Institution;
-  snapshots?: AccountSnapshot[];
-  inserted_at: string;
-  updated_at: string;
 }
 
 export interface AssetType {
@@ -118,11 +91,12 @@ export interface Asset {
   closed_at: string | null;
   risk_class?: number | null;
   risk_class_source?: 'auto_api' | 'auto_type' | 'manual' | null;
+  savings_plan_amount?: string | null;
   user_id: number;
-  account_id: number | null;
+  institution_id: number | null;
   asset_type_id: number;
   asset_type?: AssetType;
-  account?: Account;
+  institution?: Institution;
   security_asset?: SecurityAsset | null;
   insurance_asset?: InsuranceAsset | null;
   real_estate_asset?: RealEstateAsset | null;
@@ -133,19 +107,8 @@ export interface Asset {
 
 export interface NetWorthResponse {
   total: string;
-  accounts: string;
   assets: string;
   date: string;
-}
-
-// Dashboard-specific snapshot types with nested relations
-export interface DashboardAccountSnapshot extends AccountSnapshot {
-  account?: {
-    name: string;
-    institution?: {
-      name: string;
-    };
-  };
 }
 
 export interface DashboardAssetSnapshot extends AssetSnapshot {
@@ -155,12 +118,10 @@ export interface DashboardAssetSnapshot extends AssetSnapshot {
     asset_type?: {
       description: string;
     };
+    institution?: {
+      name: string;
+    };
   };
-}
-
-export interface DashboardAccountSnapshotsResponse {
-  snapshots: DashboardAccountSnapshot[];
-  date: string;
 }
 
 export interface DashboardAssetSnapshotsResponse {
@@ -178,4 +139,4 @@ export interface ApiError {
 }
 
 export type NetWorth = NetWorthResponse;
-export type SnapshotCollection = DashboardAccountSnapshotsResponse | DashboardAssetSnapshotsResponse;
+export type SnapshotCollection = DashboardAssetSnapshotsResponse;

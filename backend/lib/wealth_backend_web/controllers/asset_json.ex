@@ -29,11 +29,12 @@ defmodule WealthBackendWeb.AssetJSON do
       closed_at: asset.closed_at,
       risk_class: asset.risk_class,
       risk_class_source: asset.risk_class_source,
+      savings_plan_amount: decimal_to_string(asset.savings_plan_amount),
       user_id: asset.user_id,
-      account_id: asset.account_id,
+      institution_id: asset.institution_id,
       asset_type_id: asset.asset_type_id,
       asset_type: asset_type_data(asset.asset_type),
-      account: account_data(asset.account),
+      institution: institution_data(asset.institution),
       security_asset: security_data(asset.security_asset),
       insurance_asset: insurance_data(asset.insurance_asset),
       loan_asset: loan_data(asset.loan_asset),
@@ -48,16 +49,6 @@ defmodule WealthBackendWeb.AssetJSON do
   defp asset_type_data(nil), do: nil
   defp asset_type_data(type), do: %{id: type.id, code: type.code, description: type.description}
 
-  defp account_data(%Ecto.Association.NotLoaded{}), do: nil
-  defp account_data(nil), do: nil
-  defp account_data(account) do
-    %{
-      id: account.id,
-      name: account.name,
-      type: account.type,
-      institution: institution_data(account.institution)
-    }
-  end
 
   defp institution_data(%Ecto.Association.NotLoaded{}), do: nil
   defp institution_data(nil), do: nil

@@ -33,7 +33,7 @@ defmodule WealthBackend.Portfolio do
     Repo.all(Asset)
     |> Repo.preload([
       :asset_type,
-      [account: :institution],
+      :institution,
       :security_asset,
       :insurance_asset,
       :loan_asset,
@@ -50,7 +50,7 @@ defmodule WealthBackend.Portfolio do
     |> Repo.all()
     |> Repo.preload([
       :asset_type,
-      [account: :institution],
+      :institution,
       :security_asset,
       :insurance_asset,
       :loan_asset,
@@ -63,7 +63,7 @@ defmodule WealthBackend.Portfolio do
     Repo.get!(Asset, id)
     |> Repo.preload([
       :asset_type,
-      [account: :institution],
+      :institution,
       :security_asset,
       :insurance_asset,
       :loan_asset,
@@ -95,7 +95,7 @@ defmodule WealthBackend.Portfolio do
       {:ok, %{asset: asset}} ->
         {:ok, Repo.preload(asset, [
           :asset_type,
-          [account: :institution],
+          :institution,
           :security_asset,
           :insurance_asset,
           :loan_asset,

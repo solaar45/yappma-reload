@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiClient, ApiError, DeduplicationError } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
-import type { Account, Asset } from '../types';
+import type { Asset } from '../types';
 
 interface UseDashboardParams {
   userId: number;
@@ -9,11 +9,8 @@ interface UseDashboardParams {
 }
 
 interface DashboardData {
-  accounts: Account[];
   assets: Asset[];
   totalValue: string;
-  accountsValue: string;
-  assetsValue: string;
 }
 
 interface UseDashboardResult {
@@ -40,40 +37,26 @@ export function useDashboard({ userId, key = 0 }: UseDashboardParams): UseDashbo
 
         logger.debug('Fetching dashboard data...', { userId });
 
-        const [accountsResponse, assetsResponse] = await Promise.all([
-          apiClient.get<{ data: Account[] }>('accounts', { signal: controller.signal }),
-          apiClient.get<{ data: Asset[] }>('assets', { signal: controller.signal }),
+        const [assetsResponse] = await Promise.all([
+          apiClient.get<{ data: Asset[] }>(`assets?user_id=${userId}`, { signal: controller.signal }),
         ]);
 
         if (!isMounted) return;
 
-        const accounts = Array.isArray(accountsResponse) ? accountsResponse : accountsResponse.data || [];
         const assets = Array.isArray(assetsResponse) ? assetsResponse : assetsResponse.data || [];
 
-        const accountsValue = accounts.reduce((sum, account) => {
-          const latestSnapshot = account.snapshots?.[0];
-          const value = latestSnapshot?.balance ? parseFloat(latestSnapshot.balance) : 0;
-          return sum + value;
-        }, 0);
-
-        const assetsValue = assets.reduce((sum, asset) => {
+        const totalValue = assets.reduce((sum, asset) => {
           const latestSnapshot = asset.snapshots?.[0];
           const value = latestSnapshot?.value ? parseFloat(latestSnapshot.value) : 0;
           return sum + value;
         }, 0);
 
-        const totalValue = accountsValue + assetsValue;
-
         if (isMounted) {
           setData({
-            accounts,
             assets,
             totalValue: totalValue.toFixed(2),
-            accountsValue: accountsValue.toFixed(2),
-            assetsValue: assetsValue.toFixed(2),
           });
           logger.info('Dashboard data loaded', {
-            accounts: accounts.length,
             assets: assets.length,
             totalValue,
           });

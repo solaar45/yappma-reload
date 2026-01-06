@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { apiClient, ApiError, DeduplicationError } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
-import type { AccountSnapshot, AssetSnapshot, Account, Asset } from '../types';
+import type { AssetSnapshot, Asset } from '../types';
 
 interface UseSnapshotsParams {
   userId: number;
   key?: number;
 }
 
-export type CombinedSnapshot =
-  | (AccountSnapshot & { snapshot_type: 'account'; entity_name: string })
-  | (AssetSnapshot & { snapshot_type: 'asset'; entity_name: string });
+export type CombinedSnapshot = AssetSnapshot & { snapshot_type: 'asset'; entity_name: string };
 
 interface UseSnapshotsResult {
   snapshots: CombinedSnapshot[];
@@ -40,24 +38,13 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
         if (userId) query.append('user_id', userId.toString());
         const queryString = query.toString() ? `?${query.toString()}` : '';
 
-        const [accountsResponse, assetsResponse] = await Promise.all([
-          apiClient.get<{ data: Account[] }>(`accounts${queryString}`, { signal: controller.signal }),
+        const [assetsResponse] = await Promise.all([
           apiClient.get<{ data: Asset[] }>(`assets${queryString}`, { signal: controller.signal }),
         ]);
 
         if (!isMounted) return;
 
-        const accounts = Array.isArray(accountsResponse) ? accountsResponse : accountsResponse.data || [];
         const assets = Array.isArray(assetsResponse) ? assetsResponse : assetsResponse.data || [];
-
-        const accountSnapshots: CombinedSnapshot[] = accounts.flatMap(
-          (account) =>
-            (account.snapshots || []).map((snapshot: AccountSnapshot) => ({
-              ...snapshot,
-              snapshot_type: 'account' as const,
-              entity_name: account.name,
-            }))
-        );
 
         const assetSnapshots: CombinedSnapshot[] = assets.flatMap(
           (asset) =>
@@ -68,7 +55,7 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
             }))
         );
 
-        const combined = [...accountSnapshots, ...assetSnapshots].sort(
+        const combined = [...assetSnapshots].sort(
           (a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime()
         );
 
@@ -76,7 +63,6 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
           setSnapshots(combined);
           logger.info('Snapshots loaded', {
             total: combined.length,
-            accounts: accountSnapshots.length,
             assets: assetSnapshots.length
           });
         }

@@ -5,8 +5,7 @@ defmodule WealthBackend.Accounts do
 
   import Ecto.Query, warn: false
   alias WealthBackend.Repo
-  alias WealthBackend.Accounts.{User, Institution, Account}
-  alias WealthBackend.Analytics.AccountSnapshot
+  alias WealthBackend.Accounts.User
 
   ## Users
 
@@ -30,66 +29,5 @@ defmodule WealthBackend.Accounts do
 
   def delete_user(%User{} = user) do
     Repo.delete(user)
-  end
-
-  ## Institutions
-
-  def list_institutions(user_id) do
-    Institution
-    |> where([i], i.user_id == ^user_id)
-    |> Repo.all()
-  end
-
-  def get_institution!(id), do: Repo.get!(Institution, id)
-
-  def create_institution(attrs \\ %{}) do
-    %Institution{}
-    |> Institution.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  def update_institution(%Institution{} = institution, attrs) do
-    institution
-    |> Institution.changeset(attrs)
-    |> Repo.update()
-  end
-
-  def delete_institution(%Institution{} = institution) do
-    Repo.delete(institution)
-  end
-
-  ## Accounts
-
-  def list_accounts(user_id) do
-    snapshots_query = from s in AccountSnapshot, order_by: [desc: s.snapshot_date]
-
-    Account
-    |> where([a], a.user_id == ^user_id)
-    |> preload([:institution, snapshots: ^snapshots_query])
-    |> Repo.all()
-  end
-
-  def get_account!(id) do
-    snapshots_query = from s in AccountSnapshot, order_by: [desc: s.snapshot_date]
-
-    Account
-    |> preload([:institution, snapshots: ^snapshots_query])
-    |> Repo.get!(id)
-  end
-
-  def create_account(attrs \\ %{}) do
-    %Account{}
-    |> Account.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  def update_account(%Account{} = account, attrs) do
-    account
-    |> Account.changeset(attrs)
-    |> Repo.update()
-  end
-
-  def delete_account(%Account{} = account) do
-    Repo.delete(account)
   end
 end

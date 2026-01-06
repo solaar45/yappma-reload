@@ -61,7 +61,7 @@ export function useAssets({ userId, key }: UseAssetsOptions): UseAssetsResult {
           logger.info('Assets loaded', { count: assetsData.length });
           logger.debug('First asset:', assetsData[0]);
           logger.debug('First asset snapshots:', assetsData[0]?.snapshots);
-          logger.debug('First asset account:', assetsData[0]?.account);
+          logger.debug('First asset institution:', assetsData[0]?.institution);
 
           setAssets(assetsData);
         }

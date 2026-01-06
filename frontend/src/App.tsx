@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/sidebar';
 import { useLocation } from 'react-router-dom';
 import DashboardPage from '@/pages/DashboardPage';
-import AccountsPage from '@/pages/AccountsPage';
 import AssetsPage from '@/pages/AssetsPage';
 import InstitutionsPage from '@/pages/InstitutionsPage';
 import SnapshotsPage from '@/pages/SnapshotsPage';
@@ -31,7 +30,6 @@ function AppContent() {
   const getBreadcrumb = (pathname: string): string => {
     const breadcrumbs: Record<string, string> = {
       '/': t('navigation.dashboard'),
-      '/accounts': t('navigation.accounts'),
       '/assets': t('navigation.assets'),
       '/snapshots': t('navigation.snapshots'),
       '/institutions': t('navigation.institutions'),
@@ -72,7 +70,6 @@ function AppContent() {
         >
           <Routes>
             <Route path="/" element={<DashboardPage />} />
-            <Route path="/accounts" element={<AccountsPage />} />
             <Route path="/assets" element={<AssetsPage />} />
             <Route path="/snapshots" element={<SnapshotsPage />} />
             <Route path="/institutions" element={<InstitutionsPage />} />

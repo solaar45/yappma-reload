@@ -1,15 +1,6 @@
 import { useState } from 'react';
 import { apiClient } from '../client';
-import type { AccountSnapshot, AssetSnapshot } from '../types';
-
-type SnapshotType = 'account' | 'asset';
-
-interface CreateAccountSnapshotParams {
-  account_id: number;
-  balance: string;
-  currency: string;
-  snapshot_date: string;
-}
+import type { AssetSnapshot } from '../types';
 
 interface CreateAssetSnapshotParams {
   asset_id: number;
@@ -18,22 +9,19 @@ interface CreateAssetSnapshotParams {
   snapshot_date: string;
 }
 
-export function useCreateSnapshot(type: SnapshotType) {
+export function useCreateSnapshot() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const createSnapshot = async (
-    params: CreateAccountSnapshotParams | CreateAssetSnapshotParams
-  ): Promise<AccountSnapshot | AssetSnapshot | null> => {
+    params: CreateAssetSnapshotParams
+  ): Promise<AssetSnapshot | null> => {
     setLoading(true);
     setError(null);
 
     try {
-      const endpoint = type === 'account' ? '/snapshots/accounts' : '/snapshots/assets';
-      const data = await apiClient<AccountSnapshot | AssetSnapshot>(endpoint, {
-        method: 'POST',
-        body: JSON.stringify(params),
-      });
+      const endpoint = 'snapshots/assets';
+      const data = await apiClient.post<AssetSnapshot>(endpoint, params);
       return data;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create snapshot';

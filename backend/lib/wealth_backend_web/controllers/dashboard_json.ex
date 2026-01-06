@@ -3,21 +3,12 @@ defmodule WealthBackendWeb.DashboardJSON do
     %{
       data: %{
         total: to_string(net_worth.total),
-        accounts: to_string(net_worth.accounts),
         assets: to_string(net_worth.assets),
         date: date
       }
     }
   end
 
-  def account_snapshots(%{snapshots: snapshots, date: date}) do
-    %{
-      data: %{
-        snapshots: Enum.map(snapshots, &account_snapshot_data/1),
-        date: date
-      }
-    }
-  end
 
   def asset_snapshots(%{snapshots: snapshots, date: date}) do
     %{
@@ -28,20 +19,6 @@ defmodule WealthBackendWeb.DashboardJSON do
     }
   end
 
-  defp account_snapshot_data(snapshot) do
-    %{
-      id: snapshot.id,
-      snapshot_date: snapshot.snapshot_date,
-      balance: to_string(snapshot.balance),
-      currency: snapshot.currency,
-      account: %{
-        id: snapshot.account.id,
-        name: snapshot.account.name,
-        type: snapshot.account.type,
-        institution: institution_data(snapshot.account.institution)
-      }
-    }
-  end
 
   defp asset_snapshot_data(snapshot) do
     %{
@@ -56,7 +33,7 @@ defmodule WealthBackendWeb.DashboardJSON do
         symbol: snapshot.asset.symbol,
         currency: snapshot.asset.currency,
         asset_type: asset_type_data(snapshot.asset.asset_type),
-        account: account_data(snapshot.asset.account)
+        institution: institution_data(snapshot.asset.institution)
       }
     }
   end
@@ -79,14 +56,6 @@ defmodule WealthBackendWeb.DashboardJSON do
     }
   end
 
-  defp account_data(nil), do: nil
-  defp account_data(account) do
-    %{
-      id: account.id,
-      name: account.name,
-      type: account.type
-    }
-  end
 
   defp decimal_to_string(nil), do: nil
   defp decimal_to_string(decimal), do: to_string(decimal)

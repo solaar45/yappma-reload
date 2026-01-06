@@ -1,9 +1,10 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDashboard } from '@/lib/api/hooks';
+import { useDashboard, useTaxExemptions } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Wallet, PiggyBank } from 'lucide-react';
+import { TrendingUp, Wallet } from 'lucide-react';
 import { PortfolioHoldingsTable } from '@/components/portfolio/PortfolioHoldingsTable';
 import { PortfolioPositionsTable } from '@/components/portfolio/PortfolioPositionsTable';
 import { TaxUsageWidget } from '@/components/dashboard/TaxUsageWidget';
@@ -52,149 +53,129 @@ const mockPortfolioHoldings: PortfolioHolding[] = [
     dayChange: 35.75,
     dayChangePercent: 1.01,
   },
-  {
-    id: '4',
-    ticker: 'TSLA',
-    name: 'Tesla, Inc.',
-    shares: 15,
-    avgCost: 245.00,
-    currentPrice: 198.50,
-    marketValue: 2977.50,
-    totalGainLoss: -697.50,
-    totalGainLossPercent: -18.98,
-    dayChange: -44.85,
-    dayChangePercent: -1.48,
-  },
-  {
-    id: '5',
-    ticker: 'AMZN',
-    name: 'Amazon.com Inc.',
-    shares: 40,
-    avgCost: 155.75,
-    currentPrice: 172.25,
-    marketValue: 6890.00,
-    totalGainLoss: 660.00,
-    totalGainLossPercent: 10.59,
-    dayChange: 68.80,
-    dayChangePercent: 1.01,
-  },
-  {
-    id: '6',
-    ticker: 'NVDA',
-    name: 'NVIDIA Corporation',
-    shares: 20,
-    avgCost: 475.00,
-    currentPrice: 495.50,
-    marketValue: 9910.00,
-    totalGainLoss: 410.00,
-    totalGainLossPercent: 4.32,
-    dayChange: 198.20,
-    dayChangePercent: 2.04,
-  },
 ];
 
-// Mock data for positions demo
-const mockPortfolioPositions: PortfolioPosition[] = [
-  {
-    id: '1',
-    type: 'Asset',
-    name: 'Apple Inc.',
-    institution: 'Trade Republic',
-    assetClass: 'Equity',
-    riskScore: 3,
-    currentValue: 15450.00,
-    portfolioShare: 12.5,
-    performance: 8.5,
-    performanceHistory: [100, 102, 101, 105, 107, 108, 109],
-    savingsPlan: 250,
-    fsaAllocated: 1000,
-    fsaTotal: 1000,
-    fsaUsedYTD: 227.50,
-  },
-  {
-    id: '2',
-    type: 'Account',
-    name: 'Girokonto DKB',
-    institution: 'Deutsche Bank',
-    assetClass: 'Cash',
-    riskScore: 1,
-    currentValue: 8720.00,
-    portfolioShare: 7.1,
-    performance: 0.0,
-    performanceHistory: [100, 100, 100, 100, 100, 100, 100],
-    fsaAllocated: 0,
-    fsaTotal: 1000,
-    fsaUsedYTD: 0,
-  },
-  {
-    id: '3',
-    type: 'Asset',
-    name: 'Vanguard FTSE All-World',
-    institution: 'Scalable Capital',
-    assetClass: 'Equity',
-    riskScore: 4,
-    currentValue: 32100.00,
-    portfolioShare: 26.0,
-    performance: 12.3,
-    performanceHistory: [100, 98, 103, 108, 110, 112, 112],
-    savingsPlan: 500,
-    fsaAllocated: 500,
-    fsaTotal: 1000,
-    fsaUsedYTD: 325.00,
-  },
-  {
-    id: '4',
-    type: 'Asset',
-    name: 'iShares Core Global Aggregate Bond',
-    institution: 'ING',
-    assetClass: 'Bond',
-    riskScore: 2,
-    currentValue: 18900.00,
-    portfolioShare: 15.3,
-    performance: 3.2,
-    performanceHistory: [100, 101, 102, 102, 103, 103, 103],
-    savingsPlan: 300,
-    fsaAllocated: 350,
-    fsaTotal: 1000,
-    fsaUsedYTD: 115.80,
-  },
-  {
-    id: '5',
-    type: 'Asset',
-    name: 'Bitcoin',
-    institution: 'Bitpanda',
-    assetClass: 'Crypto',
-    riskScore: 5,
-    currentValue: 6500.00,
-    portfolioShare: 5.3,
-    performance: -15.7,
-    performanceHistory: [100, 95, 92, 88, 85, 84, 84],
-    fsaAllocated: 0,
-    fsaTotal: 1000,
-    fsaUsedYTD: 0,
-  },
-  {
-    id: '6',
-    type: 'Asset',
-    name: 'REITs Portfolio',
-    institution: 'Consorsbank',
-    assetClass: 'Real Estate',
-    riskScore: 3,
-    currentValue: 24300.00,
-    portfolioShare: 19.7,
-    performance: 6.8,
-    performanceHistory: [100, 102, 104, 105, 106, 107, 107],
-    savingsPlan: 400,
-    fsaAllocated: 150,
-    fsaTotal: 1000,
-    fsaUsedYTD: 98.50,
-  },
-];
+
 
 export default function DashboardPage() {
   const { t } = useTranslation();
-  const { userId } = useUser();
+  const { user, userId } = useUser();
   const { data, loading, error } = useDashboard({ userId: userId! });
+  const year = new Date().getFullYear();
+  const { taxExemptions } = useTaxExemptions({ userId: userId!, year });
+
+  const portfolioPositions = useMemo<PortfolioPosition[]>(() => {
+    if (!data?.assets) return [];
+
+    const totalPortfolioValue = parseFloat(data.totalValue || '0');
+    const userLimit = user?.tax_allowance_limit || 1000;
+
+    const taxExMap = new Map<number, number>();
+    taxExemptions.forEach(te => {
+      taxExMap.set(te.institution_id, parseFloat(te.amount));
+    });
+
+    const institutionGroups = new Map<number, {
+      id: string;
+      name: string;
+      institution: string;
+      currentValue: number;
+      savingsPlan: number;
+      riskScore: number;
+      assetClasses: string[];
+      fsaAllocated: number;
+    }>();
+
+    const individualAssets: PortfolioPosition[] = [];
+
+    data.assets.forEach(asset => {
+      const latestValue = parseFloat(asset.snapshots?.[0]?.value || '0');
+      const savingsPlan = parseFloat(asset.savings_plan_amount || '0');
+      const riskScore = (asset.risk_class || 3) as PortfolioPosition['riskScore'];
+
+      const assetClassMap: Record<string, string> = {
+        'security': 'security',
+        'cash': 'cash',
+        'real_estate': 'real_estate',
+        'crypto': 'crypto',
+        'insurance': 'insurance',
+        'loan': 'loan',
+        'commodity': 'commodity',
+        'collectible': 'collectible',
+        'other': 'other'
+      };
+
+      const code = asset.asset_type?.code || 'other';
+      const assetClass = assetClassMap[code] || 'other';
+
+      if (asset.institution_id && asset.institution) {
+        const instId = asset.institution_id;
+        const existing = institutionGroups.get(instId);
+        if (existing) {
+          existing.currentValue += latestValue;
+          existing.savingsPlan += savingsPlan;
+          existing.riskScore = Math.max(existing.riskScore, riskScore) as PortfolioPosition['riskScore'];
+          existing.assetClasses.push(assetClass);
+        } else {
+          institutionGroups.set(instId, {
+            id: `inst-${instId}`,
+            name: asset.institution.name,
+            institution: asset.institution.name,
+            currentValue: latestValue,
+            savingsPlan: savingsPlan,
+            riskScore: riskScore,
+            assetClasses: [assetClass],
+            fsaAllocated: taxExMap.get(instId) || 0
+          });
+        }
+      } else {
+        individualAssets.push({
+          id: `asset-${asset.id}`,
+          type: 'Asset' as const,
+          name: asset.name,
+          institution: '-',
+          assetClass,
+          riskScore,
+          currentValue: latestValue,
+          portfolioShare: totalPortfolioValue > 0 ? (latestValue / totalPortfolioValue) * 100 : 0,
+          savingsPlan: savingsPlan > 0 ? savingsPlan : undefined,
+          fsaAllocated: 0,
+          fsaTotal: userLimit,
+          fsaUsedYTD: 0
+        });
+      }
+    });
+
+    const groupedList = Array.from(institutionGroups.values()).map(group => {
+      // Find most common asset class
+      const counts = group.assetClasses.reduce((acc, curr) => {
+        acc[curr] = (acc[curr] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const keys = Object.keys(counts);
+      const dominantClass = keys.length > 0
+        ? keys.reduce((a, b) => counts[a] > counts[b] ? a : b)
+        : 'other';
+
+      return {
+        id: group.id,
+        type: 'Asset' as const,
+        name: group.name,
+        institution: group.institution,
+        assetClass: dominantClass,
+        riskScore: group.riskScore as PortfolioPosition['riskScore'],
+        currentValue: group.currentValue,
+        portfolioShare: totalPortfolioValue > 0 ? (group.currentValue / totalPortfolioValue) * 100 : 0,
+        savingsPlan: group.savingsPlan > 0 ? group.savingsPlan : undefined,
+        fsaAllocated: group.fsaAllocated,
+        fsaTotal: userLimit,
+        fsaUsedYTD: 0 // We don't have YTD usage yet
+      };
+    });
+
+    return [...groupedList, ...individualAssets];
+  }, [data, taxExemptions, user, t]);
 
   if (error) {
     return (
@@ -207,8 +188,8 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       {/* Metric Cards Grid */}
-      <div className="grid gap-4 md:gap-6 xl:grid-cols-4">
-        {/* Tax Usage Card (New) */}
+      <div className="grid gap-4 md:gap-6 xl:grid-cols-3">
+        {/* Tax Usage Card */}
         <TaxUsageWidget />
 
         {/* Net Worth Card */}
@@ -233,10 +214,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Accounts Total Card */}
+        {/* Assets Total Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.totalInAccounts')}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.totalInAssets')}</CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -245,29 +226,7 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold">
-                  {data ? formatCurrency(data.accountsValue) : '€0.00'}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {data?.accounts.length || 0} {t('dashboard.accounts')}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Assets Total Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.totalInAssets')}</CardTitle>
-            <PiggyBank className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="h-8 w-32 animate-pulse bg-muted rounded" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {data ? formatCurrency(data.assetsValue) : '€0.00'}
+                  {data ? formatCurrency(data.totalValue) : '€0.00'}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {data?.assets.length || 0} {t('dashboard.assets')}
@@ -294,59 +253,12 @@ export default function DashboardPage() {
           <CardTitle>Portfolio Positionen</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <PortfolioPositionsTable positions={mockPortfolioPositions} />
+          <PortfolioPositionsTable positions={portfolioPositions} />
         </CardContent>
       </Card>
 
-      {/* Main Content Area - Existing Cards */}
-      <div className="grid gap-4 md:gap-6 lg:grid-cols-2 xl:grid-cols-2">
-        {/* Recent Accounts */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>{t('dashboard.recentAccounts')}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            {loading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 animate-pulse bg-muted rounded" />
-                ))}
-              </div>
-            ) : data?.accounts.length ? (
-              <div className="space-y-4">
-                {data.accounts.slice(0, 5).map((account) => {
-                  const latestSnapshot = account.snapshots?.[0];
-                  return (
-                    <div key={account.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <InstitutionLogo name={account.institution?.name || account.name} domain={account.institution?.website ? account.institution.website.replace(/^https?:\/\//, '') : undefined} size="medium" className="flex-shrink-0 rounded-full" />
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium leading-none">{account.name}</p>
-                          <p className="text-xs text-muted-foreground">{account.institution?.name || 'No institution'}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {latestSnapshot
-                            ? formatCurrency(latestSnapshot.balance, latestSnapshot.currency)
-                            : formatCurrency('0', account.currency)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                {t('dashboard.noAccountSnapshots')}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
+      {/* Main Content Area - Recent Assets */}
+      <div className="grid gap-4 md:gap-6">
         {/* Recent Assets */}
         <Card className="flex flex-col">
           <CardHeader>
@@ -402,3 +314,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

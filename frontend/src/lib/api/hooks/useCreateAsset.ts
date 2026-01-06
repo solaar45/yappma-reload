@@ -7,9 +7,12 @@ interface CreateAssetData {
   asset_type_id: number;
   name: string;
   symbol?: string;
+  isin?: string;
+  ticker?: string;
   currency?: string;
   is_active?: boolean;
-  account_id?: number;
+  institution_id?: number;
+  savings_plan_amount?: string | number;
   security_asset?: {
     isin?: string;
     ticker?: string;
@@ -35,7 +38,7 @@ export function useCreateAsset() {
         currency: data.currency || 'EUR',
       };
 
-      const asset = await apiClient.post<Asset>('/assets', {
+      const asset = await apiClient.post<Asset>('assets', {
         asset: assetData,
       });
       return asset;

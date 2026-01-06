@@ -16,16 +16,6 @@ defmodule WealthBackendWeb.DashboardController do
     render(conn, :net_worth, net_worth: net_worth, date: date)
   end
 
-  @doc """
-  Returns latest snapshots for all accounts of a user.
-  Query params: user_id (required), date (optional)
-  """
-  def account_snapshots(conn, %{"user_id" => user_id} = params) do
-    date = parse_date(params["date"])
-    snapshots = Analytics.get_latest_account_snapshots(user_id, date)
-    
-    render(conn, :account_snapshots, snapshots: snapshots, date: date)
-  end
 
   @doc """
   Returns latest snapshots for all assets of a user.

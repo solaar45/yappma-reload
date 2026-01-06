@@ -9,7 +9,6 @@ defmodule WealthBackend.Accounts.User do
     field :tax_status, :string, default: "single"
 
     has_many :institutions, WealthBackend.Accounts.Institution
-    has_many :accounts, WealthBackend.Accounts.Account
     has_many :tax_exemptions, WealthBackend.Taxes.TaxExemption
 
     timestamps(type: :utc_datetime)

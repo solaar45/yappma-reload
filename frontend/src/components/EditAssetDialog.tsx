@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUser } from '@/contexts/UserContext';
 import { apiClient } from '@/lib/api/client';
+import { useInstitutions } from '@/lib/api/hooks';
 import type { Asset, AssetType } from '@/lib/api/types';
 import {
   Dialog,
@@ -22,7 +24,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Pencil } from 'lucide-react';
-import { useAccounts } from '@/lib/api/hooks';
 import InstitutionLogo from '@/components/InstitutionLogo';
 
 interface EditAssetDialogProps {
@@ -31,6 +32,7 @@ interface EditAssetDialogProps {
 }
 
 export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,13 +41,14 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
   const [formData, setFormData] = useState({
     name: asset.name,
     asset_type_id: asset.asset_type_id.toString(),
-    isin: asset.security_asset?.isin || '',
-    ticker: asset.security_asset?.ticker || '',
+    isin: asset.isin || asset.security_asset?.isin || '',
+    ticker: asset.ticker || asset.security_asset?.ticker || '',
     currency: asset.currency,
     is_active: asset.is_active ?? true,
+    savings_plan_amount: asset.savings_plan_amount?.toString() || '',
   });
-  const { accounts } = useAccounts({ userId: userId! });
-  const [accountId, setAccountId] = useState(asset.account_id?.toString() || '');
+  const { institutions } = useInstitutions({ userId: userId! });
+  const [institutionId, setInstitutionId] = useState(asset.institution_id?.toString() || '');
 
   // Reset form when dialog opens or asset changes
   useEffect(() => {
@@ -53,11 +56,13 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
       setFormData({
         name: asset.name,
         asset_type_id: asset.asset_type_id.toString(),
-        isin: asset.security_asset?.isin || '',
-        ticker: asset.security_asset?.ticker || '',
+        isin: asset.isin || asset.security_asset?.isin || '',
+        ticker: asset.ticker || asset.security_asset?.ticker || '',
         currency: asset.currency,
         is_active: asset.is_active ?? true,
+        savings_plan_amount: asset.savings_plan_amount?.toString() || '',
       });
+      setInstitutionId(asset.institution_id?.toString() || '');
     }
   }, [open, asset]);
 
@@ -91,26 +96,12 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
         asset_type_id: parseInt(formData.asset_type_id),
         currency: formData.currency,
         is_active: formData.is_active,
+        isin: formData.isin || undefined,
+        ticker: formData.ticker || undefined,
+        savings_plan_amount: formData.savings_plan_amount ? parseFloat(formData.savings_plan_amount) : null,
+        institution_id: institutionId === '' ? null : parseInt(institutionId),
+        user_id: userId
       };
-
-      // Add symbol (ISIN) if available
-      if (formData.isin) {
-        updateData.symbol = formData.isin;
-      }
-
-      // Add security_asset data if it's a security type
-      const selectedType = assetTypes.find((t) => t.id === parseInt(formData.asset_type_id));
-      if (selectedType?.code === 'security' && (formData.isin || formData.ticker)) {
-        updateData.security_asset = {
-          isin: formData.isin || undefined,
-          ticker: formData.ticker || undefined,
-        };
-      }
-
-      // account_id handling: include field (can be null to remove)
-      if (typeof accountId !== 'undefined') {
-        updateData.account_id = accountId === '' ? null : parseInt(accountId);
-      }
 
       await apiClient.put(`assets/${asset.id}`, { asset: updateData });
       setOpen(false);
@@ -131,14 +122,14 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit Asset</DialogTitle>
+            <DialogTitle>{t('assets.editAsset')}</DialogTitle>
             <DialogDescription>
-              Make changes to your asset. Click save when you're done.
+              {t('common.save')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="edit-name">Asset Name *</Label>
+              <Label htmlFor="edit-name">{t('assets.assetName')} *</Label>
               <Input
                 id="edit-name"
                 value={formData.name}
@@ -147,25 +138,25 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-asset-type">Asset Type *</Label>
+              <Label htmlFor="edit-asset-type">{t('assets.assetType')} *</Label>
               <Select
                 value={formData.asset_type_id}
                 onValueChange={(value) => setFormData({ ...formData, asset_type_id: value })}
               >
                 <SelectTrigger id="edit-asset-type">
-                  <SelectValue placeholder="Select asset type" />
+                  <SelectValue placeholder={t('assets.allTypes')} />
                 </SelectTrigger>
                 <SelectContent>
                   {assetTypes.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
-                      {type.description || type.code}
+                      {t(`assetTypes.${type.code}`, { defaultValue: type.description || type.code })}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-ticker">Ticker Symbol</Label>
+              <Label htmlFor="edit-ticker">{t('assets.ticker')}</Label>
               <Input
                 id="edit-ticker"
                 placeholder="e.g., AAPL"
@@ -174,7 +165,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-isin">ISIN</Label>
+              <Label htmlFor="edit-isin">{t('assets.isin')}</Label>
               <Input
                 id="edit-isin"
                 placeholder="e.g., US0378331005"
@@ -183,24 +174,31 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-account">Verknüpftes Konto / Depot (optional)</Label>
-              <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
-                <SelectTrigger id="edit-account">
-                  <SelectValue placeholder="Kein Konto ausgewählt" />
+              <Label htmlFor="edit-savings-plan">{t('assets.savingsPlan')} ({t('common.optional')})</Label>
+              <Input
+                id="edit-savings-plan"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={formData.savings_plan_amount}
+                onChange={(e) => setFormData({ ...formData, savings_plan_amount: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-institution">{t('assets.institution')} ({t('common.optional')})</Label>
+              <Select value={institutionId === '' ? '_none' : institutionId} onValueChange={(v) => setInstitutionId(v === '_none' ? '' : v)}>
+                <SelectTrigger id="edit-institution">
+                  <SelectValue placeholder={t('assets.allInstitutions')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Kein Konto</SelectItem>
-                  {accounts
-                    ?.filter((a) => a.is_active)
-                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-                    .map((a) => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
+                  <SelectItem value="_none">{t('assets.allInstitutions')}</SelectItem>
+                  {institutions
+                    ?.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map((inst) => (
+                      <SelectItem key={inst.id} value={inst.id.toString()}>
                         <div className="flex items-center gap-2">
-                          <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
-                          <div className="flex flex-col">
-                            <span>{a.name}</span>
-                            <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
-                          </div>
+                          <InstitutionLogo name={inst.name} domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                          <span>{inst.name}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -208,7 +206,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-currency">Currency *</Label>
+              <Label htmlFor="edit-currency">{t('common.currency')} *</Label>
               <Input
                 id="edit-currency"
                 value={formData.currency}
@@ -219,10 +217,10 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="is-active" className="text-base">
-                  Asset Status
+                  {t('assets.status')}
                 </Label>
                 <div className="text-sm text-muted-foreground">
-                  {formData.is_active ? 'Active' : 'Inactive'}
+                  {formData.is_active ? t('assets.active') : t('assets.inactive')}
                 </div>
               </div>
               <Switch
@@ -235,10 +233,10 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : 'Save changes'}
+              {loading ? t('common.loading') : t('common.save')}
             </Button>
           </DialogFooter>
         </form>

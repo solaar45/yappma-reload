@@ -45,13 +45,11 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const changeLanguage = (langCode: string) => {
     i18n.changeLanguage(langCode);
   };
-
-  const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
 
   return (
     <SidebarMenu>
@@ -95,7 +93,7 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <User />
-                Account
+                {t('user.profile') || 'Profile'}
               </DropdownMenuItem>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>

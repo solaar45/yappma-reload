@@ -1,4 +1,4 @@
-import { ChevronUp, User2, Settings, LogOut, Wallet, Landmark, PiggyBank, Camera, Receipt } from 'lucide-react';
+import { ChevronUp, User2, Settings, LogOut, Landmark, PiggyBank, Camera, Receipt } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -33,11 +33,6 @@ export function AppSidebar() {
       title: t('navigation.dashboard'),
       url: '/',
       icon: Landmark,
-    },
-    {
-      title: t('navigation.accounts'),
-      url: '/accounts',
-      icon: Wallet,
     },
     {
       title: t('navigation.assets'),

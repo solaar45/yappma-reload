@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '@/lib/api/client';
 import type { CombinedSnapshot } from '@/lib/api/hooks/useSnapshots';
 import { Button } from '@/components/ui/button';
@@ -13,13 +14,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Pencil } from 'lucide-react';
 
 interface EditSnapshotDialogProps {
@@ -28,21 +22,14 @@ interface EditSnapshotDialogProps {
 }
 
 export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
-  const isAccount = snapshot.snapshot_type === 'account';
-  const initialValue = isAccount 
-    ? (snapshot as any).balance 
-    : (snapshot as any).value;
-  const initialCurrency = isAccount ? (snapshot as any).currency : 'EUR';
-  const initialQuantity = !isAccount ? (snapshot as any).quantity || '' : '';
 
   const [formData, setFormData] = useState({
     snapshot_date: snapshot.snapshot_date,
-    value: initialValue,
-    currency: initialCurrency,
-    quantity: initialQuantity,
+    value: snapshot.value || '',
+    quantity: snapshot.quantity || '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,21 +42,13 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
     setLoading(true);
 
     try {
-      const endpoint = isAccount
-        ? `/snapshots/accounts/${snapshot.id}`
-        : `/snapshots/assets/${snapshot.id}`;
+      const endpoint = `asset_snapshots/${snapshot.id}`;
 
-      const payload = isAccount
-        ? {
-            balance: formData.value,
-            currency: formData.currency,
-            snapshot_date: formData.snapshot_date,
-          }
-        : {
-            value: formData.value,
-            quantity: formData.quantity || undefined,
-            snapshot_date: formData.snapshot_date,
-          };
+      const payload = {
+        value: formData.value,
+        quantity: formData.quantity || undefined,
+        snapshot_date: formData.snapshot_date,
+      };
 
       await apiClient.put(endpoint, payload);
 
@@ -92,14 +71,14 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit Snapshot</DialogTitle>
+            <DialogTitle>{t('snapshots.editSnapshot') || 'Edit Snapshot'}</DialogTitle>
             <DialogDescription>
-              Update snapshot for {snapshot.entity_name}
+              {t('common.save')} - {snapshot.entity_name}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="date">Date *</Label>
+              <Label htmlFor="date">{t('common.date')} *</Label>
               <Input
                 id="date"
                 type="date"
@@ -110,9 +89,7 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="value">
-                {isAccount ? 'Balance' : 'Value'} *
-              </Label>
+              <Label htmlFor="value">{t('common.value')} *</Label>
               <Input
                 id="value"
                 type="number"
@@ -124,46 +101,24 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
               />
             </div>
 
-            {isAccount && (
-              <div className="grid gap-2">
-                <Label htmlFor="currency">Currency *</Label>
-                <Select 
-                  value={formData.currency} 
-                  onValueChange={(value) => setFormData({ ...formData, currency: value })}
-                >
-                  <SelectTrigger id="currency">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                    <SelectItem value="CHF">CHF</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {!isAccount && (
-              <div className="grid gap-2">
-                <Label htmlFor="quantity">Quantity (optional)</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  step="0.0001"
-                  placeholder="e.g., number of shares"
-                  value={formData.quantity}
-                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                />
-              </div>
-            )}
+            <div className="grid gap-2">
+              <Label htmlFor="quantity">{t('common.quantity')} ({t('common.optional')})</Label>
+              <Input
+                id="quantity"
+                type="number"
+                step="0.0001"
+                placeholder="e.g., number of shares"
+                value={formData.quantity}
+                onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={loading || !formData.value}>
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? t('common.loading') : t('common.save')}
             </Button>
           </DialogFooter>
         </form>
@@ -171,3 +126,4 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
     </Dialog>
   );
 }
+

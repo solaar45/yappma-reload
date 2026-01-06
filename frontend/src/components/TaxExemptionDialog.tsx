@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
     useCreateTaxExemption,
     useUpdateTaxExemption,
-    useAccounts
+    useAssets
 } from '@/lib/api/hooks';
 import type { TaxExemption } from '@/lib/api/types';
 import { useUser } from '@/contexts/UserContext';
@@ -48,18 +48,18 @@ export function TaxExemptionDialog({
 }: TaxExemptionDialogProps) {
     const { t } = useTranslation();
     const { userId } = useUser();
-    const { accounts, isLoading: accountsLoading } = useAccounts({ userId: userId! });
+    const { assets, loading: assetsLoading } = useAssets({ userId: userId! });
     const { createTaxExemption, loading: creating, error: createError } = useCreateTaxExemption();
     const { updateTaxExemption, loading: updating, error: updateError } = useUpdateTaxExemption();
     const [localError, setLocalError] = useState<string | null>(null);
 
     const filteredInstitutions = useMemo(() => {
-        if (!accounts) return [];
+        if (!assets) return [];
         const seen = new Set<number>();
-        return accounts
-            .filter(acc => acc.institution && !seen.has(acc.institution.id) && seen.add(acc.institution.id))
-            .map(acc => acc.institution!);
-    }, [accounts]);
+        return assets
+            .filter(asset => asset.institution && !seen.has(asset.institution.id) && seen.add(asset.institution.id))
+            .map(asset => asset.institution!);
+    }, [assets]);
 
     const [institutionOpen, setInstitutionOpen] = useState(false);
     const [formData, setFormData] = useState({
@@ -167,11 +167,11 @@ export function TaxExemptionDialog({
                                         role="combobox"
                                         aria-expanded={institutionOpen}
                                         className="w-full justify-between font-normal"
-                                        disabled={accountsLoading || !!taxExemption}
+                                        disabled={assetsLoading || !!taxExemption}
                                     >
                                         {formData.institution_id
                                             ? filteredInstitutions.find((inst: any) => inst.id.toString() === formData.institution_id)?.name
-                                            : accountsLoading ? t('common.loading') : t('common.search')}
+                                            : assetsLoading ? t('common.loading') : t('common.search')}
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>

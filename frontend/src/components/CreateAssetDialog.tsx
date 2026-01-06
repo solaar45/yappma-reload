@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useCreateAsset } from '@/lib/api/hooks';
+import { useCreateAsset, useInstitutions } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { apiClient } from '@/lib/api/client';
 import type { AssetType } from '@/lib/api/types';
@@ -25,7 +25,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
-import { useAccounts } from '@/lib/api/hooks';
 import InstitutionLogo from '@/components/InstitutionLogo';
 
 interface CreateAssetDialogProps {
@@ -46,9 +45,10 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
     ticker: '',
     currency: 'EUR',
     is_active: true,
+    savings_plan_amount: '',
   });
-  const { accounts } = useAccounts({ userId: userId! });
-  const [accountId, setAccountId] = useState('');
+  const { institutions } = useInstitutions({ userId: userId! });
+  const [institutionId, setInstitutionId] = useState('');
 
   useEffect(() => {
     const fetchAssetTypes = async () => {
@@ -57,7 +57,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
         const response = await apiClient.get<{ data: AssetType[] }>('asset_types');
         const types = Array.isArray(response) ? response : (response.data || []);
         setAssetTypes(types);
-        
+
         const securityType = types.find((t) => t.code === 'security');
         if (securityType) {
           setFormData((prev) => ({ ...prev, asset_type_id: securityType.id.toString() }));
@@ -84,20 +84,16 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       name: formData.name,
       currency: formData.currency,
       is_active: formData.is_active,
-      security_asset:
-        formData.isin || formData.ticker
-          ? {
-              isin: formData.isin || undefined,
-              ticker: formData.ticker || undefined,
-            }
-          : undefined,
-      ...(accountId ? { account_id: parseInt(accountId) } : {}),
+      isin: formData.isin || undefined,
+      ticker: formData.ticker || undefined,
+      savings_plan_amount: formData.savings_plan_amount ? parseFloat(formData.savings_plan_amount) : undefined,
+      ...(institutionId ? { institution_id: parseInt(institutionId) } : {}),
     });
 
     if (result) {
       setOpen(false);
-      setFormData({ name: '', asset_type_id: '', isin: '', ticker: '', currency: 'EUR', is_active: true });
-      setAccountId('');
+      setFormData({ name: '', asset_type_id: '', isin: '', ticker: '', currency: 'EUR', is_active: true, savings_plan_amount: '' });
+      setInstitutionId('');
       onSuccess?.();
     }
   };
@@ -169,6 +165,17 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               />
             </div>
             <div className="grid gap-2">
+              <Label htmlFor="savings_plan">{t('assets.savingsPlan') || 'Savings Plan'} ({t('common.optional') || 'optional'})</Label>
+              <Input
+                id="savings_plan"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={formData.savings_plan_amount}
+                onChange={(e) => setFormData({ ...formData, savings_plan_amount: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="currency">{t('common.currency') || 'Currency'} *</Label>
               <Input
                 id="currency"
@@ -179,24 +186,20 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="account">{t('assets.account') || 'Linked Account'} ({t('common.optional') || 'optional'})</Label>
-              <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
-                <SelectTrigger id="account">
-                  <SelectValue placeholder={t('assets.allAccounts') || "No account"} />
+              <Label htmlFor="institution">{t('assets.institution') || 'Institution'} ({t('common.optional') || 'optional'})</Label>
+              <Select value={institutionId === '' ? '_none' : institutionId} onValueChange={(v) => setInstitutionId(v === '_none' ? '' : v)}>
+                <SelectTrigger id="institution">
+                  <SelectValue placeholder={t('assets.allInstitutions') || "No institution"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">{t('assets.allAccounts') || "No Account"}</SelectItem>
-                  {accounts
-                    ?.filter((a) => a.is_active)
-                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-                    .map((a) => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
+                  <SelectItem value="_none">{t('assets.allInstitutions') || "No Institution"}</SelectItem>
+                  {institutions
+                    ?.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map((inst) => (
+                      <SelectItem key={inst.id} value={inst.id.toString()}>
                         <div className="flex items-center gap-2">
-                          <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
-                          <div className="flex flex-col">
-                            <span>{a.name}</span>
-                            <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
-                          </div>
+                          <InstitutionLogo name={inst.name} domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                          <span>{inst.name}</span>
                         </div>
                       </SelectItem>
                     ))}
