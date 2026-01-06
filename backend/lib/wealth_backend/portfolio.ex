@@ -13,6 +13,7 @@ defmodule WealthBackend.Portfolio do
   alias WealthBackend.Portfolio.LoanAsset
   alias WealthBackend.Portfolio.RealEstateAsset
   alias WealthBackend.Portfolio.RiskClassifier
+  alias WealthBackend.Analytics.AssetSnapshot
 
   # Asset Types
 
@@ -37,7 +38,7 @@ defmodule WealthBackend.Portfolio do
       :insurance_asset,
       :loan_asset,
       :real_estate_asset,
-      snapshots: from(s in "snapshots", order_by: [desc: s.snapshot_date])
+      snapshots: from(s in AssetSnapshot, order_by: [desc: s.snapshot_date])
     ])
   end
 
@@ -54,7 +55,7 @@ defmodule WealthBackend.Portfolio do
       :insurance_asset,
       :loan_asset,
       :real_estate_asset,
-      snapshots: from(s in "snapshots", order_by: [desc: s.snapshot_date])
+      snapshots: from(s in AssetSnapshot, order_by: [desc: s.snapshot_date])
     ])
   end
 
@@ -67,7 +68,7 @@ defmodule WealthBackend.Portfolio do
       :insurance_asset,
       :loan_asset,
       :real_estate_asset,
-      snapshots: from(s in "snapshots", order_by: [desc: s.snapshot_date])
+      snapshots: from(s in AssetSnapshot, order_by: [desc: s.snapshot_date])
     ])
   end
 
@@ -99,7 +100,7 @@ defmodule WealthBackend.Portfolio do
           :insurance_asset,
           :loan_asset,
           :real_estate_asset,
-          snapshots: from(s in "snapshots", order_by: [desc: s.snapshot_date])
+          snapshots: from(s in AssetSnapshot, order_by: [desc: s.snapshot_date])
         ])}
 
       {:error, _failed_operation, changeset, _changes_so_far} ->
