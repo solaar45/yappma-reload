@@ -24,6 +24,7 @@ defmodule WealthBackendWeb.AssetSnapshotController do
   # Accept direct params (from frontend)
   def create(conn, params) when is_map(params) do
     user = conn.assigns.current_user
+    # Analytics.create_asset_snapshot already adds user_id as atom key
     with {:ok, %AssetSnapshot{} = snapshot} <- Analytics.create_asset_snapshot(user.id, params) do
       conn
       |> put_status(:created)

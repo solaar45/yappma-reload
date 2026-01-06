@@ -25,11 +25,36 @@ defmodule WealthBackend.Analytics do
   end
 
   def create_account_snapshot(user_id, attrs \\ %{}) do
-    attrs = Map.put(attrs, :user_id, user_id)
+    attrs = normalize_keys_to_strings(attrs)
+    |> Map.put("user_id", user_id)
 
-    %AccountSnapshot{}
-    |> AccountSnapshot.changeset(attrs)
-    |> Repo.insert()
+    # Try to find an existing snapshot for the same account/date/user and update it instead
+    account_id = to_int(Map.get(attrs, "account_id"))
+
+    existing_snapshot =
+      case Map.get(attrs, "snapshot_date") do
+        nil -> nil
+        date_str ->
+          case Date.from_iso8601(to_string(date_str)) do
+            {:ok, date} when is_integer(account_id) ->
+              Repo.get_by(AccountSnapshot,
+                account_id: account_id,
+                snapshot_date: date,
+                user_id: user_id
+              )
+
+            _ ->
+              nil
+          end
+      end
+
+    if existing_snapshot do
+      update_account_snapshot(existing_snapshot, attrs)
+    else
+      %AccountSnapshot{}
+      |> AccountSnapshot.changeset(attrs)
+      |> Repo.insert()
+    end
   end
 
   def update_account_snapshot(%AccountSnapshot{} = snapshot, attrs) do
@@ -58,12 +83,33 @@ defmodule WealthBackend.Analytics do
   end
 
   def create_asset_snapshot(user_id, attrs \\ %{}) do
-    attrs = Map.put(attrs, :user_id, user_id)
+    attrs = normalize_keys_to_strings(attrs)
+    |> Map.put("user_id", user_id)
 
     %AssetSnapshot{}
     |> AssetSnapshot.changeset(attrs)
     |> Repo.insert()
   end
+
+  defp normalize_keys_to_strings(attrs) when is_map(attrs) do
+    attrs
+    |> Enum.into(%{}, fn
+      {k, v} when is_atom(k) -> {to_string(k), v}
+      {k, v} -> {k, v}
+    end)
+  end
+
+  defp normalize_keys_to_strings(other), do: other
+
+  defp to_int(v) when is_integer(v), do: v
+  defp to_int(v) when is_binary(v) do
+    case Integer.parse(v) do
+      {i, ""} -> i
+      _ -> nil
+    end
+  end
+
+  defp to_int(_), do: nil
 
   def update_asset_snapshot(%AssetSnapshot{} = snapshot, attrs) do
     snapshot

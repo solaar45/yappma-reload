@@ -24,6 +24,7 @@ defmodule WealthBackendWeb.AccountSnapshotController do
   # Accept direct params (from frontend)
   def create(conn, params) when is_map(params) do
     user = conn.assigns.current_user
+    # Analytics.create_account_snapshot already adds user_id as atom key
     with {:ok, %AccountSnapshot{} = snapshot} <- Analytics.create_account_snapshot(user.id, params) do
       conn
       |> put_status(:created)
