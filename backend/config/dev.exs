@@ -24,10 +24,10 @@ config :wealth_backend, WealthBackendWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "liJ+1Zyg7o1YqId/AE6qdDyNmFLInsbGLmFV/qfp8/mzd1vZBPy0gxcBdpC5Sjxw",
-  watchers: [
-    esbuild: {Esbuild, :install_and_run, [:wealth_backend, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:wealth_backend, ~w(--watch)]}
-  ]
+  watchers: []
+  # Disabled esbuild/tailwind since frontend is React-based (runs separately)
+  # esbuild: {Esbuild, :install_and_run, [:wealth_backend, ~w(--sourcemap=inline --watch)]},
+  # tailwind: {Tailwind, :install_and_run, [:wealth_backend, ~w(--watch)]}
 
 # ## SSL Support
 #
