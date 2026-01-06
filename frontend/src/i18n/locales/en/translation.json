@@ -29,6 +29,11 @@
     "optional": "optional",
     "noSelection": "None"
   },
+  "languages": {
+    "de": "German",
+    "en": "English",
+    "tr": "Turkish"
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "accounts": "Accounts",
