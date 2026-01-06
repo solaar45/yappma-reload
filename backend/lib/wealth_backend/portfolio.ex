@@ -83,31 +83,6 @@ defmodule WealthBackend.Portfolio do
     has_string_keys = Map.has_key?(attrs, "asset_type_id")
     has_atom_keys = Map.has_key?(attrs, :asset_type_id)
 
-    # Get asset type code
-    asset_type_id = cond do
-      has_string_keys -> attrs["asset_type_id"]
-      has_atom_keys -> attrs[:asset_type_id]
-      true -> nil
-    end
-
-    asset_type_code = if asset_type_id do
-      case get_asset_type!(asset_type_id) do
-        %{code: code} -> code
-        _ -> nil
-      end
-    else
-      nil
-    end
-
-    # Get ISIN/symbol if available
-    identifier = cond do
-      has_string_keys -> 
-        attrs["symbol"] || get_in(attrs, ["security_asset", "isin"])
-      has_atom_keys -> 
-        attrs[:symbol] || get_in(attrs, [:security_asset, :isin])
-      true -> nil
-    end
-
     # Check if risk_class already manually provided
     has_manual_risk = cond do
       has_string_keys -> Map.has_key?(attrs, "risk_class")
@@ -115,7 +90,40 @@ defmodule WealthBackend.Portfolio do
       true -> false
     end
 
-    if not has_manual_risk do
+    if has_manual_risk do
+      # User provided manual risk_class, set source to "manual"
+      if has_string_keys do
+        Map.put(attrs, "risk_class_source", "manual")
+      else
+        Map.put(attrs, :risk_class_source, "manual")
+      end
+    else
+      # Auto-determine risk class
+      # Get asset type code
+      asset_type_id = cond do
+        has_string_keys -> attrs["asset_type_id"]
+        has_atom_keys -> attrs[:asset_type_id]
+        true -> nil
+      end
+
+      asset_type_code = if asset_type_id do
+        case get_asset_type!(asset_type_id) do
+          %{code: code} -> code
+          _ -> nil
+        end
+      else
+        nil
+      end
+
+      # Get ISIN/symbol if available
+      identifier = cond do
+        has_string_keys -> 
+          attrs["symbol"] || get_in(attrs, ["security_asset", "isin"])
+        has_atom_keys -> 
+          attrs[:symbol] || get_in(attrs, [:security_asset, :isin])
+        true -> nil
+      end
+
       {risk_class, source} = RiskClassifier.determine_risk_class(asset_type_code, identifier)
 
       # Add keys in the same format as input
@@ -128,8 +136,6 @@ defmodule WealthBackend.Portfolio do
         |> Map.put(:risk_class, risk_class)
         |> Map.put(:risk_class_source, source)
       end
-    else
-      attrs
     end
   end
 

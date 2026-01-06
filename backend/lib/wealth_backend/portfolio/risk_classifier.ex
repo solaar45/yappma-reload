@@ -1,106 +1,135 @@
 defmodule WealthBackend.Portfolio.RiskClassifier do
   @moduledoc """
-  Automatically determines risk class for assets based on:
-  - Level 1: API data (ISIN/Ticker lookup for volatility)
-  - Level 2: Asset type mapping
+  Determines risk class for assets based on various data sources.
+  
+  Risk Classes:
+  1 - Very Low Risk (cash, money market)
+  2 - Low Risk (bonds, real estate)
+  3 - Medium Risk (diversified stocks/ETFs)
+  4 - High Risk (individual stocks, sector ETFs)
+  5 - Very High Risk (crypto, commodities, derivatives)
   """
 
   require Logger
 
   @type_risk_mapping %{
     "cash" => 1,
-    "insurance" => 2,
     "security" => 3,
-    "real_estate" => 3,
-    "collectible" => 3,
-    "commodity" => 4,
+    "insurance" => 2,
+    "real_estate" => 2,
+    "loan" => 2,
     "crypto" => 5,
+    "commodity" => 4,
+    "collectible" => 4,
     "other" => 3
   }
 
   @doc """
-  Determines risk class for an asset.
+  Determines risk class and source for an asset.
   Returns {risk_class, source} tuple.
+  
+  Sources:
+  - "auto_api" - from Yahoo Finance volatility
+  - "auto_type" - from asset type mapping
+  - "manual" - manually set by user
   """
-  def determine_risk_class(asset_type_code, isin_or_symbol \\ nil) do
-    # Level 1: Try API lookup if ISIN/symbol provided
-    case fetch_risk_from_api(isin_or_symbol) do
-      {:ok, risk_class} ->
+  def determine_risk_class(asset_type_code, identifier) when is_binary(identifier) do
+    case fetch_volatility_based_risk(identifier) do
+      {:ok, risk_class} -> 
         {risk_class, "auto_api"}
-
-      {:error, _reason} ->
-        # Level 2: Fallback to type mapping
-        risk_class = Map.get(@type_risk_mapping, asset_type_code, 3)
-        {risk_class, "auto_type"}
+      {:error, _reason} -> 
+        # Fall back to type-based classification
+        {Map.get(@type_risk_mapping, asset_type_code, 3), "auto_type"}
     end
   end
 
-  # Fetches risk class from Yahoo Finance API based on volatility.
-  # Maps volatility to 1-5 scale.
-  defp fetch_risk_from_api(nil), do: {:error, :no_identifier}
-  defp fetch_risk_from_api(""), do: {:error, :no_identifier}
+  def determine_risk_class(asset_type_code, _identifier) do
+    # No identifier provided, use type-based classification
+    {Map.get(@type_risk_mapping, asset_type_code, 3), "auto_type"}
+  end
 
-  defp fetch_risk_from_api(identifier) do
-    url = "https://query1.finance.yahoo.com/v8/finance/chart/#{identifier}?range=1y&interval=1d"
+  defp fetch_volatility_based_risk(identifier) do
+    case fetch_yahoo_data(identifier) do
+      {:ok, prices} when is_list(prices) and length(prices) > 1 ->
+        volatility = calculate_annualized_volatility(prices)
+        risk_class = volatility_to_risk_class(volatility)
+        
+        Logger.debug("Calculated annualized volatility: #{Float.round(volatility * 100, 2)}% -> Risk Class #{risk_class}")
+        
+        {:ok, risk_class}
+        
+      {:error, reason} ->
+        Logger.debug("Failed to fetch volatility data: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
 
-    case HTTPoison.get(url, [], timeout: 5000, recv_timeout: 5000) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+  defp fetch_yahoo_data(identifier) do
+    # Try to fetch 1 year of historical data
+    end_date = Date.utc_today()
+    start_date = Date.add(end_date, -365)
+    
+    url = "https://query1.finance.yahoo.com/v8/finance/chart/#{identifier}?period1=#{DateTime.to_unix(DateTime.new!(start_date, ~T[00:00:00]))}&period2=#{DateTime.to_unix(DateTime.new!(end_date, ~T[23:59:59]))}&interval=1d"
+    
+    case HTTPoison.get(url) do
+      {:ok, %{status_code: 200, body: body}} ->
         parse_yahoo_response(body)
-
-      {:ok, %HTTPoison.Response{status_code: status}} ->
-        Logger.debug("Yahoo Finance API returned status #{status} for #{identifier}")
-        {:error, :api_error}
-
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.debug("Yahoo Finance API error for #{identifier}: #{inspect(reason)}")
-        {:error, :network_error}
+        
+      {:ok, %{status_code: status}} ->
+        {:error, "HTTP #{status}"}
+        
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
   defp parse_yahoo_response(body) do
     case Jason.decode(body) do
       {:ok, %{"chart" => %{"result" => [result | _]}}} ->
-        calculate_risk_from_volatility(result)
-
-      _ ->
-        {:error, :parse_error}
+        case get_in(result, ["indicators", "quote", Access.at(0), "close"]) do
+          prices when is_list(prices) ->
+            # Filter out nil values
+            valid_prices = Enum.reject(prices, &is_nil/1)
+            {:ok, valid_prices}
+            
+          _ ->
+            {:error, "No price data found"}
+        end
+        
+      {:ok, _} ->
+        {:error, "Invalid response structure"}
+        
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
-  defp calculate_risk_from_volatility(%{"indicators" => %{"quote" => [%{"close" => closes}]}}) when is_list(closes) do
-    # Filter out nil values
-    valid_closes = Enum.reject(closes, &is_nil/1)
-
-    if length(valid_closes) < 20 do
-      {:error, :insufficient_data}
-    else
-      # Calculate daily returns
-      returns = Enum.zip(valid_closes, tl(valid_closes))
-                |> Enum.map(fn {prev, curr} -> (curr - prev) / prev end)
-
-      # Calculate standard deviation (volatility)
-      mean = Enum.sum(returns) / length(returns)
-      variance = Enum.map(returns, fn r -> :math.pow(r - mean, 2) end)
-                 |> Enum.sum()
-                 |> Kernel./(length(returns))
-      volatility = :math.sqrt(variance)
-
-      # Annualized volatility (approx 252 trading days)
-      annualized_vol = volatility * :math.sqrt(252) * 100
-
-      # Map volatility to risk class (1-5)
-      risk_class = cond do
-        annualized_vol < 5.0 -> 1   # Very low (e.g., money market)
-        annualized_vol < 10.0 -> 2  # Low (e.g., bonds)
-        annualized_vol < 20.0 -> 3  # Medium (e.g., diversified equity)
-        annualized_vol < 35.0 -> 4  # High (e.g., single stocks)
-        true -> 5                    # Very high (e.g., crypto, leveraged)
-      end
-
-      Logger.debug("Calculated annualized volatility: #{Float.round(annualized_vol, 2)}% -> Risk Class #{risk_class}")
-      {:ok, risk_class}
-    end
+  defp calculate_annualized_volatility(prices) do
+    # Calculate daily returns
+    returns = prices
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.map(fn [prev, curr] -> (curr - prev) / prev end)
+    
+    # Calculate standard deviation of returns
+    mean = Enum.sum(returns) / length(returns)
+    variance = returns
+    |> Enum.map(fn r -> :math.pow(r - mean, 2) end)
+    |> Enum.sum()
+    |> Kernel./(length(returns))
+    
+    daily_volatility = :math.sqrt(variance)
+    
+    # Annualize volatility (assuming ~252 trading days per year)
+    daily_volatility * :math.sqrt(252)
   end
 
-  defp calculate_risk_from_volatility(_), do: {:error, :invalid_data}
+  defp volatility_to_risk_class(volatility) do
+    cond do
+      volatility < 0.05 -> 1  # < 5% very low risk
+      volatility < 0.10 -> 2  # 5-10% low risk
+      volatility < 0.20 -> 3  # 10-20% medium risk
+      volatility < 0.30 -> 4  # 20-30% high risk
+      true -> 5               # > 30% very high risk
+    end
+  end
 end
