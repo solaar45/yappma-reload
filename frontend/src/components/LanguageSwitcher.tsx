@@ -9,13 +9,13 @@ import {
 import { Languages } from 'lucide-react';
 
 const languages = [
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+  { code: 'de', flag: '🇩🇪' },
+  { code: 'en', flag: '🇬🇧' },
+  { code: 'tr', flag: '🇹🇷' },
 ];
 
 export function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
 
@@ -28,7 +28,7 @@ export function LanguageSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-2">
           <Languages className="h-4 w-4" />
-          <span className="hidden md:inline">{currentLanguage.flag} {currentLanguage.name}</span>
+          <span className="hidden md:inline">{currentLanguage.flag} {t(`languages.${currentLanguage.code}`)}</span>
           <span className="md:hidden">{currentLanguage.flag}</span>
         </Button>
       </DropdownMenuTrigger>
@@ -40,7 +40,7 @@ export function LanguageSwitcher() {
             className="gap-2"
           >
             <span>{language.flag}</span>
-            <span>{language.name}</span>
+            <span>{t(`languages.${language.code}`)}</span>
             {language.code === i18n.language && (
               <span className="ml-auto text-xs">✓</span>
             )}
