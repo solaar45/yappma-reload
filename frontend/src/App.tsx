@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { UserProvider } from '@/contexts/UserContext';
 import { AppSidebar } from '@/components/app-sidebar';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -23,21 +24,23 @@ import InstitutionsPage from '@/pages/InstitutionsPage';
 import SnapshotsPage from '@/pages/SnapshotsPage';
 import TaxesPage from '@/pages/TaxesPage';
 
-function getBreadcrumb(pathname: string): string {
-  const breadcrumbs: Record<string, string> = {
-    '/': 'Dashboard',
-    '/accounts': 'Accounts',
-    '/assets': 'Assets',
-    '/snapshots': 'Snapshots',
-    '/institutions': 'Institutions',
-    '/taxes': 'Taxes',
+function AppContent() {
+  const { t } = useTranslation();
+  const location = useLocation();
+
+  const getBreadcrumb = (pathname: string): string => {
+    const breadcrumbs: Record<string, string> = {
+      '/': t('navigation.dashboard'),
+      '/accounts': t('navigation.accounts'),
+      '/assets': t('navigation.assets'),
+      '/snapshots': t('navigation.snapshots'),
+      '/institutions': t('navigation.institutions'),
+      '/taxes': t('taxes.title'),
+    };
+
+    return breadcrumbs[pathname] || t('navigation.dashboard');
   };
 
-  return breadcrumbs[pathname] || 'Dashboard';
-}
-
-function AppContent() {
-  const location = useLocation();
   const breadcrumb = getBreadcrumb(location.pathname);
 
   return (
@@ -64,11 +67,7 @@ function AppContent() {
         {/* Wrap Routes with ErrorBoundary */}
         <ErrorBoundary
           onError={(error, errorInfo) => {
-            // Log error for debugging
             logger.error('Route Error Caught', { error, errorInfo });
-
-            // TODO: Send to error tracking service
-            // Example: sendToErrorTracking(error, errorInfo);
           }}
         >
           <Routes>

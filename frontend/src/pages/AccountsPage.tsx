@@ -167,10 +167,11 @@ export default function AccountsPage() {
         <DataTableColumnHeader column={column} title={t('accounts.type') || 'Type'} />
       ),
       cell: ({ row }) => {
-        const type = row.original.type.replace('_', ' ');
+        const code = row.original.type;
+        const translatedType = t(`accountTypes.${code}`, { defaultValue: code.replace('_', ' ') });
         return (
           <Badge variant="outline" className="capitalize">
-            {type}
+            {translatedType}
           </Badge>
         );
       },
@@ -417,7 +418,7 @@ export default function AccountsPage() {
                     <SelectItem value="all">{t('accounts.allTypes') || 'All Types'}</SelectItem>
                     {accountTypes.map((type) => (
                       <SelectItem key={type} value={type} className="capitalize">
-                        {type.replace('_', ' ')}
+                        {t(`accountTypes.${type}`, { defaultValue: type.replace('_', ' ') })}
                       </SelectItem>
                     ))}
                   </SelectContent>

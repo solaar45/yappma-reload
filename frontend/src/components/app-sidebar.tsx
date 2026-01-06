@@ -1,73 +1,150 @@
-"use client"
-
-import * as React from "react"
-import {
-  LayoutDashboard,
-  Wallet,
-  PiggyBank,
-  Calendar,
-  Percent,
-} from "lucide-react"
-
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { ChevronUp, User2, Settings, LogOut, Wallet, Landmark, PiggyBank, Camera, Building2, Receipt } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { NavLink } from 'react-router-dom';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
-} from "@/components/ui/sidebar"
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { useUser } from '@/contexts/UserContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { cn } from '@/lib/utils';
 
-const data = {
-  user: {
-    name: "Demo User",
-    email: "demo@yappma.local",
-    avatar: "/avatars/user.jpg",
-  },
-  navMain: [
+export function AppSidebar() {
+  const { t } = useTranslation();
+  const { user, logout } = useUser();
+
+  const items = [
     {
-      title: "Dashboard",
-      url: "/",
-      icon: LayoutDashboard,
+      title: t('navigation.dashboard'),
+      url: '/',
+      icon: Landmark,
     },
     {
-      title: "Accounts",
-      url: "/accounts",
+      title: t('navigation.accounts'),
+      url: '/accounts',
       icon: Wallet,
     },
     {
-      title: "Assets",
-      url: "/assets",
+      title: t('navigation.assets'),
+      url: '/assets',
       icon: PiggyBank,
     },
     {
-      title: "Snapshots",
-      url: "/snapshots",
-      icon: Calendar,
+      title: t('navigation.snapshots'),
+      url: '/snapshots',
+      icon: Camera,
     },
     {
-      title: "Taxes",
-      url: "/taxes",
-      icon: Percent,
+      title: t('navigation.institutions'),
+      url: '/institutions',
+      icon: Building2,
     },
-  ],
-}
+    {
+      title: t('taxes.title'),
+      url: '/taxes',
+      icon: Receipt,
+    },
+  ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const userInitials = user?.name
+    ? user.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : 'U';
+
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={[{ name: "YAPPMA", logo: LayoutDashboard, plan: "Personal" }]} />
-      </SidebarHeader>
+    <Sidebar>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <SidebarGroup>
+          <SidebarGroupLabel>YAPPMA</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center gap-3',
+                          isActive && 'bg-sidebar-accent text-sidebar-accent-foreground'
+                        )
+                      }
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                >
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarFallback className="rounded-lg">{userInitials}</AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">{user?.name || 'User'}</span>
+                    <span className="truncate text-xs">{user?.email}</span>
+                  </div>
+                  <ChevronUp className="ml-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                side="top"
+                align="end"
+                sideOffset={4}
+              >
+                <DropdownMenuItem>
+                  <User2 className="mr-2 h-4 w-4" />
+                  <span>{t('user.profile')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>{t('user.settings')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <div className="px-2 py-1.5">
+                  <LanguageSwitcher />
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>{t('user.logout')}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
-  )
+  );
 }
