@@ -79,7 +79,7 @@ export interface Account {
 
 export interface AssetType {
   id: number;
-  code: 'cash' | 'security' | 'insurance' | 'loan' | 'real_estate' | 'other';
+  code: 'cash' | 'security' | 'insurance' | 'loan' | 'real_estate' | 'crypto' | 'commodity' | 'collectible' | 'other';
   description: string;
 }
 
@@ -116,6 +116,8 @@ export interface Asset {
   is_active: boolean;
   created_at_date: string | null;
   closed_at: string | null;
+  risk_class?: number | null;
+  risk_class_source?: 'auto_api' | 'auto_type' | 'manual' | null;
   user_id: number;
   account_id: number | null;
   asset_type_id: number;
