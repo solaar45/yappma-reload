@@ -135,11 +135,20 @@ defmodule WealthBackend.Portfolio do
 
   defp create_asset_subtype(asset, attrs) do
     asset_type = Repo.get!(AssetType, asset.asset_type_id)
+    
+    # Determine if attrs uses string or atom keys
+    has_string_keys = Map.has_key?(attrs, "asset_type_id")
 
     case asset_type.code do
       "security" ->
         if security_attrs = attrs[:security_asset] || attrs["security_asset"] do
-          security_attrs = Map.put(security_attrs, :asset_id, asset.id)
+          # Add asset_id in the same key format as the rest of attrs
+          security_attrs = if has_string_keys do
+            Map.put(security_attrs, "asset_id", asset.id)
+          else
+            Map.put(security_attrs, :asset_id, asset.id)
+          end
+          
           %SecurityAsset{}
           |> SecurityAsset.changeset(security_attrs)
           |> Repo.insert()
@@ -149,7 +158,12 @@ defmodule WealthBackend.Portfolio do
 
       "insurance" ->
         if insurance_attrs = attrs[:insurance_asset] || attrs["insurance_asset"] do
-          insurance_attrs = Map.put(insurance_attrs, :asset_id, asset.id)
+          insurance_attrs = if has_string_keys do
+            Map.put(insurance_attrs, "asset_id", asset.id)
+          else
+            Map.put(insurance_attrs, :asset_id, asset.id)
+          end
+          
           %InsuranceAsset{}
           |> InsuranceAsset.changeset(insurance_attrs)
           |> Repo.insert()
@@ -159,7 +173,12 @@ defmodule WealthBackend.Portfolio do
 
       "loan" ->
         if loan_attrs = attrs[:loan_asset] || attrs["loan_asset"] do
-          loan_attrs = Map.put(loan_attrs, :asset_id, asset.id)
+          loan_attrs = if has_string_keys do
+            Map.put(loan_attrs, "asset_id", asset.id)
+          else
+            Map.put(loan_attrs, :asset_id, asset.id)
+          end
+          
           %LoanAsset{}
           |> LoanAsset.changeset(loan_attrs)
           |> Repo.insert()
@@ -169,7 +188,12 @@ defmodule WealthBackend.Portfolio do
 
       "real_estate" ->
         if re_attrs = attrs[:real_estate_asset] || attrs["real_estate_asset"] do
-          re_attrs = Map.put(re_attrs, :asset_id, asset.id)
+          re_attrs = if has_string_keys do
+            Map.put(re_attrs, "asset_id", asset.id)
+          else
+            Map.put(re_attrs, :asset_id, asset.id)
+          end
+          
           %RealEstateAsset{}
           |> RealEstateAsset.changeset(re_attrs)
           |> Repo.insert()
