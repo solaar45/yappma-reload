@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCreateAsset } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { apiClient } from '@/lib/api/client';
@@ -32,6 +33,7 @@ interface CreateAssetDialogProps {
 }
 
 export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const { createAsset, loading, error } = useCreateAsset();
   const [open, setOpen] = useState(false);
@@ -53,11 +55,9 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       setLoadingTypes(true);
       try {
         const response = await apiClient.get<{ data: AssetType[] }>('asset_types');
-        // Handle both response formats
         const types = Array.isArray(response) ? response : (response.data || []);
         setAssetTypes(types);
         
-        // Set default to 'security' if available
         const securityType = types.find((t) => t.code === 'security');
         if (securityType) {
           setFormData((prev) => ({ ...prev, asset_type_id: securityType.id.toString() }));
@@ -97,6 +97,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
     if (result) {
       setOpen(false);
       setFormData({ name: '', asset_type_id: '', isin: '', ticker: '', currency: 'EUR', is_active: true });
+      setAccountId('');
       onSuccess?.();
     }
   };
@@ -106,20 +107,20 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4" />
-          Add Asset
+          {t('assets.createAsset') || 'Add Asset'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Asset</DialogTitle>
+            <DialogTitle>{t('assets.createAsset') || 'Create New Asset'}</DialogTitle>
             <DialogDescription>
-              Add a new asset to track your investments.
+              {t('assets.addFirstDescription') || 'Add a new asset to track your investments.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Asset Name *</Label>
+              <Label htmlFor="name">{t('assets.assetName') || 'Asset Name'} *</Label>
               <Input
                 id="name"
                 placeholder="e.g., Apple Inc."
@@ -129,7 +130,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="asset_type">Asset Type *</Label>
+              <Label htmlFor="asset_type">{t('assets.assetType') || 'Asset Type'} *</Label>
               <Select
                 value={formData.asset_type_id}
                 onValueChange={(value) =>
@@ -138,19 +139,19 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 disabled={loadingTypes}
               >
                 <SelectTrigger id="asset_type">
-                  <SelectValue placeholder="Select asset type" />
+                  <SelectValue placeholder={t('assets.allTypes') || "Select asset type"} />
                 </SelectTrigger>
                 <SelectContent>
                   {assetTypes.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
-                      {type.description || type.code}
+                      {t(`assetTypes.${type.code}`, { defaultValue: type.description || type.code })}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="ticker">Ticker Symbol (optional)</Label>
+              <Label htmlFor="ticker">{t('assets.ticker') || 'Ticker Symbol'} ({t('common.optional') || 'optional'})</Label>
               <Input
                 id="ticker"
                 placeholder="e.g., AAPL"
@@ -159,7 +160,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="isin">ISIN (optional)</Label>
+              <Label htmlFor="isin">{t('assets.isin') || 'ISIN'} ({t('common.optional') || 'optional'})</Label>
               <Input
                 id="isin"
                 placeholder="e.g., US0378331005"
@@ -168,7 +169,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="currency">Currency *</Label>
+              <Label htmlFor="currency">{t('common.currency') || 'Currency'} *</Label>
               <Input
                 id="currency"
                 placeholder="EUR"
@@ -178,13 +179,13 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="account">Verknüpftes Konto / Depot (optional)</Label>
+              <Label htmlFor="account">{t('assets.account') || 'Linked Account'} ({t('common.optional') || 'optional'})</Label>
               <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
                 <SelectTrigger id="account">
-                  <SelectValue placeholder="Kein Konto ausgewählt" />
+                  <SelectValue placeholder={t('assets.allAccounts') || "No account"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Kein Konto</SelectItem>
+                  <SelectItem value="_none">{t('assets.allAccounts') || "No Account"}</SelectItem>
                   {accounts
                     ?.filter((a) => a.is_active)
                     .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
@@ -205,10 +206,10 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="is-active" className="text-base">
-                  Asset Status
+                  {t('assets.status') || 'Asset Status'}
                 </Label>
                 <div className="text-sm text-muted-foreground">
-                  {formData.is_active ? 'Active' : 'Inactive'}
+                  {formData.is_active ? (t('assets.active') || 'Active') : (t('assets.inactive') || 'Inactive')}
                 </div>
               </div>
               <Switch
@@ -221,13 +222,13 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
               disabled={loading || !formData.name || !formData.asset_type_id}
             >
-              {loading ? 'Creating...' : 'Create Asset'}
+              {loading ? (t('common.loading') || 'Creating...') : (t('common.create') || 'Create Asset')}
             </Button>
           </DialogFooter>
         </form>

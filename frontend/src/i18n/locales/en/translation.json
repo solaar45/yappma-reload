@@ -25,7 +25,9 @@
     "noResults": "No results.",
     "previous": "Previous",
     "next": "Next",
-    "rowsPerPage": "Rows per page"
+    "rowsPerPage": "Rows per page",
+    "optional": "optional",
+    "noSelection": "None"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -34,6 +36,11 @@
     "snapshots": "Snapshots",
     "institutions": "Institutions",
     "portfolio": "Portfolio",
+    "settings": "Settings"
+  },
+  "user": {
+    "profile": "Profile",
+    "logout": "Logout",
     "settings": "Settings"
   },
   "dashboard": {
