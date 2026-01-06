@@ -27,6 +27,7 @@ import { Plus } from 'lucide-react';
 interface CreateInstitutionDialogProps {
   onSuccess?: () => void;
   compact?: boolean;
+  children?: React.ReactNode;
 }
 
 const INSTITUTION_TYPES = [
@@ -46,7 +47,7 @@ const COUNTRIES = [
   { value: 'other', label: 'Other' },
 ] as const;
 
-export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateInstitutionDialogProps) {
+export function CreateInstitutionDialog({ onSuccess, compact = false, children }: CreateInstitutionDialogProps) {
   const { t } = useTranslation();
   const { userId } = useUser();
   const [open, setOpen] = useState(false);
@@ -70,8 +71,8 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
         institution: {
           name: name.trim(),
           type,
-            country,
-            website: website ? website.trim() : undefined,
+          country,
+          website: website ? website.trim() : undefined,
           user_id: userId,
         },
       });
@@ -90,13 +91,15 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
   };
 
   const getInstitutionTypeLabel = (value: string) => {
-    return t(`institutions.types.${value}`) || value;
+    return t(`institutions.types.${value}` as any) || value;
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {compact ? (
+        {children ? (
+          children
+        ) : compact ? (
           <Button variant="ghost" size="sm" type="button">
             <Plus className="h-3 w-3 mr-1" />
             {t('institutions.new') || 'New'}

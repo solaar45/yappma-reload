@@ -8,6 +8,7 @@ interface CreateAssetData {
   name: string;
   symbol?: string;
   currency?: string;
+  is_active?: boolean;
   account_id?: number;
   security_asset?: {
     isin?: string;

@@ -73,7 +73,7 @@ import { useDashboard } from '@/lib/api/hooks';
 import { formatCurrency } from '@/lib/formatters';
 
 function Dashboard() {
-  const { netWorth, loading, error } = useDashboard({ userId: 1 });
+  const { netWorth, loading, error } = useDashboard({ userId: 14 });
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;

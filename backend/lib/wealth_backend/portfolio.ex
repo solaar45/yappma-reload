@@ -247,7 +247,7 @@ defmodule WealthBackend.Portfolio do
 
   def update_asset(%Asset{} = asset, attrs) do
     asset
-    |> Asset.changeset(attrs)
+    |> Asset.update_changeset(attrs)
     |> Repo.update()
   end
 

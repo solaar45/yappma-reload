@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useAccounts } from '@/lib/api/hooks';
+import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,7 +34,8 @@ import type { Account } from '@/lib/api/types';
 
 export default function AccountsPage() {
   const { t } = useTranslation();
-  const { accounts, isLoading: loading, error, refetch } = useAccounts();
+  const { userId } = useUser();
+  const { accounts, isLoading: loading, error, refetch } = useAccounts({ userId: userId ?? undefined });
   const [searchTerm, setSearchTerm] = useState('');
   const [institutionFilter, setInstitutionFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');

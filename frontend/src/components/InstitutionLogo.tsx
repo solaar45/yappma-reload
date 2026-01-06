@@ -8,6 +8,7 @@ interface Props {
   name: string;
   domain?: string | null;
   ticker?: string | null;
+  isin?: string | null;
   size?: SizeKey;
   className?: string;
 }
@@ -25,18 +26,30 @@ function initialsFromName(name: string) {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-export const InstitutionLogo: React.FC<Props> = ({ name, domain, ticker, size = 'medium', className }) => {
-  const token = import.meta.env.VITE_LOGO_DEV_TOKEN;
+export const InstitutionLogo: React.FC<Props> = ({ name, domain, ticker, isin, size = 'medium', className }) => {
+  const logoDevToken = import.meta.env.VITE_LOGO_DEV_TOKEN;
+  const logokitToken = import.meta.env.VITE_LOGOKIT_TOKEN || logoDevToken; // Fallback to dev token if logokit not set
   const px = SIZE_MAP[size];
 
-  // Build URL priority: ticker -> domain -> name
+  // Build URL priority: isin -> ticker -> domain -> name
   const buildUrl = () => {
-    if (!token) return null;
     try {
-      const encodedToken = encodeURIComponent(String(token));
-      if (ticker) return `https://img.logo.dev/ticker/${encodeURIComponent(String(ticker))}?token=${encodedToken}`;
-      if (domain) return `https://img.logo.dev/${encodeURIComponent(String(domain))}?token=${encodedToken}`;
-      return `https://img.logo.dev/name/${encodeURIComponent(String(name))}?token=${encodedToken}`;
+      // Logokit API for ISIN and Ticker (uses logokitToken)
+      if (logokitToken) {
+        const encodedLogokitToken = encodeURIComponent(String(logokitToken));
+        if (isin) return `https://img.logokit.com/ticker/${encodeURIComponent(String(isin))}?token=${encodedLogokitToken}`;
+        if (ticker) return `https://img.logokit.com/ticker/${encodeURIComponent(String(ticker))}?token=${encodedLogokitToken}`;
+        // Logokit API for Domain
+        if (domain) return `https://img.logokit.com/${encodeURIComponent(String(domain))}?token=${encodedLogokitToken}`;
+      }
+
+      // Fallback: Logo.dev Name API (uses logoDevToken)
+      if (logoDevToken) {
+        const encodedLogoDevToken = encodeURIComponent(String(logoDevToken));
+        return `https://img.logo.dev/name/${encodeURIComponent(String(name))}?token=${encodedLogoDevToken}`;
+      }
+
+      return null;
     } catch (e) {
       return null;
     }

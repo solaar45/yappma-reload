@@ -28,7 +28,7 @@ export function LanguageSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-2">
           <Languages className="h-4 w-4" />
-          <span className="hidden md:inline">{currentLanguage.flag} {t(`languages.${currentLanguage.code}`)}</span>
+          <span className="hidden md:inline">{currentLanguage.flag} {t(`languages.${currentLanguage.code}` as any)}</span>
           <span className="md:hidden">{currentLanguage.flag}</span>
         </Button>
       </DropdownMenuTrigger>
@@ -40,7 +40,7 @@ export function LanguageSwitcher() {
             className="gap-2"
           >
             <span>{language.flag}</span>
-            <span>{t(`languages.${language.code}`)}</span>
+            <span>{t(`languages.${language.code}` as any)}</span>
             {language.code === i18n.language && (
               <span className="ml-auto text-xs">✓</span>
             )}

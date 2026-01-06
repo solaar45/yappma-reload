@@ -14,7 +14,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   // TODO: Replace with actual auth logic
   // For now, we use a mock user with ID 1
   const [user, setUser] = useState<User | null>({
-    id: 1,
+    id: 14,
     email: 'demo@yappma.local',
     name: 'Demo User',
     currency_default: 'EUR',

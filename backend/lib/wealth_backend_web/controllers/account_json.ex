@@ -34,7 +34,8 @@ defmodule WealthBackendWeb.AccountJSON do
       id: institution.id,
       name: institution.name,
       type: institution.type,
-      country: institution.country
+      country: institution.country,
+      website: institution.website
     }
   end
 

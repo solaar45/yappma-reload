@@ -17,10 +17,10 @@ defmodule WealthBackend.Portfolio.Asset do
     belongs_to :asset_type, WealthBackend.Portfolio.AssetType
 
     # Polymorphic associations
-    has_one :security_asset, WealthBackend.Portfolio.SecurityAsset
-    has_one :insurance_asset, WealthBackend.Portfolio.InsuranceAsset
-    has_one :loan_asset, WealthBackend.Portfolio.LoanAsset
-    has_one :real_estate_asset, WealthBackend.Portfolio.RealEstateAsset
+    has_one :security_asset, WealthBackend.Portfolio.SecurityAsset, on_replace: :update
+    has_one :insurance_asset, WealthBackend.Portfolio.InsuranceAsset, on_replace: :update
+    has_one :loan_asset, WealthBackend.Portfolio.LoanAsset, on_replace: :update
+    has_one :real_estate_asset, WealthBackend.Portfolio.RealEstateAsset, on_replace: :update
     has_many :snapshots, WealthBackend.Analytics.AssetSnapshot
 
     timestamps(type: :utc_datetime)
@@ -36,5 +36,14 @@ defmodule WealthBackend.Portfolio.Asset do
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:account_id)
     |> foreign_key_constraint(:asset_type_id)
+  end
+
+  def update_changeset(asset, attrs) do
+    asset
+    |> changeset(attrs)
+    |> cast_assoc(:security_asset, with: &WealthBackend.Portfolio.SecurityAsset.changeset/2)
+    |> cast_assoc(:insurance_asset, with: &WealthBackend.Portfolio.InsuranceAsset.changeset/2)
+    |> cast_assoc(:loan_asset, with: &WealthBackend.Portfolio.LoanAsset.changeset/2)
+    |> cast_assoc(:real_estate_asset, with: &WealthBackend.Portfolio.RealEstateAsset.changeset/2)
   end
 end

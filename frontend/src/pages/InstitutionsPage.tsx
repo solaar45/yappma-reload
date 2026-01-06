@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import {
   Select,
   SelectContent,
@@ -50,8 +51,8 @@ export default function InstitutionsPage() {
     setRowSelection({});
   };
 
-  const getTypeLabel = (type: string) => {
-    return t(`institutions.types.${type}`);
+  const getTypeLabel = (type: string): string => {
+    return t(`institutions.types.${type}` as any) || type;
   };
 
   // Get unique types and countries for filters
@@ -135,7 +136,15 @@ export default function InstitutionsPage() {
         <DataTableColumnHeader column={column} title={t('institutions.name')} />
       ),
       cell: ({ row }) => (
-        <div className="font-semibold">{row.getValue('name')}</div>
+        <div className="flex items-center gap-3">
+          <InstitutionLogo
+            name={row.getValue('name')}
+            domain={row.original.website ? row.original.website.replace(/^https?:\/\//, '') : undefined}
+            size="medium"
+            className="flex-shrink-0 rounded-full"
+          />
+          <div className="font-semibold">{row.getValue('name')}</div>
+        </div>
       ),
     },
     {

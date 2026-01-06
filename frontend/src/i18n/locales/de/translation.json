@@ -173,6 +173,7 @@
     "deleteSelectedConfirm": "Sind Sie sicher, dass Sie die ausgewählten Assets löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "errorLoading": "Fehler beim Laden der Assets",
     "risk": "Risiko",
+    "riskUnknown": "Unbekannt",
     "riskVeryLow": "Sehr Niedrig",
     "riskLow": "Niedrig",
     "riskMedium": "Mittel",
@@ -236,7 +237,9 @@
     "snapshotsSelected": "Momentaufnahmen ausgewählt",
     "deleteSelected": "Ausgewählte löschen",
     "deleteSelectedTitle": "Ausgewählte Momentaufnahmen löschen",
-    "deleteSelectedConfirm": "Sind Sie sicher, dass Sie die ausgewählten Momentaufnahmen löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
+    "deleteSelectedConfirm": "Sind Sie sicher, dass Sie die ausgewählten Momentaufnahmen löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "searchPlaceholder": "Suche nach Entität...",
+    "allTypes": "Alle Typen"
   },
   "taxes": {
     "title": "Steuern",

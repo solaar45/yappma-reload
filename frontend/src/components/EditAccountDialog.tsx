@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Pencil, AlertCircle } from 'lucide-react';
-import { CreateInstitutionDialog } from './CreateInstitutionDialog';
+
 import InstitutionLogo from '@/components/InstitutionLogo';
 
 interface EditAccountDialogProps {
@@ -51,7 +51,7 @@ const CURRENCIES = [
 
 export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps) {
   const { userId } = useUser();
-  const { institutions, loading: institutionsLoading, refetch: refetchInstitutions } = useInstitutions({ userId: userId! });
+  const { institutions, loading: institutionsLoading } = useInstitutions({ userId: userId! });
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState(account.name);
@@ -101,10 +101,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
     }
   };
 
-  const handleInstitutionCreated = () => {
-    // Only refetch when a new institution is created
-    refetchInstitutions();
-  };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -135,7 +132,6 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="institution">Institution *</Label>
-                <CreateInstitutionDialog compact onSuccess={handleInstitutionCreated} />
               </div>
               {institutionsLoading ? (
                 <div className="flex items-center justify-center h-10 border rounded-md bg-muted">
@@ -171,7 +167,10 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
             </div>
             <div className="grid gap-2">
               <Label htmlFor="type">Account Type *</Label>
-              <Select value={type} onValueChange={setType}>
+              <Select
+                value={type}
+                onValueChange={(value) => setType(value as any)}
+              >
                 <SelectTrigger id="type">
                   <SelectValue />
                 </SelectTrigger>
@@ -219,8 +218,8 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={loading || !name.trim() || !institutionId || institutions?.length === 0}
             >
               {loading ? 'Saving...' : 'Save Changes'}

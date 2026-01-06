@@ -173,6 +173,7 @@
     "deleteSelectedConfirm": "Seçilen varlıkları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "errorLoading": "Varlıklar yüklenirken hata oluştu",
     "risk": "Risk",
+    "riskUnknown": "Bilinmiyor",
     "riskVeryLow": "Çok Düşük",
     "riskLow": "Düşük",
     "riskMedium": "Orta",
@@ -239,7 +240,8 @@
     "deleteSelectedConfirm": "Seçilen görüntüleri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "dateFrom": "Başlangıç Tarihi",
     "dateTo": "Bitiş Tarihi",
-    "searchPlaceholder": "Varlık/Hesap ismine göre ara..."
+    "searchPlaceholder": "Varlık/Hesap ismine göre ara...",
+    "allTypes": "Tüm Türler"
   },
   "taxes": {
     "title": "Vergiler",

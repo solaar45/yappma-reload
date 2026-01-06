@@ -9,9 +9,10 @@ defmodule WealthBackendWeb.InstitutionController do
   @doc """
   List all institutions for the current user.
   """
-  def index(conn, _params) do
+  def index(conn, params) do
     # TODO: Get user_id from session/auth when authentication is implemented
-    user_id = 1
+    user_id = Map.get(params, "user_id", 1)
+    user_id = if is_binary(user_id), do: String.to_integer(user_id), else: user_id
 
     institutions = Institutions.list_available_institutions(user_id)
     render(conn, :index, institutions: institutions)

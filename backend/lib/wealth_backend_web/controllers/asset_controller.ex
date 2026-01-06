@@ -11,6 +11,7 @@ defmodule WealthBackendWeb.AssetController do
 
   def index(conn, params) do
     user_id = Map.get(params, "user_id", @default_user_id)
+    user_id = if is_binary(user_id), do: String.to_integer(user_id), else: user_id
     assets = Portfolio.list_user_assets(user_id)
     render(conn, :index, assets: assets)
   end

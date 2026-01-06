@@ -12,6 +12,7 @@ defmodule WealthBackendWeb.AccountController do
 
   def index(conn, params) do
     user_id = Map.get(params, "user_id", @default_user_id)
+    user_id = if is_binary(user_id), do: String.to_integer(user_id), else: user_id
     accounts = Accounts.list_accounts(user_id)
     render(conn, :index, accounts: accounts)
   end

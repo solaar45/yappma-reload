@@ -1,4 +1,4 @@
-import { ChevronUp, User2, Settings, LogOut, Wallet, Landmark, PiggyBank, Camera, Building2, Receipt } from 'lucide-react';
+import { ChevronUp, User2, Settings, LogOut, Wallet, Landmark, PiggyBank, Camera, Receipt } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -49,11 +49,7 @@ export function AppSidebar() {
       url: '/snapshots',
       icon: Camera,
     },
-    {
-      title: t('navigation.institutions'),
-      url: '/institutions',
-      icon: Building2,
-    },
+
     {
       title: t('taxes.title'),
       url: '/taxes',
@@ -63,10 +59,10 @@ export function AppSidebar() {
 
   const userInitials = user?.name
     ? user.name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
     : 'U';
 
   return (

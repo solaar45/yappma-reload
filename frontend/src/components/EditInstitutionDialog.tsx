@@ -126,7 +126,10 @@ export function EditInstitutionDialog({ institution, onSuccess }: EditInstitutio
             </div>
             <div className="grid gap-2">
               <Label htmlFor="type">Type *</Label>
-              <Select value={type} onValueChange={setType}>
+              <Select
+                value={type}
+                onValueChange={(value) => setType(value as any)}
+              >
                 <SelectTrigger id="type">
                   <SelectValue />
                 </SelectTrigger>

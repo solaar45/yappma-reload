@@ -5,6 +5,7 @@
 
 alias WealthBackend.Repo
 alias WealthBackend.Accounts
+alias WealthBackend.Institutions
 alias WealthBackend.Portfolio
 alias WealthBackend.Analytics
 
@@ -20,7 +21,7 @@ Repo.delete_all(WealthBackend.Portfolio.LoanAsset)
 Repo.delete_all(WealthBackend.Portfolio.RealEstateAsset)
 Repo.delete_all(WealthBackend.Portfolio.Asset)
 Repo.delete_all(WealthBackend.Accounts.Account)
-Repo.delete_all(WealthBackend.Accounts.Institution)
+Repo.delete_all(WealthBackend.Institutions.Institution)
 Repo.delete_all(WealthBackend.Portfolio.AssetType)
 Repo.delete_all(WealthBackend.Accounts.User)
 
@@ -63,30 +64,115 @@ IO.puts("✅ Creating demo user...")
 })
 
 # ============================================================================
-# 3. Create Institutions
+# 3. Create Institutions (Global Master Data)
 # ============================================================================
 IO.puts("✅ Creating institutions...")
 
-{:ok, bank} = Accounts.create_institution(%{
-  name: "Deutsche Bank",
-  type: :bank,
-  country: "DE",
-  user_id: user.id
-})
+# ============================================================================
+# 3. Create Institutions (Global Master Data)
+# ============================================================================
+IO.puts("✅ Creating institutions...")
 
-{:ok, broker} = Accounts.create_institution(%{
-  name: "Trade Republic",
-  type: :broker,
-  country: "DE",
-  user_id: user.id
-})
+institutions_data = [
+  # --- Major Banks ---
+  %{name: "Deutsche Bank", website: "deutsche-bank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Commerzbank", website: "commerzbank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "ING DiBa", website: "ing.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "DKB", website: "dkb.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Postbank", website: "postbank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Comdirect", website: "comdirect.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Consorsbank", website: "consorsbank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "HypoVereinsbank", website: "hvb.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Targobank", website: "targobank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Santander Consumer Bank", website: "santander.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Norisbank", website: "norisbank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "1822direkt", website: "1822direkt.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Sparkasse", website: "sparkasse.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Volksbank Raiffeisenbank", website: "vr.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Sparda-Bank", website: "sparda.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Deutsche Kreditbank", website: "dkb.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "GLS Bank", website: "gls.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "DBK", website: "dbk.de", type: "bank", category: "bank", country: "DE"},
 
-{:ok, insurance_company} = Accounts.create_institution(%{
-  name: "Allianz",
-  type: :insurance,
-  country: "DE",
-  user_id: user.id
-})
+  # --- Neobanks ---
+  %{name: "N26", website: "n26.com", type: "bank", category: "neobank", country: "DE"},
+  %{name: "C24 Bank", website: "c24.de", type: "bank", category: "neobank", country: "DE"},
+  %{name: "Revolut", website: "revolut.com", type: "bank", category: "neobank", country: "DE"},
+  %{name: "Bunq", website: "bunq.com", type: "bank", category: "neobank", country: "NL"},
+  %{name: "Tomorrow", website: "tomorrow.one", type: "bank", category: "neobank", country: "DE"},
+  %{name: "Vivid Money", website: "vivid.money", type: "bank", category: "neobank", country: "DE"},
+  %{name: "Klarna", website: "klarna.com", type: "bank", category: "neobank", country: "SE"},
+
+  # --- Brokers ---
+  %{name: "Trade Republic", website: "traderepublic.com", type: "broker", category: "broker", country: "DE"},
+  %{name: "Scalable Capital", website: "scalable.capital", type: "broker", category: "broker", country: "DE"},
+  %{name: "Flatex", website: "flatex.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "Smartbroker", website: "smartbroker.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "onvista bank", website: "onvista-bank.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "JustTRADE", website: "justtrade.com", type: "broker", category: "broker", country: "DE"},
+  %{name: "Finanzen.net ZERO", website: "finanzen.net", type: "broker", category: "broker", country: "DE"},
+  %{name: "S Broker", website: "sbroker.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "Degiro", website: "degiro.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "CapTrader", website: "captrader.com", type: "broker", category: "broker", country: "DE"},
+  %{name: "Lynx", website: "lynxbroker.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "Interactive Brokers", website: "interactivebrokers.com", type: "broker", category: "broker", country: "US"},
+  %{name: "Trading 212", website: "trading212.com", type: "broker", category: "broker", country: "UK"},
+  %{name: "eToro", website: "etoro.com", type: "broker", category: "broker", country: "CY"},
+
+  # --- Insurance ---
+  %{name: "Allianz", website: "allianz.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "HUK-COBURG", website: "huk.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "CosmosDirekt", website: "cosmosdirekt.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "ERGO", website: "ergo.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "AXA", website: "axa.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "R+V Versicherung", website: "ruv.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Generali", website: "generali.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Debeka", website: "debeka.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Signal Iduna", website: "signal-iduna.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "HanseMerkur", website: "hansemerkur.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Gothaer", website: "gothaer.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Zurich", website: "zurich.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "DEVK", website: "devk.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Techniker Krankenkasse", website: "tk.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "AOK", website: "aok.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "BARMER", website: "barmer.de", type: "insurance", category: "insurance", country: "DE"},
+
+  # --- Crypto ---
+  %{name: "Binance", website: "binance.com", type: "other", category: "crypto", country: "MT"},
+  %{name: "Coinbase", website: "coinbase.com", type: "other", category: "crypto", country: "US"},
+  %{name: "Kraken", website: "kraken.com", type: "other", category: "crypto", country: "US"},
+  %{name: "Bitpanda", website: "bitpanda.com", type: "other", category: "crypto", country: "AT"},
+  %{name: "Bison", website: "bisonapp.com", type: "other", category: "crypto", country: "DE"},
+  %{name: "Crypto.com", website: "crypto.com", type: "other", category: "crypto", country: "SG"},
+  %{name: "Ledger", website: "ledger.com", type: "other", category: "crypto", country: "FR"},
+  %{name: "Trezor", website: "trezor.io", type: "other", category: "crypto", country: "CZ"},
+  %{name: "KuCoin", website: "kucoin.com", type: "other", category: "crypto", country: "SC"},
+  %{name: "Bybit", website: "bybit.com", type: "other", category: "crypto", country: "AE"},
+  %{name: "Bitvavo", website: "bitvavo.com", type: "other", category: "crypto", country: "NL"}
+]
+
+# Insert all institutions
+institutions_map = Enum.reduce(institutions_data, %{}, fn attrs, acc ->
+  case Institutions.create_institution(Map.put(attrs, :is_system_provided, true)) do
+    {:ok, institution} -> Map.put(acc, attrs.name, institution)
+    {:error, changeset} -> 
+      IO.puts("❌ Failed to create #{attrs.name}: #{inspect(changeset.errors)}")
+      acc
+  end
+end)
+
+# Retrieve specific institutions for account associations (using new map for safety)
+bank = institutions_map["Deutsche Bank"]
+broker = institutions_map["Trade Republic"]
+insurance_company = institutions_map["Allianz"]
+
+if is_nil(bank) do
+  IO.puts("⚠️ Warning: Deutsche Bank not found in created institutions map. Falling back to first available.")
+end
+# Safe fallback if specific ones failed (just for demo accounts below)
+bank = bank || Enum.at(Map.values(institutions_map), 0)
+broker = broker || Enum.at(Map.values(institutions_map), 1)
+insurance_company = insurance_company || Enum.at(Map.values(institutions_map), 2)
 
 # ============================================================================
 # 4. Create Accounts
@@ -95,7 +181,7 @@ IO.puts("✅ Creating accounts...")
 
 {:ok, checking_account} = Accounts.create_account(%{
   name: "Girokonto",
-  type: :checking,
+  type: "checking",
   currency: "EUR",
   is_active: true,
   opened_at: ~D[2020-01-15],
@@ -105,7 +191,7 @@ IO.puts("✅ Creating accounts...")
 
 {:ok, savings_account} = Accounts.create_account(%{
   name: "Tagesgeldkonto",
-  type: :savings,
+  type: "savings",
   currency: "EUR",
   is_active: true,
   opened_at: ~D[2020-03-01],
@@ -115,7 +201,7 @@ IO.puts("✅ Creating accounts...")
 
 {:ok, brokerage_account} = Accounts.create_account(%{
   name: "Depot",
-  type: :brokerage,
+  type: "brokerage",
   currency: "EUR",
   is_active: true,
   opened_at: ~D[2021-06-15],
@@ -125,7 +211,7 @@ IO.puts("✅ Creating accounts...")
 
 {:ok, cash_account} = Accounts.create_account(%{
   name: "Bargeld",
-  type: :cash,
+  type: "cash",
   currency: "EUR",
   is_active: true,
   user_id: user.id,

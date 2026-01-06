@@ -8,7 +8,7 @@ interface UseSnapshotsParams {
   key?: number;
 }
 
-export type CombinedSnapshot = 
+export type CombinedSnapshot =
   | (AccountSnapshot & { snapshot_type: 'account'; entity_name: string })
   | (AssetSnapshot & { snapshot_type: 'asset'; entity_name: string });
 
@@ -36,9 +36,13 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
 
         logger.debug('Fetching snapshots...', { userId });
 
+        const query = new URLSearchParams();
+        if (userId) query.append('user_id', userId.toString());
+        const queryString = query.toString() ? `?${query.toString()}` : '';
+
         const [accountsResponse, assetsResponse] = await Promise.all([
-          apiClient.get<{ data: Account[] }>('accounts', { signal: controller.signal }),
-          apiClient.get<{ data: Asset[] }>('assets', { signal: controller.signal }),
+          apiClient.get<{ data: Account[] }>(`accounts${queryString}`, { signal: controller.signal }),
+          apiClient.get<{ data: Asset[] }>(`assets${queryString}`, { signal: controller.signal }),
         ]);
 
         if (!isMounted) return;
@@ -70,10 +74,10 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
 
         if (isMounted) {
           setSnapshots(combined);
-          logger.info('Snapshots loaded', { 
+          logger.info('Snapshots loaded', {
             total: combined.length,
             accounts: accountSnapshots.length,
-            assets: assetSnapshots.length 
+            assets: assetSnapshots.length
           });
         }
       } catch (err) {

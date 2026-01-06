@@ -19,7 +19,6 @@ defmodule WealthBackend.Portfolio.SecurityAsset do
   def changeset(security_asset, attrs) do
     security_asset
     |> cast(attrs, [:asset_id, :isin, :wkn, :ticker, :exchange, :sector])
-    |> validate_required([:asset_id])
     |> empty_string_to_nil([:isin, :wkn, :ticker, :exchange, :sector])
   end
 

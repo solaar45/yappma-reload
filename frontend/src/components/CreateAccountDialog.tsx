@@ -134,85 +134,59 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="institution">{t('accounts.institution') || 'Institution'} *</Label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => setShowCustomInstitution(!showCustomInstitution)}
-                >
-                  {showCustomInstitution ? t('common.search') || "Search list" : t('institutions.createInstitution') || "Not in list?"}
-                </Button>
-              </div>
-
-              {showCustomInstitution ? (
-                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                  <Input
-                    placeholder={t('institutions.institutionName') || "Enter institution name..."}
-                    value={formData.custom_institution_name}
-                    onChange={(e) => setFormData({ ...formData, custom_institution_name: e.target.value })}
-                    required={showCustomInstitution}
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    {t('institutions.createInstitution') || "This will create a new private institution for you."}
-                  </p>
-                </div>
-              ) : (
-                <Popover open={institutionOpen} onOpenChange={setInstitutionOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={institutionOpen}
-                      className="w-full justify-between font-normal"
-                      disabled={institutionsLoading}
-                    >
-                      {formData.institution_id
-                        ? institutions?.find((inst) => inst.id.toString() === formData.institution_id)?.name
-                        : institutionsLoading ? t('common.loading') : t('institutions.searchPlaceholder') || "Select institution..."}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder={t('institutions.searchPlaceholder') || "Search bank or broker..."} />
-                      <CommandList>
-                        <CommandEmpty>{t('institutions.noInstitutions') || "No institution found."}</CommandEmpty>
-                        <CommandGroup>
-                          {institutions?.map((inst) => (
-                            <CommandItem
-                              key={inst.id}
-                              value={inst.name}
-                              onSelect={() => {
-                                setFormData({ ...formData, institution_id: inst.id.toString() });
-                                setInstitutionOpen(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  formData.institution_id === inst.id.toString() ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              <div className="flex items-center gap-2">
-                                <InstitutionLogo name={inst.name} domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
-                                <div className="flex flex-col">
-                                  <span>{inst.name}</span>
-                                  <span className="text-[10px] text-muted-foreground capitalize">
-                                    {inst.type ? t(`institutions.types.${inst.type}`) : inst.category}
-                                  </span>
-                                </div>
+              <Label htmlFor="institution">{t('accounts.institution') || 'Institution'} *</Label>
+              <Popover open={institutionOpen} onOpenChange={setInstitutionOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={institutionOpen}
+                    className="w-full justify-between font-normal"
+                    disabled={institutionsLoading}
+                  >
+                    {formData.institution_id
+                      ? institutions?.find((inst) => inst.id.toString() === formData.institution_id)?.name
+                      : institutionsLoading ? t('common.loading') : t('institutions.searchPlaceholder') || "Select institution..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder={t('institutions.searchPlaceholder') || "Search bank or broker..."} />
+                    <CommandList>
+                      <CommandEmpty>{t('institutions.noInstitutions') || "No institution found."}</CommandEmpty>
+                      <CommandGroup>
+                        {institutions?.map((inst) => (
+                          <CommandItem
+                            key={inst.id}
+                            value={inst.name}
+                            onSelect={() => {
+                              setFormData({ ...formData, institution_id: inst.id.toString() });
+                              setInstitutionOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.institution_id === inst.id.toString() ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="flex items-center gap-2">
+                              <InstitutionLogo name={inst.name} domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                              <div className="flex flex-col">
+                                <span>{inst.name}</span>
+                                <span className="text-[10px] text-muted-foreground capitalize">
+                                  {inst.type ? t(`institutions.types.${inst.type}`) : inst.category}
+                                </span>
                               </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              )}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="type">{t('accounts.accountType') || 'Account Type'} *</Label>

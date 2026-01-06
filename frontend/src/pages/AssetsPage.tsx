@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useUser } from '@/contexts/UserContext';
 import { useAssets, useAccounts } from '@/lib/api/hooks';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent } from '@/components/ui/card';
@@ -38,10 +39,10 @@ import type { Asset, Account } from '@/lib/api/types';
 
 export default function AssetsPage() {
   const { t } = useTranslation();
-  // FIXME: Hardcoded userId for demo - replace with actual auth
-  const userId = 1;
-  const { assets, loading, error, refetch } = useAssets({ userId });
-  const { accounts } = useAccounts();
+  const { userId } = useUser();
+  // FIXME: userId can be null, handle auth properly
+  const { assets, loading, error, refetch } = useAssets({ userId: userId! });
+  const { accounts } = useAccounts({ userId: userId ?? undefined });
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [accountFilter, setAccountFilter] = useState<string>('all');
@@ -83,7 +84,7 @@ export default function AssetsPage() {
   // Helper function to get risk class color
   const getRiskClassColor = (riskClass: number | null | undefined) => {
     if (!riskClass) return 'bg-muted-foreground/30';
-    
+
     switch (riskClass) {
       case 1:
         return 'bg-green-500';
@@ -103,7 +104,7 @@ export default function AssetsPage() {
   // Helper function to get risk label
   const getRiskLabel = (riskClass: number | null | undefined) => {
     if (!riskClass) return t('assets.riskUnknown') || 'Unknown';
-    
+
     switch (riskClass) {
       case 1:
         return t('assets.riskVeryLow') || 'Very Low';
@@ -222,9 +223,10 @@ export default function AssetsPage() {
       ),
       cell: ({ row }) => {
         const ticker = row.original.security_asset?.ticker || row.original.ticker || null;
+        const isin = row.original.security_asset?.isin || null;
         return (
           <div className="flex items-center gap-3">
-            <InstitutionLogo name={row.original.name} ticker={ticker ?? undefined} size="medium" className="flex-shrink-0 rounded-full" />
+            <InstitutionLogo name={row.original.name} ticker={ticker ?? undefined} isin={isin ?? undefined} size="medium" className="flex-shrink-0 rounded-full" />
             <div className="font-medium">{row.original.name}</div>
           </div>
         );
@@ -239,7 +241,7 @@ export default function AssetsPage() {
         const code = row.original.asset_type?.code || 'other';
         const description = row.original.asset_type?.description || 'Other';
         const translatedType = t(`assetTypes.${code}`, { defaultValue: description });
-        
+
         return (
           <Badge variant="outline" className="capitalize">
             {translatedType}
@@ -612,6 +614,8 @@ export default function AssetsPage() {
           <Badge variant="secondary" className="text-base">
             {filteredAssets.length} {filteredAssets.length === 1 ? t('common.asset') : t('assets.title')}
           </Badge>
+
+
         </div>
         <CreateAssetDialog onSuccess={refetch} />
       </div>

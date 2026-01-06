@@ -31,8 +31,11 @@ export function useInstitutions({ userId, key }: UseInstitutionsOptions): UseIns
         setError(null);
 
         logger.debug('Fetching institutions...', { userId });
-        
-        const response = await apiClient.get<{ data: Institution[] }>('institutions', {
+
+        const query = new URLSearchParams();
+        if (userId) query.append('user_id', userId.toString());
+
+        const response = await apiClient.get<{ data: Institution[] }>(`institutions?${query.toString()}`, {
           signal: controller.signal,
         });
 
