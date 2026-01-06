@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUser } from '@/contexts/UserContext';
 import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,7 @@ const COUNTRIES = [
 ] as const;
 
 export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateInstitutionDialogProps) {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -87,27 +89,31 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
     }
   };
 
+  const getInstitutionTypeLabel = (value: string) => {
+    return t(`institutions.types.${value}`) || value;
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {compact ? (
           <Button variant="ghost" size="sm" type="button">
             <Plus className="h-3 w-3 mr-1" />
-            New
+            {t('institutions.new') || 'New'}
           </Button>
         ) : (
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Add Institution
+            {t('institutions.createInstitution') || 'Add Institution'}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Add New Institution</DialogTitle>
+            <DialogTitle>{t('institutions.createInstitution') || 'Add New Institution'}</DialogTitle>
             <DialogDescription>
-              Create a new financial institution (bank, broker, etc.).
+              {t('institutions.addFirst') || 'Create a new financial institution (bank, broker, etc.).'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -116,11 +122,11 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
                 <InstitutionLogo name={name || 'Institution'} domain={website ? website.replace(/^https?:\/\//, '') : undefined} size="large" className="rounded-full" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Logo Preview (from logo.dev)</p>
+                <p className="text-sm text-muted-foreground">{t('institutions.logoPreview') || 'Logo Preview (from logo.dev)'}</p>
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">{t('common.name') || 'Name'} *</Label>
               <Input
                 id="name"
                 placeholder="e.g., ING DiBa, Sparkasse"
@@ -130,7 +136,7 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="website">Website (optional)</Label>
+              <Label htmlFor="website">{t('institutions.website') || 'Website'} ({t('common.optional')})</Label>
               <Input
                 id="website"
                 placeholder="e.g., dkb.de or https://dkb.de"
@@ -139,7 +145,7 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="type">Type *</Label>
+              <Label htmlFor="type">{t('common.type') || 'Type'} *</Label>
               <Select value={type} onValueChange={setType}>
                 <SelectTrigger id="type">
                   <SelectValue />
@@ -147,14 +153,14 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
                 <SelectContent>
                   {INSTITUTION_TYPES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                      {getInstitutionTypeLabel(t.value)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="country">Country *</Label>
+              <Label htmlFor="country">{t('institutions.country') || 'Country'} *</Label>
               <Select value={country} onValueChange={setCountry}>
                 <SelectTrigger id="country">
                   <SelectValue />
@@ -171,10 +177,10 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel') || 'Cancel'}
             </Button>
             <Button type="submit" disabled={loading || !name.trim()}>
-              {loading ? 'Creating...' : 'Create Institution'}
+              {loading ? t('common.loading') : t('institutions.createInstitution')}
             </Button>
           </DialogFooter>
         </form>
