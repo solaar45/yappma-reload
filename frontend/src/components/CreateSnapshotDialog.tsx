@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUser } from '@/contexts/UserContext';
 import { useAccounts, useAssets } from '@/lib/api/hooks';
 import { apiClient } from '@/lib/api/client';
@@ -28,6 +29,7 @@ interface CreateSnapshotDialogProps {
 }
 
 export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const { accounts } = useAccounts({ userId: userId! });
   const { assets } = useAssets({ userId: userId! });
@@ -95,20 +97,20 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          Add Snapshot
+          {t('snapshots.createSnapshot') || 'Add Snapshot'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Snapshot</DialogTitle>
+            <DialogTitle>{t('snapshots.createSnapshot') || 'Create New Snapshot'}</DialogTitle>
             <DialogDescription>
-              Record a balance or value at a specific point in time.
+              {t('snapshots.addFirst') || 'Record a balance or value at a specific point in time.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="type">Snapshot Type *</Label>
+              <Label htmlFor="type">{t('common.type') || 'Snapshot Type'} *</Label>
               <Select 
                 value={snapshotType} 
                 onValueChange={(value: 'account' | 'asset') => {
@@ -120,22 +122,22 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="account">Account</SelectItem>
-                  <SelectItem value="asset">Asset</SelectItem>
+                  <SelectItem value="account">{t('common.account') || 'Account'}</SelectItem>
+                  <SelectItem value="asset">{t('common.asset') || 'Asset'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="entity">
-                {snapshotType === 'account' ? 'Account' : 'Asset'} *
+                {snapshotType === 'account' ? t('common.account') : t('common.asset')} *
               </Label>
               <Select 
                 value={formData.entity_id} 
                 onValueChange={(value) => setFormData({ ...formData, entity_id: value })}
               >
                 <SelectTrigger id="entity">
-                  <SelectValue placeholder={`Select ${snapshotType}`} />
+                  <SelectValue placeholder={`${t('common.search')}...`} />
                 </SelectTrigger>
                 <SelectContent>
                   {entities?.map((entity) => (
@@ -148,7 +150,7 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="date">Date *</Label>
+              <Label htmlFor="date">{t('common.date') || 'Date'} *</Label>
               <Input
                 id="date"
                 type="date"
@@ -160,7 +162,7 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
 
             <div className="grid gap-2">
               <Label htmlFor="value">
-                {snapshotType === 'account' ? 'Balance' : 'Value'} *
+                {snapshotType === 'account' ? t('accounts.balance') : t('common.value')} *
               </Label>
               <Input
                 id="value"
@@ -175,7 +177,7 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
 
             {snapshotType === 'account' && (
               <div className="grid gap-2">
-                <Label htmlFor="currency">Currency *</Label>
+                <Label htmlFor="currency">{t('common.currency') || 'Currency'} *</Label>
                 <Select 
                   value={formData.currency} 
                   onValueChange={(value) => setFormData({ ...formData, currency: value })}
@@ -195,7 +197,7 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
 
             {snapshotType === 'asset' && (
               <div className="grid gap-2">
-                <Label htmlFor="quantity">Quantity (optional)</Label>
+                <Label htmlFor="quantity">{t('common.quantity') || 'Quantity'} ({t('common.optional')})</Label>
                 <Input
                   id="quantity"
                   type="number"
@@ -209,10 +211,10 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={loading || !formData.entity_id || !formData.value}>
-              {loading ? 'Creating...' : 'Create Snapshot'}
+              {loading ? t('common.loading') : t('snapshots.createSnapshot')}
             </Button>
           </DialogFooter>
         </form>
