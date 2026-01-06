@@ -144,9 +144,10 @@ export default function TaxesPage() {
     return (
         <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">{t('taxes.title')}</h1>
-                    <p className="text-muted-foreground">{t('taxes.taxAllowance')} & {t('taxes.exemptionOrders')}</p>
+                <div className="flex items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold">{t('taxes.title')}</h1>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select
@@ -257,7 +258,7 @@ export default function TaxesPage() {
                             <div className="grid gap-2">
                                 <label className="text-sm font-medium">{t('taxes.totalLimit')}</label>
                                 <div className="flex items-center gap-3 p-3 rounded-md bg-muted/50 border">
-                                    <Badge variant="secondary" className="text-lg font-bold px-3 py-1">
+                                    <Badge variant="secondary" className="text-base font-medium px-2 py-0.5">
                                         {formatCurrency(computedLimit)}
                                     </Badge>
                                     <span className="text-xs text-muted-foreground">
