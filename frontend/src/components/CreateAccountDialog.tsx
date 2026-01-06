@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCreateAccount, useInstitutions } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import {
@@ -38,16 +39,6 @@ interface CreateAccountDialogProps {
   onSuccess?: () => void;
 }
 
-const ACCOUNT_TYPES = [
-  { value: 'checking', label: 'Checking' },
-  { value: 'savings', label: 'Savings' },
-  { value: 'credit_card', label: 'Credit Card' },
-  { value: 'brokerage', label: 'Brokerage' },
-  { value: 'insurance', label: 'Insurance' },
-  { value: 'cash', label: 'Cash' },
-  { value: 'other', label: 'Other' },
-] as const;
-
 const CURRENCIES = [
   { value: 'EUR', label: 'EUR (€)' },
   { value: 'USD', label: 'USD ($)' },
@@ -56,12 +47,24 @@ const CURRENCIES = [
 ] as const;
 
 export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const { institutions, loading: institutionsLoading } = useInstitutions({ userId: userId! });
   const { createAccount, loading, error } = useCreateAccount();
   const [open, setOpen] = useState(false);
   const [institutionOpen, setInstitutionOpen] = useState(false);
   const [showCustomInstitution, setShowCustomInstitution] = useState(false);
+
+  // Dynamic account types from translations
+  const ACCOUNT_TYPES = [
+    { value: 'checking', label: t('accountTypes.checking') },
+    { value: 'savings', label: t('accountTypes.savings') },
+    { value: 'credit_card', label: t('accountTypes.credit_card') },
+    { value: 'brokerage', label: t('accountTypes.brokerage') },
+    { value: 'insurance', label: t('accountTypes.insurance') },
+    { value: 'cash', label: t('accountTypes.cash') },
+    { value: 'other', label: t('accountTypes.other') },
+  ] as const;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -108,23 +111,23 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          Add Account
+          {t('accounts.createAccount') || 'Add Account'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Account</DialogTitle>
+            <DialogTitle>{t('accounts.createAccount') || 'Create New Account'}</DialogTitle>
             <DialogDescription>
-              Add a new account to track your finances.
+              {t('accounts.addFirstDescription') || 'Add a new account to track your finances.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Account Name *</Label>
+              <Label htmlFor="name">{t('accounts.accountName') || 'Account Name'} *</Label>
               <Input
                 id="name"
-                placeholder="e.g., Main Checking, Savings Account"
+                placeholder={t('accounts.accountName') || "e.g., Main Checking, Savings Account"}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
@@ -132,7 +135,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             </div>
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="institution">Institution *</Label>
+                <Label htmlFor="institution">{t('accounts.institution') || 'Institution'} *</Label>
                 <Button
                   type="button"
                   variant="ghost"
@@ -140,20 +143,20 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                   className="h-7 text-xs"
                   onClick={() => setShowCustomInstitution(!showCustomInstitution)}
                 >
-                  {showCustomInstitution ? "Search list" : "Not in correctly?"}
+                  {showCustomInstitution ? t('common.search') || "Search list" : t('institutions.createInstitution') || "Not in list?"}
                 </Button>
               </div>
 
               {showCustomInstitution ? (
                 <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                   <Input
-                    placeholder="Enter institution name..."
+                    placeholder={t('institutions.institutionName') || "Enter institution name..."}
                     value={formData.custom_institution_name}
                     onChange={(e) => setFormData({ ...formData, custom_institution_name: e.target.value })}
                     required={showCustomInstitution}
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    This will create a new private institution for you.
+                    {t('institutions.createInstitution') || "This will create a new private institution for you."}
                   </p>
                 </div>
               ) : (
@@ -168,15 +171,15 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                     >
                       {formData.institution_id
                         ? institutions?.find((inst) => inst.id.toString() === formData.institution_id)?.name
-                        : institutionsLoading ? "Loading..." : "Select institution..."}
+                        : institutionsLoading ? t('common.loading') : t('institutions.searchPlaceholder') || "Select institution..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                     <Command>
-                      <CommandInput placeholder="Search bank or broker..." />
+                      <CommandInput placeholder={t('institutions.searchPlaceholder') || "Search bank or broker..."} />
                       <CommandList>
-                        <CommandEmpty>No institution found.</CommandEmpty>
+                        <CommandEmpty>{t('institutions.noInstitutions') || "No institution found."}</CommandEmpty>
                         <CommandGroup>
                           {institutions?.map((inst) => (
                             <CommandItem
@@ -198,7 +201,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                                 <div className="flex flex-col">
                                   <span>{inst.name}</span>
                                   <span className="text-[10px] text-muted-foreground capitalize">
-                                    {inst.type || inst.category}
+                                    {inst.type ? t(`institutions.types.${inst.type}`) : inst.category}
                                   </span>
                                 </div>
                               </div>
@@ -212,7 +215,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               )}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="type">Account Type *</Label>
+              <Label htmlFor="type">{t('accounts.accountType') || 'Account Type'} *</Label>
               <Select
                 value={formData.type}
                 onValueChange={(value) => setFormData({ ...formData, type: value })}
@@ -230,7 +233,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="currency">Currency *</Label>
+              <Label htmlFor="currency">{t('common.currency') || 'Currency'} *</Label>
               <Select
                 value={formData.currency}
                 onValueChange={(value) => setFormData({ ...formData, currency: value })}
@@ -250,10 +253,10 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="is-active" className="text-base">
-                  Account Status
+                  {t('accounts.status') || 'Account Status'}
                 </Label>
                 <div className="text-sm text-muted-foreground">
-                  {formData.is_active ? 'Active' : 'Inactive'}
+                  {formData.is_active ? (t('accounts.active') || 'Active') : (t('accounts.inactive') || 'Inactive')}
                 </div>
               </div>
               <Switch
@@ -268,13 +271,13 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
               disabled={loading || !formData.name || (!showCustomInstitution && !formData.institution_id) || (showCustomInstitution && !formData.custom_institution_name)}
             >
-              {loading ? 'Creating...' : 'Create Account'}
+              {loading ? (t('common.loading') || 'Creating...') : (t('common.create') || 'Create Account')}
             </Button>
           </DialogFooter>
         </form>
