@@ -11,7 +11,7 @@ defmodule WealthBackendWeb.AssetController do
 
   def index(conn, params) do
     user_id = Map.get(params, "user_id", @default_user_id)
-    assets = Portfolio.list_assets(user_id)
+    assets = Portfolio.list_user_assets(user_id)
     render(conn, :index, assets: assets)
   end
 
@@ -35,7 +35,7 @@ defmodule WealthBackendWeb.AssetController do
   def update(conn, %{"id" => id, "asset" => asset_params}) do
     asset = Portfolio.get_asset!(id)
 
-    with {:ok, %Asset{} = asset} <- Portfolio.update_full_asset(asset, asset_params) do
+    with {:ok, %Asset{} = asset} <- Portfolio.update_asset(asset, asset_params) do
       render(conn, :show, asset: asset)
     end
   end

@@ -35,10 +35,8 @@ defmodule WealthBackend.Portfolio.RiskClassifier do
     end
   end
 
-  @doc """
-  Fetches risk class from Yahoo Finance API based on volatility.
-  Maps volatility to 1-5 scale.
-  """
+  # Fetches risk class from Yahoo Finance API based on volatility.
+  # Maps volatility to 1-5 scale.
   defp fetch_risk_from_api(nil), do: {:error, :no_identifier}
   defp fetch_risk_from_api(""), do: {:error, :no_identifier}
 
