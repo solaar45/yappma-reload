@@ -28,6 +28,7 @@ import {
     CommandItem,
     CommandList,
 } from '@/components/ui/command';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import { cn } from '@/lib/utils';
 
 interface TaxExemptionDialogProps {
@@ -195,7 +196,13 @@ export function TaxExemptionDialog({
                                                                 formData.institution_id === inst.id.toString() ? "opacity-100" : "opacity-0"
                                                             )}
                                                         />
-                                                        {inst.name}
+                                                        <div className="flex items-center gap-2">
+                                                            <InstitutionLogo name={inst.name} domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                                                            <div className="flex flex-col">
+                                                                <span>{inst.name}</span>
+                                                                <span className="text-[10px] text-muted-foreground capitalize">{inst.type || inst.category}</span>
+                                                            </div>
+                                                        </div>
                                                     </CommandItem>
                                                 ))}
                                             </CommandGroup>

@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Pencil, AlertCircle } from 'lucide-react';
 import { CreateInstitutionDialog } from './CreateInstitutionDialog';
+import InstitutionLogo from '@/components/InstitutionLogo';
 
 interface EditAccountDialogProps {
   account: Account;
@@ -148,7 +149,13 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                   <SelectContent>
                     {institutions.map((inst) => (
                       <SelectItem key={inst.id} value={inst.id.toString()}>
-                        {inst.name}
+                        <div className="flex items-center gap-2">
+                          <InstitutionLogo name={inst.name} domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                          <div className="flex flex-col">
+                            <span>{inst.name}</span>
+                            <span className="text-[10px] text-muted-foreground capitalize">{inst.type || inst.category}</span>
+                          </div>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

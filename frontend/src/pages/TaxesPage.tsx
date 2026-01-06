@@ -28,6 +28,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import InstitutionLogo from '@/components/InstitutionLogo';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -319,7 +320,15 @@ export default function TaxesPage() {
                                 taxExemptions.map((te) => (
                                     <TableRow key={te.id}>
                                         <TableCell className="font-medium">
-                                            {te.institution?.name || "Unknown"}
+                                            <div className="flex items-center gap-2">
+                                                <InstitutionLogo
+                                                    name={te.institution?.name || 'Unknown'}
+                                                    domain={te.institution?.website ? te.institution.website.replace(/^https?:\/\//, '') : undefined}
+                                                    size="small"
+                                                    className="flex-shrink-0 rounded-full"
+                                                />
+                                                <span>{te.institution?.name || 'Unknown'}</span>
+                                            </div>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             {formatCurrency(te.amount)}

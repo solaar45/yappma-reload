@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -142,9 +143,11 @@ export default function AssetsPage() {
         <DataTableColumnHeader column={column} title={t('assets.name') || 'Name'} />
       ),
       cell: ({ row }) => {
+        const ticker = row.original.security_asset?.ticker || row.original.ticker || null;
         return (
-          <div className="font-medium">
-            {row.original.name}
+          <div className="flex items-center gap-3">
+            <InstitutionLogo name={row.original.name} ticker={ticker ?? undefined} size="medium" className="flex-shrink-0 rounded-full" />
+            <div className="font-medium">{row.original.name}</div>
           </div>
         );
       },

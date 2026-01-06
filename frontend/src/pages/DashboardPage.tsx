@@ -9,6 +9,7 @@ import { PortfolioPositionsTable } from '@/components/portfolio/PortfolioPositio
 import { TaxUsageWidget } from '@/components/dashboard/TaxUsageWidget';
 import type { PortfolioHolding } from '@/components/portfolio/PortfolioHoldingsTable';
 import type { PortfolioPosition } from '@/components/portfolio/PortfolioPositionsTable';
+import InstitutionLogo from '@/components/InstitutionLogo';
 
 // Mock data for holdings demo
 const mockPortfolioHoldings: PortfolioHolding[] = [
@@ -317,13 +318,12 @@ export default function DashboardPage() {
                   const latestSnapshot = account.snapshots?.[0];
                   return (
                     <div key={account.id} className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {account.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {account.institution?.name || 'No institution'}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <InstitutionLogo name={account.institution?.name || account.name} domain={account.institution?.website ? account.institution.website.replace(/^https?:\/\//, '') : undefined} size="medium" className="flex-shrink-0 rounded-full" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium leading-none">{account.name}</p>
+                          <p className="text-xs text-muted-foreground">{account.institution?.name || 'No institution'}</p>
+                        </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium">
@@ -365,16 +365,17 @@ export default function DashboardPage() {
                   const latestSnapshot = asset.snapshots?.[0];
                   return (
                     <div key={asset.id} className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {asset.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {asset.asset_type?.description || 'No type'}
-                          {latestSnapshot?.quantity && (
-                            <> · {parseFloat(latestSnapshot.quantity).toFixed(2)} {t('assets.units')}</>
-                          )}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <InstitutionLogo name={asset.name} ticker={asset.ticker ?? asset.security_asset?.ticker ?? undefined} size="medium" className="flex-shrink-0 rounded-full" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium leading-none">{asset.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {asset.asset_type?.description || 'No type'}
+                            {latestSnapshot?.quantity && (
+                              <> · {parseFloat(latestSnapshot.quantity).toFixed(2)} {t('assets.units')}</>
+                            )}
+                          </p>
+                        </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium">

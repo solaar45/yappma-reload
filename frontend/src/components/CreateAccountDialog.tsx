@@ -32,7 +32,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-import { Badge } from './ui/badge';
+import InstitutionLogo from '@/components/InstitutionLogo';
 
 interface CreateAccountDialogProps {
   onSuccess?: () => void;
@@ -193,19 +193,15 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                                   formData.institution_id === inst.id.toString() ? "opacity-100" : "opacity-0"
                                 )}
                               />
-                              <div className="flex flex-col">
-                                <span>{inst.name}</span>
-                                {inst.category && (
+                              <div className="flex items-center gap-2">
+                                <InstitutionLogo name={inst.name} domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                                <div className="flex flex-col">
+                                  <span>{inst.name}</span>
                                   <span className="text-[10px] text-muted-foreground capitalize">
-                                    {inst.category}
+                                    {inst.type || inst.category}
                                   </span>
-                                )}
+                                </div>
                               </div>
-                              {inst.is_system_provided && (
-                                <Badge variant="secondary" className="ml-auto text-[8px] h-4 px-1">
-                                  System
-                                </Badge>
-                              )}
                             </CommandItem>
                           ))}
                         </CommandGroup>

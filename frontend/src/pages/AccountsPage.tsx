@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -132,9 +133,17 @@ export default function AccountsPage() {
         <DataTableColumnHeader column={column} title={t('accounts.name') || 'Name'} />
       ),
       cell: ({ row }) => {
+        const inst = row.original.institution;
+        const domain = inst?.website ? inst.website.replace(/^https?:\/\//, '') : undefined;
         return (
-          <div className="font-medium">
-            {row.original.name}
+          <div className="flex items-center gap-3">
+            <InstitutionLogo
+              name={inst?.name || row.original.name}
+              domain={domain}
+              size="medium"
+              className="flex-shrink-0 rounded-full"
+            />
+            <div className="font-medium">{row.original.name}</div>
           </div>
         );
       },

@@ -23,6 +23,21 @@ For production, `.env.production`:
 VITE_API_BASE_URL=/api
 ```
 
+### Logo.dev integration
+
+If you want to enable automatic institution logos via Logo.dev (recommended):
+
+- Register at https://logo.dev and get a publishable key (starts with `pk_...`).
+- Add the token to your frontend environment files as `VITE_LOGO_DEV_TOKEN`.
+
+Example `.env.development`:
+```
+VITE_API_BASE_URL=http://localhost:4000/api
+VITE_LOGO_DEV_TOKEN=pk_xxxxxxxxxxxxxxxxx
+```
+
+The app will use this token to request logos from Logo.dev.
+
 ### Run Development Server
 ```bash
 npm run dev

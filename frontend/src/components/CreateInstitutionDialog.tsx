@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -50,6 +51,7 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [type, setType] = useState<string>('bank');
+  const [website, setWebsite] = useState<string>('');
   const [country, setCountry] = useState<string>('DE');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,7 +68,8 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
         institution: {
           name: name.trim(),
           type,
-          country,
+            country,
+            website: website ? website.trim() : undefined,
           user_id: userId,
         },
       });
@@ -108,6 +111,14 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            <div className="flex items-center gap-4">
+              <div>
+                <InstitutionLogo name={name || 'Institution'} domain={website ? website.replace(/^https?:\/\//, '') : undefined} size="large" className="rounded-full" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Logo Preview (from logo.dev)</p>
+              </div>
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="name">Name *</Label>
               <Input
@@ -116,6 +127,15 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="website">Website (optional)</Label>
+              <Input
+                id="website"
+                placeholder="e.g., dkb.de or https://dkb.de"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
