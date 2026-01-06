@@ -29,6 +29,11 @@
     "optional": "isteğe bağlı",
     "noSelection": "Hiçbiri"
   },
+  "languages": {
+    "de": "Almanca",
+    "en": "İngilizce",
+    "tr": "Türkçe"
+  },
   "navigation": {
     "dashboard": "Panel",
     "accounts": "Hesaplar",
@@ -233,7 +238,7 @@
     "amount": "Miktar",
     "institution": "Kurum",
     "year": "Yıl",
-    "warningOverLimit": "Uyarı: Muafiyet emirlerinizin toplamı ({{total}}) toplam limitinizi ({{limit}}) aşıyor!",
+    "warningOverLimit": "Uyarı: Muafiyet emirlerinizin toplamı ({{total}}) toplam limitinizi ({{limit}})!",
     "noExemptions": "Bu yıl için muafiyet emri bulunamadı.",
     "errorDuplicateExemption": "Bu kurum ve yıl için zaten bir muafiyet emri mevcut.",
     "tooltipDisabledAddOrder": "Geçmiş yıllar için yeni muafiyet emri oluşturulamaz.",
