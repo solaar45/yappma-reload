@@ -171,7 +171,20 @@
     "deleteSelected": "Delete Selected",
     "deleteSelectedTitle": "Delete Selected Assets",
     "deleteSelectedConfirm": "Are you sure you want to delete the selected assets? This action cannot be undone.",
-    "errorLoading": "Error loading assets"
+    "errorLoading": "Error loading assets",
+    "risk": "Risk",
+    "riskVeryLow": "Very Low",
+    "riskLow": "Low",
+    "riskMedium": "Medium",
+    "riskHigh": "High",
+    "riskVeryHigh": "Very High",
+    "riskSource": "Source",
+    "riskSourceApi": "Auto (API)",
+    "riskSourceType": "Auto (Type)",
+    "riskSourceManual": "Manual",
+    "riskSourceUnknown": "Unknown",
+    "riskSourceApiDesc": "Calculated from historical volatility",
+    "riskSourceTypeDesc": "Based on asset type"
   },
   "institutions": {
     "title": "Institutions",

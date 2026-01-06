@@ -171,7 +171,20 @@
     "deleteSelected": "Seçilenleri Sil",
     "deleteSelectedTitle": "Seçilen Varlıkları Sil",
     "deleteSelectedConfirm": "Seçilen varlıkları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-    "errorLoading": "Varlıklar yüklenirken hata oluştu"
+    "errorLoading": "Varlıklar yüklenirken hata oluştu",
+    "risk": "Risk",
+    "riskVeryLow": "Çok Düşük",
+    "riskLow": "Düşük",
+    "riskMedium": "Orta",
+    "riskHigh": "Yüksek",
+    "riskVeryHigh": "Çok Yüksek",
+    "riskSource": "Kaynak",
+    "riskSourceApi": "Otomatik (API)",
+    "riskSourceType": "Otomatik (Tür)",
+    "riskSourceManual": "Manuel",
+    "riskSourceUnknown": "Bilinmiyor",
+    "riskSourceApiDesc": "Geçmiş volatiliteden hesaplandı",
+    "riskSourceTypeDesc": "Varlık türüne göre"
   },
   "institutions": {
     "title": "Kurumlar",

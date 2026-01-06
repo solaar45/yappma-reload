@@ -171,7 +171,20 @@
     "deleteSelected": "Ausgewählte löschen",
     "deleteSelectedTitle": "Ausgewählte Assets löschen",
     "deleteSelectedConfirm": "Sind Sie sicher, dass Sie die ausgewählten Assets löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
-    "errorLoading": "Fehler beim Laden der Assets"
+    "errorLoading": "Fehler beim Laden der Assets",
+    "risk": "Risiko",
+    "riskVeryLow": "Sehr Niedrig",
+    "riskLow": "Niedrig",
+    "riskMedium": "Mittel",
+    "riskHigh": "Hoch",
+    "riskVeryHigh": "Sehr Hoch",
+    "riskSource": "Quelle",
+    "riskSourceApi": "Auto (API)",
+    "riskSourceType": "Auto (Typ)",
+    "riskSourceManual": "Manuell",
+    "riskSourceUnknown": "Unbekannt",
+    "riskSourceApiDesc": "Berechnet aus historischer Volatilität",
+    "riskSourceTypeDesc": "Basierend auf Asset-Typ"
   },
   "institutions": {
     "title": "Institute",
