@@ -57,11 +57,15 @@ cash_type = Portfolio.get_asset_type_by_code("cash")
 # ============================================================================
 IO.puts("✅ Creating demo user...")
 
-{:ok, user} = Accounts.create_user(%{
+{:ok, user} = Accounts.register_user(%{
   name: "Demo User",
   email: "demo@yappma.dev",
+  password: "password1234",
   currency_default: "EUR"
 })
+
+# Mark as confirmed
+user |> Ecto.Changeset.change(%{confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)}) |> Repo.update!()
 
 # ============================================================================
 # 3. Create Institutions (Global Master Data)
@@ -224,13 +228,12 @@ IO.puts("✅ Creating accounts...")
 IO.puts("✅ Creating assets...")
 
 # Security 1: MSCI World ETF
-{:ok, etf_msci_world} = Portfolio.create_full_asset(%{
+{:ok, etf_msci_world} = Portfolio.create_full_asset(user.id, %{
   name: "iShares Core MSCI World",
   symbol: "IE00B4L5Y983",
   currency: "EUR",
   is_active: true,
   created_at_date: ~D[2021-06-15],
-  user_id: user.id,
   account_id: brokerage_account.id,
   asset_type_id: security_type.id,
   security_asset: %{
@@ -243,13 +246,12 @@ IO.puts("✅ Creating assets...")
 })
 
 # Security 2: Vanguard All-World
-{:ok, etf_vanguard} = Portfolio.create_full_asset(%{
+{:ok, etf_vanguard} = Portfolio.create_full_asset(user.id, %{
   name: "Vanguard FTSE All-World",
   symbol: "IE00BK5BQT80",
   currency: "EUR",
   is_active: true,
   created_at_date: ~D[2022-01-10],
-  user_id: user.id,
   account_id: brokerage_account.id,
   asset_type_id: security_type.id,
   security_asset: %{
@@ -261,13 +263,12 @@ IO.puts("✅ Creating assets...")
 })
 
 # Security 3: Bitcoin ETF
-{:ok, bitcoin_etf} = Portfolio.create_full_asset(%{
+{:ok, bitcoin_etf} = Portfolio.create_full_asset(user.id, %{
   name: "iShares Bitcoin Trust ETF",
   symbol: "US46428V5093",
   currency: "EUR",
   is_active: true,
   created_at_date: ~D[2024-02-15],
-  user_id: user.id,
   account_id: brokerage_account.id,
   asset_type_id: security_type.id,
   security_asset: %{
@@ -279,12 +280,11 @@ IO.puts("✅ Creating assets...")
 })
 
 # Insurance 1: Haftpflicht
-{:ok, liability_insurance} = Portfolio.create_full_asset(%{
+{:ok, liability_insurance} = Portfolio.create_full_asset(user.id, %{
   name: "Privathaftpflichtversicherung",
   currency: "EUR",
   is_active: true,
   created_at_date: ~D[2020-01-01],
-  user_id: user.id,
   asset_type_id: insurance_type.id,
   insurance_asset: %{
     insurer_name: "Allianz",
@@ -296,12 +296,11 @@ IO.puts("✅ Creating assets...")
 })
 
 # Insurance 2: Lebensversicherung
-{:ok, life_insurance} = Portfolio.create_full_asset(%{
+{:ok, life_insurance} = Portfolio.create_full_asset(user.id, %{
   name: "Kapitallebensversicherung",
   currency: "EUR",
   is_active: true,
   created_at_date: ~D[2015-03-15],
-  user_id: user.id,
   asset_type_id: insurance_type.id,
   insurance_asset: %{
     insurer_name: "Allianz",
@@ -313,12 +312,11 @@ IO.puts("✅ Creating assets...")
 })
 
 # Real Estate
-{:ok, apartment} = Portfolio.create_full_asset(%{
+{:ok, apartment} = Portfolio.create_full_asset(user.id, %{
   name: "Eigentumswohnung München",
   currency: "EUR",
   is_active: true,
   created_at_date: ~D[2018-09-01],
-  user_id: user.id,
   asset_type_id: real_estate_type.id,
   real_estate_asset: %{
     address: "Maximilianstraße 42, 80539 München",
@@ -329,11 +327,10 @@ IO.puts("✅ Creating assets...")
 })
 
 # Cash Asset
-{:ok, cash_home} = Portfolio.create_full_asset(%{
+{:ok, cash_home} = Portfolio.create_full_asset(user.id, %{
   name: "Bargeld zu Hause",
   currency: "EUR",
   is_active: true,
-  user_id: user.id,
   account_id: cash_account.id,
   asset_type_id: cash_type.id
 })
@@ -356,7 +353,7 @@ Enum.each([
   {~D[2025-11-30], "4200.50"},
   {~D[2025-12-30], "5000.00"}
 ], fn {date, balance} ->
-  {:ok, _} = Analytics.create_account_snapshot(%{
+  {:ok, _} = Analytics.create_account_snapshot(user.id, %{
     account_id: checking_account.id,
     snapshot_date: date,
     balance: Decimal.new(balance),
@@ -370,7 +367,7 @@ Enum.each([
   {~D[2025-11-30], "12500.00"},
   {~D[2025-12-30], "13000.00"}
 ], fn {date, balance} ->
-  {:ok, _} = Analytics.create_account_snapshot(%{
+  {:ok, _} = Analytics.create_account_snapshot(user.id, %{
     account_id: savings_account.id,
     snapshot_date: date,
     balance: Decimal.new(balance),
@@ -384,7 +381,7 @@ Enum.each([
   {~D[2025-11-30], "450.00"},
   {~D[2025-12-30], "600.00"}
 ], fn {date, balance} ->
-  {:ok, _} = Analytics.create_account_snapshot(%{
+  {:ok, _} = Analytics.create_account_snapshot(user.id, %{
     account_id: cash_account.id,
     snapshot_date: date,
     balance: Decimal.new(balance),
@@ -403,7 +400,7 @@ Enum.each([
   {~D[2025-11-30], "100", "87.20"},
   {~D[2025-12-30], "100", "89.75"}
 ], fn {date, qty, price} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
+  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: etf_msci_world.id,
     snapshot_date: date,
     quantity: Decimal.new(qty),
@@ -418,7 +415,7 @@ Enum.each([
   {~D[2025-11-30], "50", "99.50"},
   {~D[2025-12-30], "50", "101.20"}
 ], fn {date, qty, price} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
+  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: etf_vanguard.id,
     snapshot_date: date,
     quantity: Decimal.new(qty),
@@ -433,7 +430,7 @@ Enum.each([
   {~D[2025-11-30], "20", "45.80"},
   {~D[2025-12-30], "20", "48.25"}
 ], fn {date, qty, price} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
+  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: bitcoin_etf.id,
     snapshot_date: date,
     quantity: Decimal.new(qty),
@@ -448,7 +445,7 @@ Enum.each([
   {~D[2025-11-30], "0"},
   {~D[2025-12-30], "0"}
 ], fn {date, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
+  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: liability_insurance.id,
     snapshot_date: date,
     value: Decimal.new(value),
@@ -462,7 +459,7 @@ Enum.each([
   {~D[2025-11-30], "18750.00"},
   {~D[2025-12-30], "19000.00"}
 ], fn {date, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
+  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: life_insurance.id,
     snapshot_date: date,
     value: Decimal.new(value),
@@ -476,7 +473,7 @@ Enum.each([
   {~D[2025-11-30], "482000.00"},
   {~D[2025-12-30], "485000.00"}
 ], fn {date, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
+  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: apartment.id,
     snapshot_date: date,
     value: Decimal.new(value),
@@ -490,7 +487,7 @@ Enum.each([
   {~D[2025-11-30], "750.00"},
   {~D[2025-12-30], "900.00"}
 ], fn {date, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
+  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: cash_home.id,
     snapshot_date: date,
     value: Decimal.new(value)

@@ -29,8 +29,10 @@ defmodule WealthBackend.Portfolio do
 
   # Assets
 
-  def list_assets do
-    Repo.all(Asset)
+  def list_assets(user_id) do
+    Asset
+    |> where([a], a.user_id == ^user_id)
+    |> Repo.all()
     |> Repo.preload([
       :asset_type,
       [account: :institution],
@@ -59,8 +61,10 @@ defmodule WealthBackend.Portfolio do
     ])
   end
 
-  def get_asset!(id) do
-    Repo.get!(Asset, id)
+  def get_asset!(id, user_id) do
+    Asset
+    |> where([a], a.id == ^id and a.user_id == ^user_id)
+    |> Repo.one!()
     |> Repo.preload([
       :asset_type,
       [account: :institution],
@@ -72,18 +76,24 @@ defmodule WealthBackend.Portfolio do
     ])
   end
 
-  def create_asset(attrs \\ %{}) do
+  def create_asset(user_id, attrs \\ %{}) do
     # Determine risk class before creating asset
-    attrs = enrich_with_risk_class(attrs)
+    attrs = 
+      attrs
+      |> Map.put(:user_id, user_id)
+      |> enrich_with_risk_class()
 
     %Asset{}
     |> Asset.changeset(attrs)
     |> Repo.insert()
   end
 
-  def create_full_asset(attrs \\ %{}) do
+  def create_full_asset(user_id, attrs \\ %{}) do
     # Determine risk class before creating asset
-    attrs = enrich_with_risk_class(attrs)
+    attrs = 
+      attrs
+      |> Map.put(:user_id, user_id)
+      |> enrich_with_risk_class()
 
     Ecto.Multi.new()
     |> Ecto.Multi.insert(:asset, Asset.changeset(%Asset{}, attrs))

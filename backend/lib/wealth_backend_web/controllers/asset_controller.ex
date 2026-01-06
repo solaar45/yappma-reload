@@ -6,21 +6,16 @@ defmodule WealthBackendWeb.AssetController do
 
   action_fallback WealthBackendWeb.FallbackController
 
-  # TODO: Get user_id from authenticated session/JWT token
-  @default_user_id 1
-
-  def index(conn, params) do
-    user_id = Map.get(params, "user_id", @default_user_id)
-    user_id = if is_binary(user_id), do: String.to_integer(user_id), else: user_id
-    assets = Portfolio.list_user_assets(user_id)
+  def index(conn, _params) do
+    user = conn.assigns.current_user
+    assets = Portfolio.list_assets(user.id)
     render(conn, :index, assets: assets)
   end
 
-  def create(conn, %{"asset" => asset_params} = params) do
-    # Add default user_id if not provided
-    asset_params = Map.put_new(asset_params, "user_id", Map.get(params, "user_id", @default_user_id))
+  def create(conn, %{"asset" => asset_params}) do
+    user = conn.assigns.current_user
     
-    with {:ok, %Asset{} = asset} <- Portfolio.create_full_asset(asset_params) do
+    with {:ok, %Asset{} = asset} <- Portfolio.create_full_asset(user.id, asset_params) do
       conn
       |> put_status(:created)
       |> put_resp_header("location", ~p"/api/assets/#{asset}")
@@ -29,12 +24,14 @@ defmodule WealthBackendWeb.AssetController do
   end
 
   def show(conn, %{"id" => id}) do
-    asset = Portfolio.get_asset!(id)
+    user = conn.assigns.current_user
+    asset = Portfolio.get_asset!(id, user.id)
     render(conn, :show, asset: asset)
   end
 
   def update(conn, %{"id" => id, "asset" => asset_params}) do
-    asset = Portfolio.get_asset!(id)
+    user = conn.assigns.current_user
+    asset = Portfolio.get_asset!(id, user.id)
 
     with {:ok, %Asset{} = asset} <- Portfolio.update_asset(asset, asset_params) do
       render(conn, :show, asset: asset)
@@ -42,7 +39,8 @@ defmodule WealthBackendWeb.AssetController do
   end
 
   def delete(conn, %{"id" => id}) do
-    asset = Portfolio.get_asset!(id)
+    user = conn.assigns.current_user
+    asset = Portfolio.get_asset!(id, user.id)
 
     with {:ok, %Asset{}} <- Portfolio.delete_asset(asset) do
       send_resp(conn, :no_content, "")

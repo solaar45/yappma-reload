@@ -44,6 +44,21 @@
     "portfolio": "Portfolio",
     "settings": "Einstellungen"
   },
+  "auth": {
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "loginButton": "Anmelden",
+    "loggingIn": "Wird angemeldet...",
+    "invalidCredentials": "Ungültige E-Mail oder Passwort",
+    "loginError": "Fehler beim Anmelden. Bitte versuchen Sie es erneut.",
+    "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
+    "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+    "welcome": "Willkommen zurück",
+    "loginDescription": "Melden Sie sich an, um fortzufahren",
+    "demoHint": "Demo-Zugangsdaten:"
+  },
   "user": {
     "profile": "Profil",
     "logout": "Abmelden",

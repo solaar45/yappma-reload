@@ -39,7 +39,9 @@ defmodule WealthBackend.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:cors_plug, "~> 3.0"},
-      {:httpoison, "~> 2.2"}
+      {:httpoison, "~> 2.2"},
+      {:bcrypt_elixir, "~> 3.0"},
+      {:phoenix_html, "~> 4.1"}
     ]
   end
 

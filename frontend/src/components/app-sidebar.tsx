@@ -1,6 +1,6 @@
 import { ChevronUp, User2, Settings, LogOut, Wallet, Landmark, PiggyBank, Camera, Receipt } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Sidebar,
@@ -21,12 +21,20 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useUser } from '@/contexts/UserContext';
+import { useAuth } from '@/hooks/useAuth';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { cn } from '@/lib/utils';
 
 export function AppSidebar() {
   const { t } = useTranslation();
-  const { user, logout } = useUser();
+  const navigate = useNavigate();
+  const { user } = useUser();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   const items = [
     {
@@ -132,7 +140,7 @@ export function AppSidebar() {
                   <LanguageSwitcher />
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>{t('user.logout')}</span>
                 </DropdownMenuItem>

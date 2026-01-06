@@ -44,6 +44,21 @@
     "portfolio": "Portfolio",
     "settings": "Settings"
   },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "loginButton": "Sign In",
+    "loggingIn": "Signing in...",
+    "invalidCredentials": "Invalid email or password",
+    "loginError": "Error signing in. Please try again.",
+    "networkError": "Network error. Please check your connection.",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "welcome": "Welcome back",
+    "loginDescription": "Sign in to continue",
+    "demoHint": "Demo credentials:"
+  },
   "user": {
     "profile": "Profile",
     "logout": "Logout",

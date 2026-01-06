@@ -10,7 +10,11 @@ defmodule WealthBackend.Taxes do
     |> Repo.all()
   end
 
-  def get_tax_exemption!(id), do: Repo.get!(TaxExemption, id)
+  def get_tax_exemption!(id, user_id) do
+    TaxExemption
+    |> where([te], te.id == ^id and te.user_id == ^user_id)
+    |> Repo.one!()
+  end
 
   def create_tax_exemption(attrs \\ %{}) do
     %TaxExemption{}

@@ -9,9 +9,10 @@ defmodule WealthBackendWeb.DashboardController do
   Returns net worth calculation for a user.
   Query params: user_id (required), date (optional, defaults to today)
   """
-  def net_worth(conn, %{"user_id" => user_id} = params) do
+  def net_worth(conn, params) do
+    user = conn.assigns.current_user
     date = parse_date(params["date"])
-    net_worth = Analytics.calculate_net_worth(user_id, date)
+    net_worth = Analytics.calculate_net_worth(user.id, date)
     
     render(conn, :net_worth, net_worth: net_worth, date: date)
   end
@@ -20,9 +21,10 @@ defmodule WealthBackendWeb.DashboardController do
   Returns latest snapshots for all accounts of a user.
   Query params: user_id (required), date (optional)
   """
-  def account_snapshots(conn, %{"user_id" => user_id} = params) do
+  def account_snapshots(conn, params) do
+    user = conn.assigns.current_user
     date = parse_date(params["date"])
-    snapshots = Analytics.get_latest_account_snapshots(user_id, date)
+    snapshots = Analytics.get_latest_account_snapshots(user.id, date)
     
     render(conn, :account_snapshots, snapshots: snapshots, date: date)
   end
@@ -31,9 +33,10 @@ defmodule WealthBackendWeb.DashboardController do
   Returns latest snapshots for all assets of a user.
   Query params: user_id (required), date (optional)
   """
-  def asset_snapshots(conn, %{"user_id" => user_id} = params) do
+  def asset_snapshots(conn, params) do
+    user = conn.assigns.current_user
     date = parse_date(params["date"])
-    snapshots = Analytics.get_latest_asset_snapshots(user_id, date)
+    snapshots = Analytics.get_latest_asset_snapshots(user.id, date)
     
     render(conn, :asset_snapshots, snapshots: snapshots, date: date)
   end

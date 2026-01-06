@@ -6,20 +6,14 @@ defmodule WealthBackendWeb.AccountController do
 
   action_fallback WealthBackendWeb.FallbackController
 
-  # TODO: Get user_id from authenticated session/JWT token
-  # For now, use a default test user_id
-  @default_user_id 1
-
-  def index(conn, params) do
-    user_id = Map.get(params, "user_id", @default_user_id)
-    user_id = if is_binary(user_id), do: String.to_integer(user_id), else: user_id
-    accounts = Accounts.list_accounts(user_id)
+  def index(conn, _params) do
+    user = conn.assigns.current_user
+    accounts = Accounts.list_accounts(user.id)
     render(conn, :index, accounts: accounts)
   end
 
-  def create(conn, %{"account" => account_params} = params) do
-    user_id = Map.get(account_params, "user_id") || Map.get(params, "user_id", @default_user_id)
-    account_params = Map.put(account_params, "user_id", user_id)
+  def create(conn, %{"account" => account_params}) do
+    user = conn.assigns.current_user
     
     result = WealthBackend.Repo.transaction(fn ->
       institution_id = case Map.get(account_params, "custom_institution_name") do
@@ -27,7 +21,7 @@ defmodule WealthBackendWeb.AccountController do
           # Create custom institution
           case WealthBackend.Institutions.create_institution(%{
             "name" => name,
-            "user_id" => user_id,
+            "user_id" => user.id,
             "is_system_provided" => false,
             "type" => "other",
             "category" => "other"
@@ -39,7 +33,10 @@ defmodule WealthBackendWeb.AccountController do
           Map.get(account_params, "institution_id")
       end
 
-      account_params = Map.put(account_params, "institution_id", institution_id)
+      account_params = 
+        account_params 
+        |> Map.put("institution_id", institution_id)
+        |> Map.put("user_id", user.id)
       
       case Accounts.create_account(account_params) do
         {:ok, account} -> account
@@ -63,12 +60,14 @@ defmodule WealthBackendWeb.AccountController do
   end
 
   def show(conn, %{"id" => id}) do
-    account = Accounts.get_account!(id) |> WealthBackend.Repo.preload(:institution)
+    user = conn.assigns.current_user
+    account = Accounts.get_account!(id, user)
     render(conn, :show, account: account)
   end
 
   def update(conn, %{"id" => id, "account" => account_params}) do
-    account = Accounts.get_account!(id)
+    user = conn.assigns.current_user
+    account = Accounts.get_account!(id, user)
 
     with {:ok, %Account{} = account} <- Accounts.update_account(account, account_params) do
       account = WealthBackend.Repo.preload(account, :institution)
@@ -77,7 +76,8 @@ defmodule WealthBackendWeb.AccountController do
   end
 
   def delete(conn, %{"id" => id}) do
-    account = Accounts.get_account!(id)
+    user = conn.assigns.current_user
+    account = Accounts.get_account!(id, user)
 
     with {:ok, %Account{}} <- Accounts.delete_account(account) do
       send_resp(conn, :no_content, "")

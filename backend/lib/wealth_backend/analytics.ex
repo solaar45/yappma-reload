@@ -11,16 +11,22 @@ defmodule WealthBackend.Analytics do
 
   ## Account Snapshots
 
-  def list_account_snapshots(account_id) do
+  def list_account_snapshots(account_id, user_id) do
     AccountSnapshot
-    |> where([s], s.account_id == ^account_id)
+    |> where([s], s.account_id == ^account_id and s.user_id == ^user_id)
     |> order_by([s], desc: s.snapshot_date)
     |> Repo.all()
   end
 
-  def get_account_snapshot!(id), do: Repo.get!(AccountSnapshot, id)
+  def get_account_snapshot!(id, user_id) do
+    AccountSnapshot
+    |> where([s], s.id == ^id and s.user_id == ^user_id)
+    |> Repo.one!()
+  end
 
-  def create_account_snapshot(attrs \\ %{}) do
+  def create_account_snapshot(user_id, attrs \\ %{}) do
+    attrs = Map.put(attrs, :user_id, user_id)
+
     %AccountSnapshot{}
     |> AccountSnapshot.changeset(attrs)
     |> Repo.insert()
@@ -38,16 +44,22 @@ defmodule WealthBackend.Analytics do
 
   ## Asset Snapshots
 
-  def list_asset_snapshots(asset_id) do
+  def list_asset_snapshots(asset_id, user_id) do
     AssetSnapshot
-    |> where([s], s.asset_id == ^asset_id)
+    |> where([s], s.asset_id == ^asset_id and s.user_id == ^user_id)
     |> order_by([s], desc: s.snapshot_date)
     |> Repo.all()
   end
 
-  def get_asset_snapshot!(id), do: Repo.get!(AssetSnapshot, id)
+  def get_asset_snapshot!(id, user_id) do
+    AssetSnapshot
+    |> where([s], s.id == ^id and s.user_id == ^user_id)
+    |> Repo.one!()
+  end
 
-  def create_asset_snapshot(attrs \\ %{}) do
+  def create_asset_snapshot(user_id, attrs \\ %{}) do
+    attrs = Map.put(attrs, :user_id, user_id)
+
     %AssetSnapshot{}
     |> AssetSnapshot.changeset(attrs)
     |> Repo.insert()
