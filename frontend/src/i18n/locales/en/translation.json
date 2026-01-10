@@ -55,7 +55,13 @@
     "hasAccount": "Already registered?",
     "loginHere": "Login here",
     "registerHere": "Register here",
-    "demoHint": "Demo version: All data is local and not saved"
+    "demoHint": "Demo version: All data is local and not saved",
+    "invalidCredentials": "Invalid credentials. Please check your email and password.",
+    "loginError": "Login error. Please try again.",
+    "networkError": "Network error. Please check your internet connection.",
+    "loginDescription": "Sign in with your credentials",
+    "loggingIn": "Logging in...",
+    "loginButton": "Sign in"
   },
   "dashboard": {
     "title": "Dashboard",

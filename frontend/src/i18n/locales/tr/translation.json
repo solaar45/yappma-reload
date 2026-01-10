@@ -55,7 +55,13 @@
     "hasAccount": "Zaten kayıtlı mısınız?",
     "loginHere": "Buradan giriş yapın",
     "registerHere": "Buradan kayıt olun",
-    "demoHint": "Demo sürüm: Tüm veriler yerel ve kaydedilmez"
+    "demoHint": "Demo sürüm: Tüm veriler yerel ve kaydedilmez",
+    "invalidCredentials": "Geçersiz kimlik bilgileri. Lütfen e-postanızı ve şifrenizi kontrol edin.",
+    "loginError": "Giriş hatası. Lütfen tekrar deneyin.",
+    "networkError": "Ağ hatası. Lütfen internet bağlantınızı kontrol edin.",
+    "loginDescription": "Kimlik bilgilerinizle giriş yapın",
+    "loggingIn": "Giriş yapılıyor...",
+    "loginButton": "Giriş Yap"
   },
   "dashboard": {
     "title": "Kontrol Paneli",

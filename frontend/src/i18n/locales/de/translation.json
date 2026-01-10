@@ -55,7 +55,13 @@
     "hasAccount": "Bereits registriert?",
     "loginHere": "Hier anmelden",
     "registerHere": "Hier registrieren",
-    "demoHint": "Demo-Version: Alle Daten sind lokal und werden nicht gespeichert"
+    "demoHint": "Demo-Version: Alle Daten sind lokal und werden nicht gespeichert",
+    "invalidCredentials": "Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Passwort.",
+    "loginError": "Anmeldefehler. Bitte versuchen Sie es erneut.",
+    "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Internetverbindung.",
+    "loginDescription": "Melden Sie sich mit Ihren Zugangsdaten an",
+    "loggingIn": "Anmeldung läuft...",
+    "loginButton": "Anmelden"
   },
   "dashboard": {
     "title": "Dashboard",
