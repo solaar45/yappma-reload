@@ -33,12 +33,49 @@
     "optional": "optional",
     "currency": "Währung"
   },
+  "auth": {
+    "welcome": "Willkommen bei YAPPMA",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "register": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "forgotPassword": "Passwort vergessen?",
+    "noAccount": "Noch kein Konto?",
+    "hasAccount": "Bereits registriert?",
+    "loginHere": "Hier anmelden",
+    "registerHere": "Hier registrieren",
+    "demoHint": "Demo-Version: Alle Daten sind lokal und werden nicht gespeichert"
+  },
   "dashboard": {
     "title": "Dashboard",
     "totalValue": "Gesamtwert",
+    "totalNetWorth": "Nettovermögen",
+    "totalInAccounts": "Gesamt auf Konten",
+    "totalInAssets": "Gesamt in Vermögenswerten",
     "accounts": "Konten",
     "assets": "Vermögenswerte",
-    "recentActivity": "Letzte Aktivität"
+    "recentActivity": "Letzte Aktivität",
+    "recentAccounts": "Letzte Konten",
+    "recentAssets": "Letzte Vermögenswerte",
+    "noAccountSnapshots": "Keine Konto-Momentaufnahmen vorhanden",
+    "noAssetSnapshots": "Keine Vermögenswert-Momentaufnahmen vorhanden",
+    "errorLoading": "Fehler beim Laden des Dashboards",
+    "asOf": "Stand"
+  },
+  "taxes": {
+    "title": "Steuern",
+    "yearToDate": "Jahr bis heute",
+    "used": "Verwendet",
+    "remaining": "Verbleibend",
+    "allocated": "Zugewiesen",
+    "fsa": "Freibetrag",
+    "fsaExplanation": "Ihr jährlicher Steuerfreibetrag",
+    "fsaUsed": "Genutzter Freibetrag",
+    "fsaRemaining": "Verbleibender Freibetrag",
+    "projectedYearEnd": "Prognostiziert (Jahresende)",
+    "onTrack": "Auf Kurs",
+    "overBudget": "Über Budget"
   },
   "accounts": {
     "title": "Konten",
@@ -79,6 +116,7 @@
     "account": "Konto",
     "currentValue": "Aktueller Wert",
     "quantity": "Menge",
+    "units": "Einheiten",
     "status": "Status",
     "active": "Aktiv",
     "inactive": "Inaktiv",
