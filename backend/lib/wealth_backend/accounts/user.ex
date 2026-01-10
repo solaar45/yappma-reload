@@ -56,6 +56,17 @@ defmodule WealthBackend.Accounts.User do
     |> validate_number(:tax_allowance_limit, greater_than_or_equal_to: 0)
   end
 
+  @doc """
+  A user changeset for updating settings like name, currency, and tax preferences.
+  Does not require or validate password.
+  """
+  def settings_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:name, :currency_default, :tax_allowance_limit, :tax_status])
+    |> validate_inclusion(:tax_status, ~w(single married))
+    |> validate_number(:tax_allowance_limit, greater_than_or_equal_to: 0)
+  end
+
   defp validate_email(changeset, opts) do
     changeset
     |> validate_required([:email])
