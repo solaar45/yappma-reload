@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useCreateAsset } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { apiClient } from '@/lib/api/client';
-import type { AssetType } from '@/lib/api/types';
+import type { AssetType, SecurityAsset, InsuranceAsset, RealEstateAsset } from '@/lib/api/types';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,9 @@ import {
 import { Plus } from 'lucide-react';
 import { useAccounts } from '@/lib/api/hooks';
 import InstitutionLogo from '@/components/InstitutionLogo';
+import { SecurityAssetForm } from '@/components/portfolio/SecurityAssetForm';
+import { InsuranceAssetForm } from '@/components/portfolio/InsuranceAssetForm';
+import { RealEstateAssetForm } from '@/components/portfolio/RealEstateAssetForm';
 
 interface CreateAssetDialogProps {
   onSuccess?: () => void;
@@ -39,16 +42,27 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
   const [open, setOpen] = useState(false);
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    asset_type_id: string;
+    currency: string;
+    is_active: boolean;
+    security_asset?: Partial<SecurityAsset>;
+    insurance_asset?: Partial<InsuranceAsset>;
+    real_estate_asset?: Partial<RealEstateAsset>;
+  }>({
     name: '',
     asset_type_id: '',
-    isin: '',
-    ticker: '',
     currency: 'EUR',
     is_active: true,
   });
   const { accounts } = useAccounts({ userId: userId! });
   const [accountId, setAccountId] = useState('');
+
+  // Get selected asset type
+  const selectedAssetType = assetTypes.find(
+    (t) => t.id.toString() === formData.asset_type_id
+  );
 
   useEffect(() => {
     const fetchAssetTypes = async () => {
@@ -84,19 +98,20 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       name: formData.name,
       currency: formData.currency,
       is_active: formData.is_active,
-      security_asset:
-        formData.isin || formData.ticker
-          ? {
-              isin: formData.isin || undefined,
-              ticker: formData.ticker || undefined,
-            }
-          : undefined,
+      security_asset: formData.security_asset,
+      insurance_asset: formData.insurance_asset,
+      real_estate_asset: formData.real_estate_asset,
       ...(accountId ? { account_id: parseInt(accountId) } : {}),
     });
 
     if (result) {
       setOpen(false);
-      setFormData({ name: '', asset_type_id: '', isin: '', ticker: '', currency: 'EUR', is_active: true });
+      setFormData({
+        name: '',
+        asset_type_id: '',
+        currency: 'EUR',
+        is_active: true,
+      });
       setAccountId('');
       onSuccess?.();
     }
@@ -110,7 +125,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
           {t('assets.createAsset') || 'Add Asset'}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{t('assets.createAsset') || 'Create New Asset'}</DialogTitle>
@@ -150,34 +165,57 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="ticker">{t('assets.ticker') || 'Ticker Symbol'} ({t('common.optional') || 'optional'})</Label>
-              <Input
-                id="ticker"
-                placeholder="e.g., AAPL"
-                value={formData.ticker}
-                onChange={(e) => setFormData({ ...formData, ticker: e.target.value })}
-              />
+
+            {/* Conditionally render specialized forms based on asset type */}
+            {selectedAssetType?.code === 'security' && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-3">
+                  {t('assets.security.details') || 'Security Details'}
+                </h4>
+                <SecurityAssetForm
+                  value={formData.security_asset || {}}
+                  onChange={(value) => setFormData({ ...formData, security_asset: value })}
+                />
+              </div>
+            )}
+
+            {selectedAssetType?.code === 'insurance' && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-3">
+                  {t('assets.insurance.details') || 'Insurance Details'}
+                </h4>
+                <InsuranceAssetForm
+                  value={formData.insurance_asset || {}}
+                  onChange={(value) => setFormData({ ...formData, insurance_asset: value })}
+                />
+              </div>
+            )}
+
+            {selectedAssetType?.code === 'real_estate' && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-3">
+                  {t('assets.realEstate.details') || 'Real Estate Details'}
+                </h4>
+                <RealEstateAssetForm
+                  value={formData.real_estate_asset || {}}
+                  onChange={(value) => setFormData({ ...formData, real_estate_asset: value })}
+                />
+              </div>
+            )}
+
+            <div className="border-t pt-4">
+              <div className="grid gap-2">
+                <Label htmlFor="currency">{t('common.currency') || 'Currency'} *</Label>
+                <Input
+                  id="currency"
+                  placeholder="EUR"
+                  value={formData.currency}
+                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                  required
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="isin">{t('assets.isin') || 'ISIN'} ({t('common.optional') || 'optional'})</Label>
-              <Input
-                id="isin"
-                placeholder="e.g., US0378331005"
-                value={formData.isin}
-                onChange={(e) => setFormData({ ...formData, isin: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="currency">{t('common.currency') || 'Currency'} *</Label>
-              <Input
-                id="currency"
-                placeholder="EUR"
-                value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                required
-              />
-            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="account">{t('assets.account') || 'Linked Account'} ({t('common.optional') || 'optional'})</Label>
               <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
