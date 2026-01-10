@@ -8,6 +8,7 @@
     "asset": "Vermögenswert",
     "institutions": "Institutionen",
     "snapshots": "Momentaufnahmen",
+    "snapshot": "Momentaufnahme",
     "settings": "Einstellungen",
     "logout": "Abmelden",
     "save": "Speichern",
@@ -32,6 +33,15 @@
     "deleting": "Wird gelöscht...",
     "optional": "optional",
     "currency": "Währung"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "accounts": "Konten",
+    "assets": "Vermögenswerte",
+    "institutions": "Institutionen",
+    "snapshots": "Momentaufnahmen",
+    "taxes": "Steuern",
+    "settings": "Einstellungen"
   },
   "auth": {
     "welcome": "Willkommen bei YAPPMA",
@@ -75,7 +85,22 @@
     "fsaRemaining": "Verbleibender Freibetrag",
     "projectedYearEnd": "Prognostiziert (Jahresende)",
     "onTrack": "Auf Kurs",
-    "overBudget": "Über Budget"
+    "overBudget": "Über Budget",
+    "addExemption": "Freistellungsauftrag hinzufügen",
+    "tooltipDisabledAddOrder": "Freistellungsaufträge können nur für das aktuelle Jahr hinzugefügt werden",
+    "taxAllowance": "Steuerlicher Freibetrag",
+    "married": "Verheiratet",
+    "single": "Ledig",
+    "totalLimit": "Gesamtlimit",
+    "usedAmount": "Genutzter Betrag",
+    "remainingAmount": "Verbleibender Betrag",
+    "warningOverLimit": "Warnung: Die Summe Ihrer Freistellungsaufträge ({{total}}) überschreitet das zulässige Limit von {{limit}}!",
+    "status": "Steuerstatus",
+    "exemptionOrders": "Freistellungsaufträge",
+    "institution": "Institution",
+    "amount": "Betrag",
+    "noExemptions": "Keine Freistellungsaufträge vorhanden",
+    "deleteExemption": "Freistellungsauftrag löschen"
   },
   "accounts": {
     "title": "Konten",
@@ -294,7 +319,12 @@
     "types": {
       "account": "Konto",
       "asset": "Vermögenswert"
-    }
+    },
+    "snapshotSelected": "Momentaufnahme ausgewählt",
+    "snapshotsSelected": "Momentaufnahmen ausgewählt",
+    "deleteSelected": "Ausgewählte löschen",
+    "deleteSelectedTitle": "Ausgewählte Momentaufnahmen löschen",
+    "deleteSelectedConfirm": "Möchten Sie die ausgewählten Momentaufnahmen wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
   },
   "settings": {
     "title": "Einstellungen",

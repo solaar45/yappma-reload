@@ -8,6 +8,7 @@
     "asset": "Varlık",
     "institutions": "Kurumlar",
     "snapshots": "Anlık Görüntüler",
+    "snapshot": "Anlık Görüntü",
     "settings": "Ayarlar",
     "logout": "Çıkış Yap",
     "save": "Kaydet",
@@ -32,6 +33,15 @@
     "deleting": "Siliniyor...",
     "optional": "isteğe bağlı",
     "currency": "Para Birimi"
+  },
+  "navigation": {
+    "dashboard": "Kontrol Paneli",
+    "accounts": "Hesaplar",
+    "assets": "Varlıklar",
+    "institutions": "Kurumlar",
+    "snapshots": "Anlık Görüntüler",
+    "taxes": "Vergiler",
+    "settings": "Ayarlar"
   },
   "auth": {
     "welcome": "YAPPMA'ya Hoş Geldiniz",
@@ -75,7 +85,22 @@
     "fsaRemaining": "Kalan Muafiyet",
     "projectedYearEnd": "Tahmin (Yıl Sonu)",
     "onTrack": "Yolunda",
-    "overBudget": "Bütçe Aşımı"
+    "overBudget": "Bütçe Aşımı",
+    "addExemption": "Muafiyet Emri Ekle",
+    "tooltipDisabledAddOrder": "Muafiyet emirleri yalnızca mevcut yıl için eklenebilir",
+    "taxAllowance": "Vergi Muafiyeti",
+    "married": "Evli",
+    "single": "Bekar",
+    "totalLimit": "Toplam Limit",
+    "usedAmount": "Kullanılan Tutar",
+    "remainingAmount": "Kalan Tutar",
+    "warningOverLimit": "Uyarı: Muafiyet emirlerinizin toplamı ({{total}}) izin verilen {{limit}} limitini aşıyor!",
+    "status": "Vergi Durumu",
+    "exemptionOrders": "Muafiyet Emirleri",
+    "institution": "Kurum",
+    "amount": "Tutar",
+    "noExemptions": "Muafiyet emri yok",
+    "deleteExemption": "Muafiyet Emrini Sil"
   },
   "accounts": {
     "title": "Hesaplar",
@@ -294,7 +319,12 @@
     "types": {
       "account": "Hesap",
       "asset": "Varlık"
-    }
+    },
+    "snapshotSelected": "Anlık görüntü seçildi",
+    "snapshotsSelected": "Anlık görüntü seçildi",
+    "deleteSelected": "Seçilenleri sil",
+    "deleteSelectedTitle": "Seçili anlık görüntüleri sil",
+    "deleteSelectedConfirm": "Seçili anlık görüntüleri gerçekten silmek istiyor musunuz? Bu işlem geri alınamaz."
   },
   "settings": {
     "title": "Ayarlar",

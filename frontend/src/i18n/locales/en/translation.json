@@ -8,6 +8,7 @@
     "asset": "Asset",
     "institutions": "Institutions",
     "snapshots": "Snapshots",
+    "snapshot": "Snapshot",
     "settings": "Settings",
     "logout": "Logout",
     "save": "Save",
@@ -32,6 +33,15 @@
     "deleting": "Deleting...",
     "optional": "optional",
     "currency": "Currency"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "accounts": "Accounts",
+    "assets": "Assets",
+    "institutions": "Institutions",
+    "snapshots": "Snapshots",
+    "taxes": "Taxes",
+    "settings": "Settings"
   },
   "auth": {
     "welcome": "Welcome to YAPPMA",
@@ -75,7 +85,22 @@
     "fsaRemaining": "Remaining Allowance",
     "projectedYearEnd": "Projected (Year End)",
     "onTrack": "On Track",
-    "overBudget": "Over Budget"
+    "overBudget": "Over Budget",
+    "addExemption": "Add Exemption Order",
+    "tooltipDisabledAddOrder": "Exemption orders can only be added for the current year",
+    "taxAllowance": "Tax Allowance",
+    "married": "Married",
+    "single": "Single",
+    "totalLimit": "Total Limit",
+    "usedAmount": "Used Amount",
+    "remainingAmount": "Remaining Amount",
+    "warningOverLimit": "Warning: The sum of your exemption orders ({{total}}) exceeds the allowed limit of {{limit}}!",
+    "status": "Tax Status",
+    "exemptionOrders": "Exemption Orders",
+    "institution": "Institution",
+    "amount": "Amount",
+    "noExemptions": "No exemption orders available",
+    "deleteExemption": "Delete Exemption Order"
   },
   "accounts": {
     "title": "Accounts",
@@ -294,7 +319,12 @@
     "types": {
       "account": "Account",
       "asset": "Asset"
-    }
+    },
+    "snapshotSelected": "Snapshot selected",
+    "snapshotsSelected": "Snapshots selected",
+    "deleteSelected": "Delete selected",
+    "deleteSelectedTitle": "Delete selected snapshots",
+    "deleteSelectedConfirm": "Do you really want to delete the selected snapshots? This action cannot be undone."
   },
   "settings": {
     "title": "Settings",
