@@ -187,17 +187,15 @@ defmodule WealthBackend.Portfolio.RiskClassifier do
     end
   end
 
-  @doc """
-  Maps annualized volatility to risk classes aligned with EU SRRI standards.
-  
-  Risk Class 1: < 5%  (Money market funds, very stable bonds)
-  Risk Class 2: < 12% (Government bonds, defensive equity funds)
-  Risk Class 3: < 20% (Balanced funds, global equity ETFs like MSCI World)
-  Risk Class 4: < 35% (Individual stocks, sector funds, emerging markets)
-  Risk Class 5: ≥ 35% (Crypto, leveraged products, highly volatile assets)
-  
-  Note: MSCI World ETFs typically show 12-18% annualized volatility → Risk Class 3
-  """
+  # Maps annualized volatility to risk classes aligned with EU SRRI standards.
+  #
+  # Risk Class 1: < 5%  (Money market funds, very stable bonds)
+  # Risk Class 2: < 12% (Government bonds, defensive equity funds)
+  # Risk Class 3: < 20% (Balanced funds, global equity ETFs like MSCI World)
+  # Risk Class 4: < 35% (Individual stocks, sector funds, emerging markets)
+  # Risk Class 5: ≥ 35% (Crypto, leveraged products, highly volatile assets)
+  #
+  # Note: MSCI World ETFs typically show 12-18% annualized volatility → Risk Class 3
   defp volatility_to_risk_class(volatility) do
     cond do
       volatility < 0.05 -> 1  # < 5% - Very low risk
