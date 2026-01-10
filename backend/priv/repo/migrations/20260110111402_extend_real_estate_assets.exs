@@ -9,7 +9,7 @@ defmodule WealthBackend.Repo.Migrations.ExtendRealEstateAssets do
       add :operating_expenses, :decimal, precision: 15, scale: 2
       add :property_tax, :decimal, precision: 15, scale: 2
       add :mortgage_outstanding, :decimal, precision: 15, scale: 2
-      add :mortgage_rate, :decimal, precision: 5, scale: 3
+      add :mortgage_rate, :decimal, precision: 10, scale: 4
       add :construction_year, :integer
       add :renovation_year, :integer
       add :cadastral_number, :string
