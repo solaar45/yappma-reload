@@ -132,7 +132,6 @@ export function CreateInstitutionDialog({ onSuccess, compact = false, children }
               <Label htmlFor="name">{t('common.name') || 'Name'} *</Label>
               <Input
                 id="name"
-                placeholder="e.g., ING DiBa, Sparkasse"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -142,7 +141,6 @@ export function CreateInstitutionDialog({ onSuccess, compact = false, children }
               <Label htmlFor="website">Website ({t('common.optional')})</Label>
               <Input
                 id="website"
-                placeholder="e.g., dkb.de or https://dkb.de"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
               />
