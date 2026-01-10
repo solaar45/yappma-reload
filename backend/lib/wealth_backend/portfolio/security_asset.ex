@@ -9,6 +9,16 @@ defmodule WealthBackend.Portfolio.SecurityAsset do
     field :ticker, :string
     field :exchange, :string
     field :sector, :string
+    
+    # Extended fields
+    field :security_type, :string
+    field :distribution_type, :string
+    field :expense_ratio, :decimal
+    field :issuer, :string
+    field :coupon_rate, :decimal
+    field :maturity_date, :date
+    field :country_of_domicile, :string
+    field :benchmark_index, :string
 
     belongs_to :asset, WealthBackend.Portfolio.Asset, define_field: false
 
@@ -18,8 +28,49 @@ defmodule WealthBackend.Portfolio.SecurityAsset do
   @doc false
   def changeset(security_asset, attrs) do
     security_asset
-    |> cast(attrs, [:asset_id, :isin, :wkn, :ticker, :exchange, :sector])
-    |> empty_string_to_nil([:isin, :wkn, :ticker, :exchange, :sector])
+    |> cast(attrs, [
+      :asset_id,
+      :isin,
+      :wkn,
+      :ticker,
+      :exchange,
+      :sector,
+      :security_type,
+      :distribution_type,
+      :expense_ratio,
+      :issuer,
+      :coupon_rate,
+      :maturity_date,
+      :country_of_domicile,
+      :benchmark_index
+    ])
+    |> empty_string_to_nil([
+      :isin,
+      :wkn,
+      :ticker,
+      :exchange,
+      :sector,
+      :security_type,
+      :distribution_type,
+      :issuer,
+      :country_of_domicile,
+      :benchmark_index
+    ])
+    |> validate_inclusion(:security_type, [
+      "stock",
+      "etf",
+      "bond",
+      "mutual_fund",
+      "index_fund",
+      nil
+    ])
+    |> validate_inclusion(:distribution_type, [
+      "accumulating",
+      "distributing",
+      nil
+    ])
+    |> validate_number(:expense_ratio, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)
+    |> validate_number(:coupon_rate, greater_than_or_equal_to: 0)
   end
 
   # Convert empty strings to nil for optional fields
