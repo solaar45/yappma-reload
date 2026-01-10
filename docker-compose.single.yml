@@ -1,0 +1,83 @@
+version: '3.9'
+
+# ============================================
+# YAPPMA Reload - Single Container Setup
+# ============================================
+# Backend + Frontend in one container
+# Only PostgreSQL is separate
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: yappma-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_DATABASE:-wealth_backend_prod}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - yappma-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # YAPPMA Application (Backend + Frontend)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_LOGOKIT_TOKEN: ${VITE_LOGOKIT_TOKEN}
+        VITE_LOGO_DEV_TOKEN: ${VITE_LOGO_DEV_TOKEN}
+    image: yappma-app:latest
+    container_name: yappma-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_HOSTNAME: postgres
+      DB_DATABASE: ${DB_DATABASE:-wealth_backend_prod}
+      
+      # Phoenix
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      PHOENIX_HOST: ${PHOENIX_HOST:-localhost}
+      PHX_SERVER: true
+      
+      # API Keys
+      ALPHA_VANTAGE_API_KEY: ${ALPHA_VANTAGE_API_KEY}
+      
+      # Environment
+      MIX_ENV: prod
+      PORT: 4000
+    ports:
+      - "8080:8080"
+      - "4000:4000"
+    networks:
+      - yappma-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  yappma-network:
+    driver: bridge
