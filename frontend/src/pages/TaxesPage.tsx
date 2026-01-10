@@ -75,12 +75,13 @@ export default function TaxesPage() {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
 
-    const [taxStatus, setTaxStatus] = useState<'single' | 'married'>(user?.tax_status || 'single');
+    // Initialize with 'single' as default, will be updated when user loads
+    const [taxStatus, setTaxStatus] = useState<'single' | 'married'>('single');
 
     // Keep tax status in sync with user state
     useEffect(() => {
-        if (user) {
-            setTaxStatus(user.tax_status);
+        if (user?.tax_status) {
+            setTaxStatus(user.tax_status as 'single' | 'married');
         }
     }, [user]);
 
@@ -248,7 +249,7 @@ export default function TaxesPage() {
                                     onValueChange={(v: 'single' | 'married') => setTaxStatus(v)}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue />
+                                        <SelectValue placeholder={t('taxes.single')} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="single">{t('taxes.single')}</SelectItem>
