@@ -127,7 +127,6 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               <Label htmlFor="name">{t('accounts.name') || 'Account Name'} *</Label>
               <Input
                 id="name"
-                placeholder={t('accounts.name') || "e.g., Main Checking, Savings Account"}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
