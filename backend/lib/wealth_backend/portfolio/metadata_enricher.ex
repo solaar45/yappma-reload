@@ -6,7 +6,8 @@ defmodule WealthBackend.Portfolio.MetadataEnricher do
 
   require Logger
 
-  @yahoo_finance_base "https://query2.finance.yahoo.com/v10/finance/quoteSummary/"
+  # Using v7 quote endpoint that doesn't require authentication
+  @yahoo_quote_url "https://query1.finance.yahoo.com/v7/finance/quote"
   @timeout 10_000
   @recv_timeout 10_000
 
@@ -70,25 +71,29 @@ defmodule WealthBackend.Portfolio.MetadataEnricher do
   # Private functions
 
   defp fetch_yahoo_data(ticker) do
-    url = "#{@yahoo_finance_base}#{ticker}?modules=summaryDetail,assetProfile,quoteType,fundProfile"
+    # Use v7 quote endpoint which doesn't require authentication
+    url = "#{@yahoo_quote_url}?symbols=#{ticker}"
+    
     headers = [
-      {"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
-      {"Accept", "application/json"}
+      {"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"},
+      {"Accept", "application/json"},
+      {"Accept-Language", "en-US,en;q=0.9"},
+      {"Referer", "https://finance.yahoo.com/"}
     ]
     
-    Logger.info("Fetching data from Yahoo Finance for: #{ticker}")
+    Logger.info("Fetching data from Yahoo Finance v7 for: #{ticker}")
     
     case HTTPoison.get(url, headers, timeout: @timeout, recv_timeout: @recv_timeout) do
       {:ok, %{status_code: 200, body: body}} ->
         Logger.debug("Received successful response from Yahoo Finance")
-        parse_yahoo_response(body, ticker)
+        parse_yahoo_v7_response(body, ticker)
       
       {:ok, %{status_code: 404}} ->
         Logger.warning("Yahoo Finance returned 404 for ticker: #{ticker}")
         {:error, :not_found}
       
       {:ok, %{status_code: status, body: body}} ->
-        Logger.warning("Yahoo Finance API returned status #{status} for ticker #{ticker}: #{body}")
+        Logger.warning("Yahoo Finance API returned status #{status} for ticker #{ticker}: #{inspect(body)}")
         {:error, :api_error}
       
       {:error, %HTTPoison.Error{reason: :timeout}} ->
@@ -105,17 +110,17 @@ defmodule WealthBackend.Portfolio.MetadataEnricher do
       {:error, :api_error}
   end
 
-  defp parse_yahoo_response(body, ticker) do
+  defp parse_yahoo_v7_response(body, ticker) do
     case Jason.decode(body) do
-      {:ok, %{"quoteSummary" => %{"result" => [data | _]}}} when data != nil ->
-        Logger.debug("Successfully parsed Yahoo Finance response")
-        extract_metadata(data, ticker)
+      {:ok, %{"quoteResponse" => %{"result" => [quote | _]}}} when quote != nil ->
+        Logger.debug("Successfully parsed Yahoo Finance v7 response")
+        extract_metadata_v7(quote, ticker)
       
-      {:ok, %{"quoteSummary" => %{"result" => nil}}} ->
-        Logger.warning("Yahoo Finance returned null result for ticker: #{ticker}")
+      {:ok, %{"quoteResponse" => %{"result" => []}}} ->
+        Logger.warning("Yahoo Finance returned empty result for ticker: #{ticker}")
         {:error, :not_found}
       
-      {:ok, %{"quoteSummary" => %{"error" => error}}} ->
+      {:ok, %{"quoteResponse" => %{"error" => error}}} ->
         Logger.warning("Yahoo Finance API error: #{inspect(error)}")
         {:error, :not_found}
       
@@ -129,23 +134,20 @@ defmodule WealthBackend.Portfolio.MetadataEnricher do
     end
   end
 
-  defp extract_metadata(data, ticker) do
-    quote_type = get_in(data, ["quoteType"]) || %{}
-    summary = get_in(data, ["summaryDetail"]) || %{}
-    profile = get_in(data, ["assetProfile"]) || %{}
-    fund_profile = get_in(data, ["fundProfile"]) || %{}
-
+  defp extract_metadata_v7(quote, ticker) do
     metadata = %{
-      ticker: get_in(quote_type, ["symbol"]) || ticker,
-      name: get_in(quote_type, ["longName"]) || get_in(quote_type, ["shortName"]),
-      security_type: determine_security_type(quote_type),
-      exchange: get_in(quote_type, ["exchange"]),
-      currency: get_in(summary, ["currency"]),
-      sector: get_in(profile, ["sector"]),
-      country_of_domicile: get_in(profile, ["country"]),
-      expense_ratio: extract_expense_ratio(fund_profile),
-      distribution_type: extract_distribution_type(fund_profile),
-      benchmark_index: get_in(fund_profile, ["categoryName"])
+      ticker: quote["symbol"] || ticker,
+      name: quote["longName"] || quote["shortName"],
+      security_type: determine_security_type_v7(quote["quoteType"]),
+      exchange: quote["exchange"],
+      currency: quote["currency"],
+      sector: quote["sector"],
+      country_of_domicile: quote["country"],
+      # Additional fields available in v7
+      market_cap: format_number(quote["marketCap"]),
+      price: quote["regularMarketPrice"],
+      fifty_two_week_high: quote["fiftyTwoWeekHigh"],
+      fifty_two_week_low: quote["fiftyTwoWeekLow"]
     }
     |> remove_nil_values()
 
@@ -163,34 +165,21 @@ defmodule WealthBackend.Portfolio.MetadataEnricher do
       {:error, :extraction_error}
   end
 
-  defp determine_security_type(%{"quoteType" => type}) when is_binary(type) do
-    case String.upcase(type) do
+  defp determine_security_type_v7(quote_type) when is_binary(quote_type) do
+    case String.upcase(quote_type) do
       "EQUITY" -> "stock"
       "ETF" -> "etf"
       "MUTUALFUND" -> "mutual_fund"
       "INDEX" -> "index_fund"
-      _ -> nil
+      "CRYPTOCURRENCY" -> "crypto"
+      _ -> "other"
     end
   end
-  defp determine_security_type(_), do: nil
+  defp determine_security_type_v7(_), do: nil
 
-  defp extract_expense_ratio(%{"annualReportExpenseRatio" => ratio}) when is_number(ratio) do
-    # Yahoo returns as decimal (e.g., 0.0045 for 0.45%)
-    # Convert to percentage string
-    Float.to_string(ratio * 100)
-  end
-  defp extract_expense_ratio(_), do: nil
-
-  defp extract_distribution_type(%{"legalType" => type}) when is_binary(type) do
-    type_lower = String.downcase(type)
-    
-    cond do
-      String.contains?(type_lower, "accumulating") -> "accumulating"
-      String.contains?(type_lower, "distributing") -> "distributing"
-      true -> nil
-    end
-  end
-  defp extract_distribution_type(_), do: nil
+  defp format_number(nil), do: nil
+  defp format_number(num) when is_number(num), do: num
+  defp format_number(_), do: nil
 
   defp remove_nil_values(map) do
     map
