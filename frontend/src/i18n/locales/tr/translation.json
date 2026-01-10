@@ -27,12 +27,17 @@
     "loading": "Yüklen iyor...",
     "error": "Hata",
     "success": "Başarılı",
+    "saved": "Kaydedildi",
     "confirmation": "Onay",
     "areYouSure": "Emin misiniz?",
     "retry": "Tekrar dene",
     "deleting": "Siliniyor...",
     "optional": "isteğe bağlı",
-    "currency": "Para Birimi"
+    "currency": "Para Birimi",
+    "showing": "Gösterilen: {{from}} - {{to}} / Toplam {{total}}",
+    "rowsPerPage": "Sayfa başına satır",
+    "previous": "Önceki",
+    "next": "Sonraki"
   },
   "navigation": {
     "dashboard": "Kontrol Paneli",
@@ -42,6 +47,11 @@
     "snapshots": "Anlık Görüntüler",
     "taxes": "Vergiler",
     "settings": "Ayarlar"
+  },
+  "languages": {
+    "en": "İngilizce",
+    "de": "Almanca",
+    "tr": "Türkçe"
   },
   "auth": {
     "welcome": "YAPPMA'ya Hoş Geldiniz",
@@ -102,6 +112,9 @@
     "remainingAmount": "Kalan Tutar",
     "warningOverLimit": "Uyarı: Muafiyet emirlerinizin toplamı ({{total}}) izin verilen {{limit}} limitini aşıyor!",
     "status": "Vergi Durumu",
+    "statusDescription": "Vergi durumunuzu ayarlayın. Limit otomatik olarak ayarlanır.",
+    "autoBasedOnStatus": "Duruma göre otomatik",
+    "updateStatus": "Durumu Güncelle",
     "exemptionOrders": "Muafiyet Emirleri",
     "institution": "Kurum",
     "amount": "Tutar",

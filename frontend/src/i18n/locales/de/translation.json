@@ -27,12 +27,17 @@
     "loading": "Lädt...",
     "error": "Fehler",
     "success": "Erfolg",
+    "saved": "Gespeichert",
     "confirmation": "Bestätigung",
     "areYouSure": "Sind Sie sicher?",
     "retry": "Erneut versuchen",
     "deleting": "Wird gelöscht...",
     "optional": "optional",
-    "currency": "Währung"
+    "currency": "Währung",
+    "showing": "Zeige {{from}} - {{to}} von {{total}}",
+    "rowsPerPage": "Zeilen pro Seite",
+    "previous": "Zurück",
+    "next": "Weiter"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -42,6 +47,11 @@
     "snapshots": "Momentaufnahmen",
     "taxes": "Steuern",
     "settings": "Einstellungen"
+  },
+  "languages": {
+    "en": "Englisch",
+    "de": "Deutsch",
+    "tr": "Türkisch"
   },
   "auth": {
     "welcome": "Willkommen bei YAPPMA",
@@ -102,6 +112,9 @@
     "remainingAmount": "Verbleibender Betrag",
     "warningOverLimit": "Warnung: Die Summe Ihrer Freistellungsaufträge ({{total}}) überschreitet das zulässige Limit von {{limit}}!",
     "status": "Steuerstatus",
+    "statusDescription": "Passen Sie Ihren Steuerstatus an. Das Limit wird automatisch gesetzt.",
+    "autoBasedOnStatus": "Automatisch basierend auf Status",
+    "updateStatus": "Status aktualisieren",
     "exemptionOrders": "Freistellungsaufträge",
     "institution": "Institution",
     "amount": "Betrag",

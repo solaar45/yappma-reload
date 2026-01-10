@@ -52,9 +52,9 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
     asset_type_id: asset.asset_type_id.toString(),
     currency: asset.currency,
     is_active: asset.is_active ?? true,
-    security_asset: asset.security_asset,
-    insurance_asset: asset.insurance_asset,
-    real_estate_asset: asset.real_estate_asset,
+    security_asset: asset.security_asset ?? undefined,
+    insurance_asset: asset.insurance_asset ?? undefined,
+    real_estate_asset: asset.real_estate_asset ?? undefined,
   });
   const { accounts } = useAccounts({ userId: userId! });
   const [accountId, setAccountId] = useState(asset.account_id?.toString() || '');
@@ -72,9 +72,9 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
         asset_type_id: asset.asset_type_id.toString(),
         currency: asset.currency,
         is_active: asset.is_active ?? true,
-        security_asset: asset.security_asset,
-        insurance_asset: asset.insurance_asset,
-        real_estate_asset: asset.real_estate_asset,
+        security_asset: asset.security_asset ?? undefined,
+        insurance_asset: asset.insurance_asset ?? undefined,
+        real_estate_asset: asset.real_estate_asset ?? undefined,
       });
     }
   }, [open, asset]);

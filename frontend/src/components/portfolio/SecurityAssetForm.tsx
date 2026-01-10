@@ -30,7 +30,7 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
     const identifier = value.ticker || value.isin || value.wkn;
     if (!identifier) {
       toast({
-        title: t('error'),
+        title: t('common.error'),
         description: t('assets.security.enrichment.noIdentifier'),
         variant: 'destructive',
       });
@@ -55,12 +55,12 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
       });
 
       toast({
-        title: t('success'),
+        title: t('common.success'),
         description: t('assets.security.enrichment.success'),
       });
     } catch (error) {
       toast({
-        title: t('error'),
+        title: t('common.error'),
         description: t('assets.security.enrichment.failed'),
         variant: 'destructive',
       });

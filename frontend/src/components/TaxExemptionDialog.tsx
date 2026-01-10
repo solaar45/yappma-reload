@@ -122,9 +122,9 @@ export function TaxExemptionDialog({
         if (error) {
             if (error.status === 422 && error.data?.errors) {
                 const errors = error.data.errors;
-                if (errors.user_id?.includes('has already been taken') ||
+                    if (errors.user_id?.includes('has already been taken') ||
                     errors.institution_id?.includes('has already been taken')) {
-                    setLocalError(t('taxes.errorDuplicateExemption'));
+                    setLocalError('A duplicate exemption already exists for this user/institution.');
                 } else {
                     setLocalError(t('common.error'));
                 }
@@ -142,7 +142,7 @@ export function TaxExemptionDialog({
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
                         <DialogTitle>
-                            {taxExemption ? t('taxes.editExemption') : t('taxes.addExemption')}
+                            {taxExemption ? 'Edit Exemption' : t('taxes.addExemption')}
                         </DialogTitle>
                         <DialogDescription>
                             {taxExemption ? 'Passen Sie diesen Freistellungsauftrag an.' : 'Hinterlegen Sie einen neuen Freistellungsauftrag.'}
@@ -179,7 +179,7 @@ export function TaxExemptionDialog({
                                     <Command>
                                         <CommandInput placeholder={t('common.search')} />
                                         <CommandList>
-                                            <CommandEmpty>{t('common.noResults')}</CommandEmpty>
+                                            <CommandEmpty>No results found.</CommandEmpty>
                                             <CommandGroup>
                                                 {filteredInstitutions.map((inst: any) => (
                                                     <CommandItem
@@ -224,7 +224,7 @@ export function TaxExemptionDialog({
                             />
                         </div>
                         <div className="grid gap-2 text-xs text-muted-foreground">
-                            {t('taxes.year')}: {year}
+                            Year: {year}
                         </div>
                     </div>
                     <DialogFooter>

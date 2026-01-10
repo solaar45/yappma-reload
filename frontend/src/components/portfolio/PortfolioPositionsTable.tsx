@@ -342,7 +342,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
       columnHelper.display({
         id: 'actions',
         header: 'Aktionen',
-        cell: ({ row }) => (
+        cell: () => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">

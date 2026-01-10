@@ -238,7 +238,7 @@ export default function TaxesPage() {
                 <Card className="flex flex-col">
                     <CardHeader>
                         <CardTitle>{t('navigation.settings')}</CardTitle>
-                        <CardDescription>Passen Sie Ihren Steuerstatus an. Das Limit wird automatisch gesetzt.</CardDescription>
+                        <CardDescription>{t('taxes.statusDescription')}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 flex-1">
                         <div className="grid gap-4">
@@ -264,7 +264,7 @@ export default function TaxesPage() {
                                         {formatCurrency(computedLimit)}
                                     </Badge>
                                     <span className="text-xs text-muted-foreground">
-                                        Automatisch basierend auf Status
+                                        {t('taxes.autoBasedOnStatus')}
                                     </span>
                                 </div>
                             </div>
@@ -280,12 +280,12 @@ export default function TaxesPage() {
                                 {saveSuccess ? (
                                     <>
                                         <Check className="h-4 w-4 mr-2" />
-                                        Gespeichert
+                                        {t('common.saved')}
                                     </>
                                 ) : (
-                                    <>
+                                        <> 
                                         <Save className="h-4 w-4 mr-2" />
-                                        Update Status
+                                        {t('taxes.updateStatus')}
                                     </>
                                 )}
                             </Button>

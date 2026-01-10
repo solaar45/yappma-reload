@@ -97,12 +97,12 @@ export function CreateInstitutionDialog({ onSuccess, compact = false, children }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children ? (
+          {children ? (
           children
         ) : compact ? (
           <Button variant="ghost" size="sm" type="button">
             <Plus className="h-3 w-3 mr-1" />
-            {t('institutions.new') || 'New'}
+              {t('institutions.createInstitution') || 'New'}
           </Button>
         ) : (
           <Button>
@@ -125,7 +125,7 @@ export function CreateInstitutionDialog({ onSuccess, compact = false, children }
                 <InstitutionLogo name={name || 'Institution'} domain={website ? website.replace(/^https?:\/\//, '') : undefined} size="large" className="rounded-full" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground">{t('institutions.logoPreview') || 'Logo Preview (from logo.dev)'}</p>
+                <p className="text-sm text-muted-foreground">Logo Preview (from logo.dev)</p>
               </div>
             </div>
             <div className="grid gap-2">
@@ -139,7 +139,7 @@ export function CreateInstitutionDialog({ onSuccess, compact = false, children }
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="website">{t('institutions.website') || 'Website'} ({t('common.optional')})</Label>
+              <Label htmlFor="website">Website ({t('common.optional')})</Label>
               <Input
                 id="website"
                 placeholder="e.g., dkb.de or https://dkb.de"

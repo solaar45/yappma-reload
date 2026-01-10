@@ -92,15 +92,34 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
     e.preventDefault();
     if (!userId || !formData.asset_type_id) return;
 
+    // Helper to convert null values to undefined to satisfy API types
+    const sanitize = <T,>(obj?: T) => {
+      if (!obj) return undefined;
+      const out: any = {};
+      for (const key of Object.keys(obj as any)) {
+        const val = (obj as any)[key];
+        out[key] = val === null ? undefined : val;
+      }
+      return out as T;
+    };
+
+    const sanitizedSecurity = sanitize(formData.security_asset) as {
+      isin?: string;
+      ticker?: string;
+      wkn?: string;
+      exchange?: string;
+      sector?: string;
+    } | undefined;
+
+    
+
     const result = await createAsset({
       user_id: userId,
       asset_type_id: parseInt(formData.asset_type_id),
       name: formData.name,
       currency: formData.currency,
       is_active: formData.is_active,
-      security_asset: formData.security_asset,
-      insurance_asset: formData.insurance_asset,
-      real_estate_asset: formData.real_estate_asset,
+      security_asset: sanitizedSecurity,
       ...(accountId ? { account_id: parseInt(accountId) } : {}),
     });
 

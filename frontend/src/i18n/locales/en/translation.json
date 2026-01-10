@@ -27,12 +27,17 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
+    "saved": "Saved",
     "confirmation": "Confirmation",
     "areYouSure": "Are you sure?",
     "retry": "Retry",
     "deleting": "Deleting...",
     "optional": "optional",
-    "currency": "Currency"
+    "currency": "Currency",
+    "showing": "Showing {{from}} - {{to}} of {{total}}",
+    "rowsPerPage": "Rows per page",
+    "previous": "Previous",
+    "next": "Next"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -42,6 +47,11 @@
     "snapshots": "Snapshots",
     "taxes": "Taxes",
     "settings": "Settings"
+  },
+  "languages": {
+    "en": "English",
+    "de": "German",
+    "tr": "Turkish"
   },
   "auth": {
     "welcome": "Welcome to YAPPMA",
@@ -102,6 +112,9 @@
     "remainingAmount": "Remaining Amount",
     "warningOverLimit": "Warning: The sum of your exemption orders ({{total}}) exceeds the allowed limit of {{limit}}!",
     "status": "Tax Status",
+    "statusDescription": "Adjust your tax status. The limit is set automatically.",
+    "autoBasedOnStatus": "Automatically based on status",
+    "updateStatus": "Update Status",
     "exemptionOrders": "Exemption Orders",
     "institution": "Institution",
     "amount": "Amount",

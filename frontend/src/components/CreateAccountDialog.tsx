@@ -55,15 +55,15 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
   const [institutionOpen, setInstitutionOpen] = useState(false);
   const [showCustomInstitution, setShowCustomInstitution] = useState(false);
 
-  // Dynamic account types from translations
+  // Account types (use plain labels to avoid missing translation keys)
   const ACCOUNT_TYPES = [
-    { value: 'checking', label: t('accountTypes.checking') },
-    { value: 'savings', label: t('accountTypes.savings') },
-    { value: 'credit_card', label: t('accountTypes.credit_card') },
-    { value: 'brokerage', label: t('accountTypes.brokerage') },
-    { value: 'insurance', label: t('accountTypes.insurance') },
-    { value: 'cash', label: t('accountTypes.cash') },
-    { value: 'other', label: t('accountTypes.other') },
+    { value: 'checking', label: 'Checking' },
+    { value: 'savings', label: 'Savings' },
+    { value: 'credit_card', label: 'Credit Card' },
+    { value: 'brokerage', label: 'Brokerage' },
+    { value: 'insurance', label: 'Insurance' },
+    { value: 'cash', label: 'Cash' },
+    { value: 'other', label: 'Other' },
   ] as const;
 
   const [formData, setFormData] = useState({
@@ -124,10 +124,10 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">{t('accounts.accountName') || 'Account Name'} *</Label>
+              <Label htmlFor="name">{t('accounts.name') || 'Account Name'} *</Label>
               <Input
                 id="name"
-                placeholder={t('accounts.accountName') || "e.g., Main Checking, Savings Account"}
+                placeholder={t('accounts.name') || "e.g., Main Checking, Savings Account"}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
@@ -189,7 +189,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               </Popover>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="type">{t('accounts.accountType') || 'Account Type'} *</Label>
+              <Label htmlFor="type">{t('accounts.type') || 'Account Type'} *</Label>
               <Select
                 value={formData.type}
                 onValueChange={(value) => setFormData({ ...formData, type: value })}
@@ -198,9 +198,9 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {ACCOUNT_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                  {ACCOUNT_TYPES.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

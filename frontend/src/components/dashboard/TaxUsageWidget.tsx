@@ -65,7 +65,7 @@ export function TaxUsageWidget() {
                             to="/taxes"
                             className="flex items-center gap-1 text-[10px] text-primary hover:underline group"
                         >
-                            {t('common.actions')} {t('taxes.editExemption')}
+                            {t('common.actions')} {t('taxes.addExemption')}
                             <ArrowRight className="h-2 w-2 transition-transform group-hover:translate-x-0.5" />
                         </Link>
                     </div>

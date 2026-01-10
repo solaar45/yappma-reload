@@ -51,7 +51,7 @@ export function NavUser({
     i18n.changeLanguage(langCode);
   };
 
-  const currentLanguage = languages.find((lang) => lang.code === i18n.language) || languages[0];
+  
 
   return (
     <SidebarMenu>

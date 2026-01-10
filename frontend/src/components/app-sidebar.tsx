@@ -129,11 +129,11 @@ export function AppSidebar() {
               >
                 <DropdownMenuItem>
                   <User2 className="mr-2 h-4 w-4" />
-                  <span>{t('user.profile')}</span>
+                  <span>{t('common.account')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
-                  <span>{t('user.settings')}</span>
+                  <span>{t('settings.title')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <div className="px-2 py-1.5">
@@ -142,7 +142,7 @@ export function AppSidebar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>{t('user.logout')}</span>
+                  <span>{t('common.logout')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

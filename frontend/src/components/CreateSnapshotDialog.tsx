@@ -197,7 +197,7 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
 
             {snapshotType === 'asset' && (
               <div className="grid gap-2">
-                <Label htmlFor="quantity">{t('common.quantity') || 'Quantity'} ({t('common.optional')})</Label>
+                <Label htmlFor="quantity">Quantity ({t('common.optional')})</Label>
                 <Input
                   id="quantity"
                   type="number"

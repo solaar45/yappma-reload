@@ -139,7 +139,7 @@ export function DataTable<TData, TValue>({
       </Table>
       <div className="flex items-center justify-between px-2 py-4">
         <div className="text-sm text-muted-foreground whitespace-nowrap">
-          {t('common.showing', { start, end, total: totalRows })}
+          {t('common.showing', { from: start, to: end, total: totalRows })}
         </div>
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2">
