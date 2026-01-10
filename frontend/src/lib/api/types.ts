@@ -89,6 +89,15 @@ export interface SecurityAsset {
   ticker: string | null;
   exchange: string | null;
   sector: string | null;
+  // Extended fields
+  security_type: 'stock' | 'etf' | 'bond' | 'mutual_fund' | 'index_fund' | null;
+  distribution_type: 'accumulating' | 'distributing' | null;
+  expense_ratio: string | null;
+  issuer: string | null;
+  coupon_rate: string | null;
+  maturity_date: string | null;
+  country_of_domicile: string | null;
+  benchmark_index: string | null;
 }
 
 export interface InsuranceAsset {
@@ -96,7 +105,12 @@ export interface InsuranceAsset {
   policy_number: string;
   insurance_type: string;
   coverage_amount: string;
+  deductible: string;
   payment_frequency: string;
+  // Extended fields
+  policy_start_date: string | null;
+  policy_end_date: string | null;
+  premium_amount: string | null;
 }
 
 export interface RealEstateAsset {
@@ -104,6 +118,17 @@ export interface RealEstateAsset {
   size_m2: string;
   purchase_price: string;
   purchase_date: string;
+  // Extended fields
+  property_type: 'residential' | 'commercial' | 'land' | 'mixed_use' | null;
+  usage: 'owner_occupied' | 'rented_out' | 'vacant' | 'development' | null;
+  rental_income: string | null;
+  operating_expenses: string | null;
+  property_tax: string | null;
+  mortgage_outstanding: string | null;
+  mortgage_rate: string | null;
+  construction_year: number | null;
+  renovation_year: number | null;
+  cadastral_number: string | null;
 }
 
 export interface Asset {
@@ -129,6 +154,25 @@ export interface Asset {
   snapshots?: AssetSnapshot[];
   inserted_at: string;
   updated_at: string;
+}
+
+// Security enrichment types
+export interface SecurityEnrichmentRequest {
+  identifier: string;
+  type?: 'ticker' | 'isin' | 'wkn' | 'auto';
+}
+
+export interface SecurityEnrichmentResponse {
+  ticker?: string;
+  name?: string;
+  security_type?: 'stock' | 'etf' | 'bond' | 'mutual_fund' | 'index_fund';
+  exchange?: string;
+  currency?: string;
+  sector?: string;
+  country_of_domicile?: string;
+  expense_ratio?: number;
+  distribution_type?: 'accumulating' | 'distributing';
+  benchmark_index?: string;
 }
 
 export interface NetWorthResponse {
