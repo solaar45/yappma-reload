@@ -154,7 +154,6 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               <Label htmlFor="name">{t('assets.assetName') || 'Asset Name'} *</Label>
               <Input
                 id="name"
-                placeholder="e.g., Apple Inc."
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
@@ -254,7 +253,6 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 <Label htmlFor="currency">{t('common.currency') || 'Currency'} *</Label>
                 <Input
                   id="currency"
-                  placeholder="EUR"
                   value={formData.currency}
                   onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
                   required
