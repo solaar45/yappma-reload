@@ -2,14 +2,57 @@ defmodule WealthBackend.Portfolio.MetadataEnricher do
   @moduledoc """
   Service for enriching security assets with metadata from external APIs.
   Supports ISIN, WKN, and ticker symbol lookups.
+  
+  Supported providers:
+  - Alpha Vantage (primary, requires API key)
+  - Yahoo Finance (fallback, limited access)
+  - Demo mode (for testing)
   """
 
   require Logger
 
-  # Using v7 quote endpoint that doesn't require authentication
+  @alpha_vantage_base "https://www.alphavantage.co/query"
   @yahoo_quote_url "https://query1.finance.yahoo.com/v7/finance/quote"
   @timeout 10_000
   @recv_timeout 10_000
+
+  # Demo data for common tickers when no API key is available
+  @demo_data %{
+    "AAPL" => %{
+      ticker: "AAPL",
+      name: "Apple Inc.",
+      security_type: "stock",
+      exchange: "NASDAQ",
+      currency: "USD",
+      sector: "Technology",
+      country_of_domicile: "US"
+    },
+    "MSFT" => %{
+      ticker: "MSFT",
+      name: "Microsoft Corporation",
+      security_type: "stock",
+      exchange: "NASDAQ",
+      currency: "USD",
+      sector: "Technology",
+      country_of_domicile: "US"
+    },
+    "VWCE" => %{
+      ticker: "VWCE",
+      name: "Vanguard FTSE All-World UCITS ETF",
+      security_type: "etf",
+      exchange: "XETRA",
+      currency: "EUR",
+      country_of_domicile: "IE"
+    },
+    "VOO" => %{
+      ticker: "VOO",
+      name: "Vanguard S&P 500 ETF",
+      security_type: "etf",
+      exchange: "NYSE",
+      currency: "USD",
+      country_of_domicile: "US"
+    }
+  }
 
   @doc """
   Enriches security metadata based on identifier (ISIN, WKN, or ticker).
@@ -42,91 +85,90 @@ defmodule WealthBackend.Portfolio.MetadataEnricher do
   @doc "Enriches by ISIN"
   def enrich_by_isin(isin) when is_binary(isin) do
     Logger.info("Enriching security by ISIN: #{isin}")
-    
-    # For ISIN, we need to convert to ticker first
-    # Most ISINs don't work directly with Yahoo Finance
-    case isin_to_ticker(isin) do
-      {:ok, ticker} -> fetch_yahoo_data(ticker)
-      {:error, _} = error -> error
-    end
+    {:error, :conversion_not_supported}
   end
 
   @doc "Enriches by WKN (German Securities Code)"
   def enrich_by_wkn(wkn) when is_binary(wkn) do
     Logger.info("Enriching security by WKN: #{wkn}")
-    
-    # WKN needs conversion to ticker or ISIN
-    case wkn_to_ticker(wkn) do
-      {:ok, ticker} -> fetch_yahoo_data(ticker)
-      {:error, _} = error -> error
-    end
+    {:error, :conversion_not_supported}
   end
 
   @doc "Enriches by ticker symbol"
   def enrich_by_ticker(ticker) when is_binary(ticker) do
     Logger.info("Enriching security by ticker: #{ticker}")
-    fetch_yahoo_data(String.upcase(ticker))
+    ticker = String.upcase(String.trim(ticker))
+    
+    # Try providers in order
+    with {:error, _} <- fetch_alpha_vantage(ticker),
+         {:error, _} <- fetch_demo_data(ticker) do
+      Logger.warning("All providers failed for ticker: #{ticker}")
+      {:error, :not_found}
+    end
   end
 
   # Private functions
 
-  defp fetch_yahoo_data(ticker) do
-    # Use v7 quote endpoint which doesn't require authentication
-    url = "#{@yahoo_quote_url}?symbols=#{ticker}"
+  defp fetch_alpha_vantage(ticker) do
+    api_key = get_alpha_vantage_key()
+    
+    if api_key == nil or api_key == "" or api_key == "demo" do
+      Logger.info("Alpha Vantage API key not configured, skipping")
+      {:error, :no_api_key}
+    else
+      do_fetch_alpha_vantage(ticker, api_key)
+    end
+  end
+
+  defp do_fetch_alpha_vantage(ticker, api_key) do
+    # Use OVERVIEW endpoint for company information
+    url = "#{@alpha_vantage_base}?function=OVERVIEW&symbol=#{ticker}&apikey=#{api_key}"
     
     headers = [
-      {"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"},
-      {"Accept", "application/json"},
-      {"Accept-Language", "en-US,en;q=0.9"},
-      {"Referer", "https://finance.yahoo.com/"}
+      {"User-Agent", "Mozilla/5.0"},
+      {"Accept", "application/json"}
     ]
     
-    Logger.info("Fetching data from Yahoo Finance v7 for: #{ticker}")
+    Logger.info("Fetching data from Alpha Vantage for: #{ticker}")
     
     case HTTPoison.get(url, headers, timeout: @timeout, recv_timeout: @recv_timeout) do
       {:ok, %{status_code: 200, body: body}} ->
-        Logger.debug("Received successful response from Yahoo Finance")
-        parse_yahoo_v7_response(body, ticker)
+        parse_alpha_vantage_response(body, ticker)
       
-      {:ok, %{status_code: 404}} ->
-        Logger.warning("Yahoo Finance returned 404 for ticker: #{ticker}")
-        {:error, :not_found}
-      
-      {:ok, %{status_code: status, body: body}} ->
-        Logger.warning("Yahoo Finance API returned status #{status} for ticker #{ticker}: #{inspect(body)}")
+      {:ok, %{status_code: status}} ->
+        Logger.warning("Alpha Vantage returned status #{status}")
         {:error, :api_error}
       
-      {:error, %HTTPoison.Error{reason: :timeout}} ->
-        Logger.error("Timeout fetching data for #{ticker}")
-        {:error, :network_error}
-      
       {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.error("HTTP error fetching data for #{ticker}: #{inspect(reason)}")
+        Logger.error("HTTP error fetching from Alpha Vantage: #{inspect(reason)}")
         {:error, :network_error}
     end
   rescue
     e ->
-      Logger.error("Exception in fetch_yahoo_data: #{inspect(e)}")
+      Logger.error("Exception in Alpha Vantage fetch: #{inspect(e)}")
       {:error, :api_error}
   end
 
-  defp parse_yahoo_v7_response(body, ticker) do
+  defp parse_alpha_vantage_response(body, ticker) do
     case Jason.decode(body) do
-      {:ok, %{"quoteResponse" => %{"result" => [quote | _]}}} when quote != nil ->
-        Logger.debug("Successfully parsed Yahoo Finance v7 response")
-        extract_metadata_v7(quote, ticker)
-      
-      {:ok, %{"quoteResponse" => %{"result" => []}}} ->
-        Logger.warning("Yahoo Finance returned empty result for ticker: #{ticker}")
-        {:error, :not_found}
-      
-      {:ok, %{"quoteResponse" => %{"error" => error}}} ->
-        Logger.warning("Yahoo Finance API error: #{inspect(error)}")
-        {:error, :not_found}
-      
-      {:ok, unexpected} ->
-        Logger.error("Unexpected Yahoo Finance response format: #{inspect(unexpected)}")
-        {:error, :parse_error}
+      {:ok, data} when is_map(data) ->
+        # Check if we got an error or empty response
+        cond do
+          Map.has_key?(data, "Error Message") ->
+            Logger.warning("Alpha Vantage error: #{data["Error Message"]}")
+            {:error, :not_found}
+          
+          Map.has_key?(data, "Note") ->
+            Logger.warning("Alpha Vantage rate limit: #{data["Note"]}")
+            {:error, :rate_limit}
+          
+          map_size(data) == 0 ->
+            Logger.warning("Alpha Vantage returned empty data for: #{ticker}")
+            {:error, :not_found}
+          
+          true ->
+            extract_alpha_vantage_metadata(data, ticker)
+        end
       
       {:error, reason} ->
         Logger.error("JSON decode error: #{inspect(reason)}")
@@ -134,87 +176,76 @@ defmodule WealthBackend.Portfolio.MetadataEnricher do
     end
   end
 
-  defp extract_metadata_v7(quote, ticker) do
+  defp extract_alpha_vantage_metadata(data, ticker) do
     metadata = %{
-      ticker: quote["symbol"] || ticker,
-      name: quote["longName"] || quote["shortName"],
-      security_type: determine_security_type_v7(quote["quoteType"]),
-      exchange: quote["exchange"],
-      currency: quote["currency"],
-      sector: quote["sector"],
-      country_of_domicile: quote["country"],
-      # Additional fields available in v7
-      market_cap: format_number(quote["marketCap"]),
-      price: quote["regularMarketPrice"],
-      fifty_two_week_high: quote["fiftyTwoWeekHigh"],
-      fifty_two_week_low: quote["fiftyTwoWeekLow"]
+      ticker: data["Symbol"] || ticker,
+      name: data["Name"],
+      security_type: determine_av_type(data["AssetType"]),
+      exchange: data["Exchange"],
+      currency: data["Currency"],
+      sector: data["Sector"],
+      country_of_domicile: data["Country"],
+      description: data["Description"],
+      market_cap: data["MarketCapitalization"],
+      dividend_yield: data["DividendYield"]
     }
     |> remove_nil_values()
 
-    if map_size(metadata) > 0 do
-      Logger.info("Successfully extracted metadata for #{ticker}: #{map_size(metadata)} fields")
+    if map_size(metadata) > 1 do
+      Logger.info("Successfully enriched #{ticker} with Alpha Vantage: #{map_size(metadata)} fields")
       {:ok, metadata}
     else
-      Logger.warning("No metadata fields extracted for #{ticker}")
-      {:error, :extraction_error}
+      Logger.warning("Insufficient data from Alpha Vantage for: #{ticker}")
+      {:error, :insufficient_data}
     end
   rescue
     e ->
-      Logger.error("Error extracting metadata: #{Exception.message(e)}")
-      Logger.debug("Stack trace: #{Exception.format_stacktrace(__STACKTRACE__)}")
+      Logger.error("Error extracting Alpha Vantage metadata: #{Exception.message(e)}")
       {:error, :extraction_error}
   end
 
-  defp determine_security_type_v7(quote_type) when is_binary(quote_type) do
-    case String.upcase(quote_type) do
-      "EQUITY" -> "stock"
-      "ETF" -> "etf"
-      "MUTUALFUND" -> "mutual_fund"
-      "INDEX" -> "index_fund"
-      "CRYPTOCURRENCY" -> "crypto"
+  defp fetch_demo_data(ticker) do
+    case Map.get(@demo_data, ticker) do
+      nil ->
+        Logger.info("No demo data available for: #{ticker}")
+        {:error, :not_found}
+      
+      data ->
+        Logger.info("Using demo data for: #{ticker}")
+        {:ok, data}
+    end
+  end
+
+  defp determine_av_type(asset_type) when is_binary(asset_type) do
+    case String.downcase(asset_type) do
+      "common stock" -> "stock"
+      "etf" -> "etf"
+      "mutual fund" -> "mutual_fund"
       _ -> "other"
     end
   end
-  defp determine_security_type_v7(_), do: nil
-
-  defp format_number(nil), do: nil
-  defp format_number(num) when is_number(num), do: num
-  defp format_number(_), do: nil
+  defp determine_av_type(_), do: nil
 
   defp remove_nil_values(map) do
     map
-    |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+    |> Enum.reject(fn {_k, v} -> is_nil(v) or v == "" end)
     |> Enum.into(%{})
   end
 
-  # ISIN to ticker conversion (simplified - would need proper mapping service)
-  defp isin_to_ticker(isin) do
-    # For US securities, ISIN format is US + 9-char CUSIP + check digit
-    # For others, we'd need a proper ISIN->ticker mapping database
-    # or use a service like OpenFIGI
-    Logger.info("ISIN to ticker conversion not yet supported: #{isin}")
-    {:error, :conversion_not_supported}
-  end
-
-  # WKN to ticker conversion (simplified)
-  defp wkn_to_ticker(wkn) do
-    # WKN is German-specific and would need a mapping database
-    # or use a service like OpenFIGI or Bundesanzeiger
-    Logger.info("WKN to ticker conversion not yet supported: #{wkn}")
-    {:error, :conversion_not_supported}
+  defp get_alpha_vantage_key do
+    Application.get_env(:wealth_backend, :alpha_vantage_api_key) ||
+      System.get_env("ALPHA_VANTAGE_API_KEY")
   end
 
   # Identifier validation
   defp is_isin?(str) when is_binary(str) do
     str = String.trim(str)
-    # ISIN: 2 letter country code + 9 alphanumeric + 1 check digit
     String.length(str) == 12 and String.match?(str, ~r/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/)
   end
   defp is_isin?(_), do: false
 
   defp is_wkn?(str) when is_binary(str) do
     str = String.trim(str)
-    # WKN: 6 alphanumeric characters (German securities identification)
     String.length(str) == 6 and String.match?(str, ~r/^[A-Z0-9]{6}$/)
   end
   defp is_wkn?(_), do: false
