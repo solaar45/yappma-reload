@@ -73,35 +73,73 @@ defmodule WealthBackendWeb.AssetJSON do
 
   defp security_data(%Ecto.Association.NotLoaded{}), do: nil
   defp security_data(nil), do: nil
-  defp security_data(s), do: %{isin: s.isin, wkn: s.wkn, ticker: s.ticker, exchange: s.exchange, sector: s.sector}
+  defp security_data(s) do
+    %{
+      isin: s.isin,
+      wkn: s.wkn,
+      ticker: s.ticker,
+      exchange: s.exchange,
+      sector: s.sector,
+      # Extended fields
+      security_type: s.security_type,
+      distribution_type: s.distribution_type,
+      expense_ratio: decimal_to_string(s.expense_ratio),
+      issuer: s.issuer,
+      coupon_rate: decimal_to_string(s.coupon_rate),
+      maturity_date: s.maturity_date,
+      country_of_domicile: s.country_of_domicile,
+      benchmark_index: s.benchmark_index
+    }
+  end
 
   defp insurance_data(%Ecto.Association.NotLoaded{}), do: nil
   defp insurance_data(nil), do: nil
-  defp insurance_data(i), do: %{
-    insurer_name: i.insurer_name,
-    policy_number: i.policy_number,
-    insurance_type: i.insurance_type,
-    coverage_amount: decimal_to_string(i.coverage_amount),
-    deductible: decimal_to_string(i.deductible),
-    payment_frequency: i.payment_frequency
-  }
+  defp insurance_data(i) do
+    %{
+      insurer_name: i.insurer_name,
+      policy_number: i.policy_number,
+      insurance_type: i.insurance_type,
+      coverage_amount: decimal_to_string(i.coverage_amount),
+      deductible: decimal_to_string(i.deductible),
+      payment_frequency: i.payment_frequency,
+      # Extended fields
+      policy_start_date: i.policy_start_date,
+      policy_end_date: i.policy_end_date,
+      premium_amount: decimal_to_string(i.premium_amount)
+    }
+  end
 
   defp loan_data(%Ecto.Association.NotLoaded{}), do: nil
   defp loan_data(nil), do: nil
-  defp loan_data(l), do: %{
-    interest_rate: decimal_to_string(l.interest_rate),
-    payment_frequency: l.payment_frequency,
-    maturity_date: l.maturity_date
-  }
+  defp loan_data(l) do
+    %{
+      interest_rate: decimal_to_string(l.interest_rate),
+      payment_frequency: l.payment_frequency,
+      maturity_date: l.maturity_date
+    }
+  end
 
   defp real_estate_data(%Ecto.Association.NotLoaded{}), do: nil
   defp real_estate_data(nil), do: nil
-  defp real_estate_data(r), do: %{
-    address: r.address,
-    size_m2: decimal_to_string(r.size_m2),
-    purchase_price: decimal_to_string(r.purchase_price),
-    purchase_date: r.purchase_date
-  }
+  defp real_estate_data(r) do
+    %{
+      address: r.address,
+      size_m2: decimal_to_string(r.size_m2),
+      purchase_price: decimal_to_string(r.purchase_price),
+      purchase_date: r.purchase_date,
+      # Extended fields
+      property_type: r.property_type,
+      usage: r.usage,
+      rental_income: decimal_to_string(r.rental_income),
+      operating_expenses: decimal_to_string(r.operating_expenses),
+      property_tax: decimal_to_string(r.property_tax),
+      mortgage_outstanding: decimal_to_string(r.mortgage_outstanding),
+      mortgage_rate: decimal_to_string(r.mortgage_rate),
+      construction_year: r.construction_year,
+      renovation_year: r.renovation_year,
+      cadastral_number: r.cadastral_number
+    }
+  end
 
   defp snapshots_data(%Ecto.Association.NotLoaded{}), do: []
   defp snapshots_data(snapshots) when is_list(snapshots) do
