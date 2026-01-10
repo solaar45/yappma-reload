@@ -171,6 +171,36 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
               </Select>
             </div>
 
+            {/* Security Type field - only shown when Security is selected */}
+            {selectedAssetType?.code === 'security' && (
+              <div className="grid gap-2">
+                <Label htmlFor="edit-security-type">Security Type</Label>
+                <Select
+                  value={formData.security_asset?.security_type || ''}
+                  onValueChange={(val) =>
+                    setFormData({
+                      ...formData,
+                      security_asset: {
+                        ...formData.security_asset,
+                        security_type: val as SecurityAsset['security_type'],
+                      },
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select security type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="stock">Stock</SelectItem>
+                    <SelectItem value="etf">ETF</SelectItem>
+                    <SelectItem value="bond">Bond</SelectItem>
+                    <SelectItem value="mutual_fund">Mutual Fund</SelectItem>
+                    <SelectItem value="index_fund">Index Fund</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Conditionally render specialized forms based on asset type */}
             {selectedAssetType?.code === 'security' && (
               <div className="border-t pt-4">
