@@ -64,7 +64,6 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
             id="ticker"
             value={value.ticker || ''}
             onChange={(e) => onChange({ ...value, ticker: e.target.value })}
-            placeholder="AAPL"
             disabled={disabled}
           />
         </div>
@@ -91,7 +90,6 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
             id="isin"
             value={value.isin || ''}
             onChange={(e) => onChange({ ...value, isin: e.target.value })}
-            placeholder="US0378331005"
             disabled={disabled}
           />
         </div>
@@ -102,7 +100,6 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
             id="wkn"
             value={value.wkn || ''}
             onChange={(e) => onChange({ ...value, wkn: e.target.value })}
-            placeholder="865985"
             disabled={disabled}
           />
         </div>
