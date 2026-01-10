@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@/contexts/UserContext';
 import { apiClient } from '@/lib/api/client';
-import type { Asset, AssetType } from '@/lib/api/types';
+import type { Asset, AssetType, SecurityAsset, InsuranceAsset, RealEstateAsset } from '@/lib/api/types';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,9 @@ import {
 import { Pencil } from 'lucide-react';
 import { useAccounts } from '@/lib/api/hooks';
 import InstitutionLogo from '@/components/InstitutionLogo';
+import { SecurityAssetForm } from '@/components/portfolio/SecurityAssetForm';
+import { InsuranceAssetForm } from '@/components/portfolio/InsuranceAssetForm';
+import { RealEstateAssetForm } from '@/components/portfolio/RealEstateAssetForm';
 
 interface EditAssetDialogProps {
   asset: Asset;
@@ -36,16 +39,30 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    asset_type_id: string;
+    currency: string;
+    is_active: boolean;
+    security_asset?: Partial<SecurityAsset>;
+    insurance_asset?: Partial<InsuranceAsset>;
+    real_estate_asset?: Partial<RealEstateAsset>;
+  }>({
     name: asset.name,
     asset_type_id: asset.asset_type_id.toString(),
-    isin: asset.security_asset?.isin || '',
-    ticker: asset.security_asset?.ticker || '',
     currency: asset.currency,
     is_active: asset.is_active ?? true,
+    security_asset: asset.security_asset,
+    insurance_asset: asset.insurance_asset,
+    real_estate_asset: asset.real_estate_asset,
   });
   const { accounts } = useAccounts({ userId: userId! });
   const [accountId, setAccountId] = useState(asset.account_id?.toString() || '');
+
+  // Get selected asset type
+  const selectedAssetType = assetTypes.find(
+    (t) => t.id.toString() === formData.asset_type_id
+  );
 
   // Reset form when dialog opens or asset changes
   useEffect(() => {
@@ -53,10 +70,11 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
       setFormData({
         name: asset.name,
         asset_type_id: asset.asset_type_id.toString(),
-        isin: asset.security_asset?.isin || '',
-        ticker: asset.security_asset?.ticker || '',
         currency: asset.currency,
         is_active: asset.is_active ?? true,
+        security_asset: asset.security_asset,
+        insurance_asset: asset.insurance_asset,
+        real_estate_asset: asset.real_estate_asset,
       });
     }
   }, [open, asset]);
@@ -65,7 +83,6 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
     const fetchAssetTypes = async () => {
       try {
         const response = await apiClient.get<{ data: AssetType[] }>('asset_types');
-        // Handle both response formats
         const types = Array.isArray(response) ? response : (response.data || []);
         setAssetTypes(types);
       } catch (err) {
@@ -91,21 +108,10 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
         asset_type_id: parseInt(formData.asset_type_id),
         currency: formData.currency,
         is_active: formData.is_active,
+        security_asset: formData.security_asset,
+        insurance_asset: formData.insurance_asset,
+        real_estate_asset: formData.real_estate_asset,
       };
-
-      // Add symbol (ISIN) if available
-      if (formData.isin) {
-        updateData.symbol = formData.isin;
-      }
-
-      // Add security_asset data if it's a security type
-      const selectedType = assetTypes.find((t) => t.id === parseInt(formData.asset_type_id));
-      if (selectedType?.code === 'security' && (formData.isin || formData.ticker)) {
-        updateData.security_asset = {
-          isin: formData.isin || undefined,
-          ticker: formData.ticker || undefined,
-        };
-      }
 
       // account_id handling: include field (can be null to remove)
       if (typeof accountId !== 'undefined') {
@@ -128,7 +134,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
       <Button variant="ghost" size="icon" onClick={() => setOpen(true)}>
         <Pencil className="h-4 w-4" />
       </Button>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit Asset</DialogTitle>
@@ -164,49 +170,66 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-ticker">Ticker Symbol</Label>
-              <Input
-                id="edit-ticker"
-                placeholder="e.g., AAPL"
-                value={formData.ticker}
-                onChange={(e) => setFormData({ ...formData, ticker: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-isin">ISIN</Label>
-              <Input
-                id="edit-isin"
-                placeholder="e.g., US0378331005"
-                value={formData.isin}
-                onChange={(e) => setFormData({ ...formData, isin: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-account">Verknüpftes Konto / Depot (optional)</Label>
-              <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
-                <SelectTrigger id="edit-account">
-                  <SelectValue placeholder="Kein Konto ausgewählt" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_none">Kein Konto</SelectItem>
-                  {accounts
-                    ?.filter((a) => a.is_active)
-                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-                    .map((a) => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
-                        <div className="flex items-center gap-2">
-                          <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
-                          <div className="flex flex-col">
-                            <span>{a.name}</span>
-                            <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
+
+            {/* Conditionally render specialized forms based on asset type */}
+            {selectedAssetType?.code === 'security' && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-3">Security Details</h4>
+                <SecurityAssetForm
+                  value={formData.security_asset || {}}
+                  onChange={(value) => setFormData({ ...formData, security_asset: value })}
+                />
+              </div>
+            )}
+
+            {selectedAssetType?.code === 'insurance' && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-3">Insurance Details</h4>
+                <InsuranceAssetForm
+                  value={formData.insurance_asset || {}}
+                  onChange={(value) => setFormData({ ...formData, insurance_asset: value })}
+                />
+              </div>
+            )}
+
+            {selectedAssetType?.code === 'real_estate' && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-3">Real Estate Details</h4>
+                <RealEstateAssetForm
+                  value={formData.real_estate_asset || {}}
+                  onChange={(value) => setFormData({ ...formData, real_estate_asset: value })}
+                />
+              </div>
+            )}
+
+            <div className="border-t pt-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-account">Verknüpftes Konto / Depot (optional)</Label>
+                <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
+                  <SelectTrigger id="edit-account">
+                    <SelectValue placeholder="Kein Konto ausgewählt" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">Kein Konto</SelectItem>
+                    {accounts
+                      ?.filter((a) => a.is_active)
+                      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                      .map((a) => (
+                        <SelectItem key={a.id} value={a.id.toString()}>
+                          <div className="flex items-center gap-2">
+                            <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                            <div className="flex flex-col">
+                              <span>{a.name}</span>
+                              <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
+                            </div>
                           </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
             <div className="grid gap-2">
               <Label htmlFor="edit-currency">Currency *</Label>
               <Input
