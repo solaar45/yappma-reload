@@ -33,12 +33,49 @@
     "optional": "optional",
     "currency": "Currency"
   },
+  "auth": {
+    "welcome": "Welcome to YAPPMA",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already registered?",
+    "loginHere": "Login here",
+    "registerHere": "Register here",
+    "demoHint": "Demo version: All data is local and not saved"
+  },
   "dashboard": {
     "title": "Dashboard",
     "totalValue": "Total Value",
+    "totalNetWorth": "Total Net Worth",
+    "totalInAccounts": "Total in Accounts",
+    "totalInAssets": "Total in Assets",
     "accounts": "Accounts",
     "assets": "Assets",
-    "recentActivity": "Recent Activity"
+    "recentActivity": "Recent Activity",
+    "recentAccounts": "Recent Accounts",
+    "recentAssets": "Recent Assets",
+    "noAccountSnapshots": "No account snapshots available",
+    "noAssetSnapshots": "No asset snapshots available",
+    "errorLoading": "Error loading dashboard",
+    "asOf": "as of"
+  },
+  "taxes": {
+    "title": "Taxes",
+    "yearToDate": "Year to Date",
+    "used": "Used",
+    "remaining": "Remaining",
+    "allocated": "Allocated",
+    "fsa": "Tax-Free Allowance",
+    "fsaExplanation": "Your annual tax-free allowance",
+    "fsaUsed": "Used Allowance",
+    "fsaRemaining": "Remaining Allowance",
+    "projectedYearEnd": "Projected (Year End)",
+    "onTrack": "On Track",
+    "overBudget": "Over Budget"
   },
   "accounts": {
     "title": "Accounts",
@@ -79,6 +116,7 @@
     "account": "Account",
     "currentValue": "Current Value",
     "quantity": "Quantity",
+    "units": "units",
     "status": "Status",
     "active": "Active",
     "inactive": "Inactive",
