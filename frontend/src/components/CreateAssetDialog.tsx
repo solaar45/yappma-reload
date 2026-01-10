@@ -107,11 +107,8 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       isin?: string;
       ticker?: string;
       wkn?: string;
-      exchange?: string;
-      sector?: string;
+      security_type?: string;
     } | undefined;
-
-    
 
     const result = await createAsset({
       user_id: userId,
@@ -184,6 +181,36 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Security Type field - only shown when Security is selected */}
+            {selectedAssetType?.code === 'security' && (
+              <div className="grid gap-2">
+                <Label htmlFor="security_type">{t('assets.security.type') || 'Security Type'}</Label>
+                <Select
+                  value={formData.security_asset?.security_type || ''}
+                  onValueChange={(val) =>
+                    setFormData({
+                      ...formData,
+                      security_asset: {
+                        ...formData.security_asset,
+                        security_type: val as SecurityAsset['security_type'],
+                      },
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('assets.security.selectType') || 'Select security type'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="stock">{t('assets.security.types.stock') || 'Stock'}</SelectItem>
+                    <SelectItem value="etf">{t('assets.security.types.etf') || 'ETF'}</SelectItem>
+                    <SelectItem value="bond">{t('assets.security.types.bond') || 'Bond'}</SelectItem>
+                    <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund') || 'Mutual Fund'}</SelectItem>
+                    <SelectItem value="index_fund">{t('assets.security.types.indexFund') || 'Index Fund'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Conditionally render specialized forms based on asset type */}
             {selectedAssetType?.code === 'security' && (
