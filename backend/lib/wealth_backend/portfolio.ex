@@ -77,10 +77,11 @@ defmodule WealthBackend.Portfolio do
   end
 
   def create_asset(user_id, attrs \\ %{}) do
-    # Determine risk class before creating asset
-    attrs = 
+    # Normalize keys to strings and determine risk class before creating asset
+    attrs =
       attrs
-      |> Map.put(:user_id, user_id)
+      |> stringify_keys()
+      |> Map.put("user_id", user_id)
       |> enrich_with_risk_class()
 
     %Asset{}
@@ -89,10 +90,11 @@ defmodule WealthBackend.Portfolio do
   end
 
   def create_full_asset(user_id, attrs \\ %{}) do
-    # Determine risk class before creating asset
-    attrs = 
+    # Normalize keys to strings and determine risk class before creating asset
+    attrs =
       attrs
-      |> Map.put(:user_id, user_id)
+      |> stringify_keys()
+      |> Map.put("user_id", user_id)
       |> enrich_with_risk_class()
 
     Ecto.Multi.new()
@@ -121,7 +123,7 @@ defmodule WealthBackend.Portfolio do
   defp enrich_with_risk_class(attrs) when is_map(attrs) do
     # Normalize to string keys first
     attrs = if is_struct(attrs), do: Map.from_struct(attrs), else: attrs
-    
+
     # Determine if we have string or atom keys
     has_string_keys = Map.has_key?(attrs, "asset_type_id")
     has_atom_keys = Map.has_key?(attrs, :asset_type_id)
@@ -160,9 +162,9 @@ defmodule WealthBackend.Portfolio do
 
       # Get ISIN/symbol if available
       identifier = cond do
-        has_string_keys -> 
+        has_string_keys ->
           attrs["symbol"] || get_in(attrs, ["security_asset", "isin"])
-        has_atom_keys -> 
+        has_atom_keys ->
           attrs[:symbol] || get_in(attrs, [:security_asset, :isin])
         true -> nil
       end
@@ -184,7 +186,7 @@ defmodule WealthBackend.Portfolio do
 
   defp create_asset_subtype(asset, attrs) do
     asset_type = Repo.get!(AssetType, asset.asset_type_id)
-    
+
     # Determine if attrs uses string or atom keys
     has_string_keys = Map.has_key?(attrs, "asset_type_id")
 
@@ -197,7 +199,7 @@ defmodule WealthBackend.Portfolio do
           else
             Map.put(security_attrs, :asset_id, asset.id)
           end
-          
+
           %SecurityAsset{}
           |> SecurityAsset.changeset(security_attrs)
           |> Repo.insert()
@@ -212,7 +214,7 @@ defmodule WealthBackend.Portfolio do
           else
             Map.put(insurance_attrs, :asset_id, asset.id)
           end
-          
+
           %InsuranceAsset{}
           |> InsuranceAsset.changeset(insurance_attrs)
           |> Repo.insert()
@@ -227,7 +229,7 @@ defmodule WealthBackend.Portfolio do
           else
             Map.put(loan_attrs, :asset_id, asset.id)
           end
-          
+
           %LoanAsset{}
           |> LoanAsset.changeset(loan_attrs)
           |> Repo.insert()
@@ -242,7 +244,7 @@ defmodule WealthBackend.Portfolio do
           else
             Map.put(re_attrs, :asset_id, asset.id)
           end
-          
+
           %RealEstateAsset{}
           |> RealEstateAsset.changeset(re_attrs)
           |> Repo.insert()
@@ -268,4 +270,24 @@ defmodule WealthBackend.Portfolio do
   def change_asset(%Asset{} = asset, attrs \\ %{}) do
     Asset.changeset(asset, attrs)
   end
+
+  # Recursively convert atom keys to strings to ensure consistent param keys for Ecto
+  defp stringify_keys(%{} = map) do
+    map
+    |> Enum.map(fn {k, v} ->
+      key = if is_atom(k), do: Atom.to_string(k), else: k
+      value = case v do
+        %{} -> stringify_keys(v)
+        list when is_list(list) -> Enum.map(list, fn
+          elem when is_map(elem) -> stringify_keys(elem)
+          elem -> elem
+        end)
+        other -> other
+      end
+      {key, value}
+    end)
+    |> Enum.into(%{})
+  end
+
+  defp stringify_keys(other), do: other
 end
