@@ -5,9 +5,9 @@ defmodule WealthBackend.Repo.Migrations.ExtendSecurityAssets do
     alter table(:security_assets) do
       add :security_type, :string
       add :distribution_type, :string
-      add :expense_ratio, :decimal, precision: 5, scale: 3
+      add :expense_ratio, :decimal, precision: 10, scale: 4
       add :issuer, :string
-      add :coupon_rate, :decimal, precision: 5, scale: 3
+      add :coupon_rate, :decimal, precision: 10, scale: 4
       add :maturity_date, :date
       add :country_of_domicile, :string
       add :benchmark_index, :string
