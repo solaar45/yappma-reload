@@ -3,13 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { enrichSecurityMetadata } from '@/lib/api/securities';
 import { useToast } from '@/hooks/use-toast';
@@ -45,7 +38,6 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
       onChange({
         ...value,
         ticker: metadata.ticker || value.ticker,
-        security_type: metadata.security_type || value.security_type,
       });
 
       toast({
@@ -114,26 +106,6 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
             disabled={disabled}
           />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="security_type">{t('assets.security.type')}</Label>
-        <Select
-          value={value.security_type || ''}
-          onValueChange={(val) => onChange({ ...value, security_type: val as SecurityAsset['security_type'] })}
-          disabled={disabled}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={t('assets.security.selectType')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="stock">{t('assets.security.types.stock')}</SelectItem>
-            <SelectItem value="etf">{t('assets.security.types.etf')}</SelectItem>
-            <SelectItem value="bond">{t('assets.security.types.bond')}</SelectItem>
-            <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund')}</SelectItem>
-            <SelectItem value="index_fund">{t('assets.security.types.indexFund')}</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
     </div>
   );
