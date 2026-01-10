@@ -1,28 +1,297 @@
 # ============================================
-# Environment Files
+# YAPPMA Reload - Monorepo .gitignore
+# ============================================
+# This file consolidates all ignore patterns for the entire monorepo
+# Organized by category for easy maintenance
+
+# ============================================
+# Environment & Secrets
 # ============================================
 .env
 .env.local
 .env.*.local
+.envrc
 
 # ============================================
-# Python (FinTS Worker)
+# Dependencies
 # ============================================
-fints-worker/venv/
-fints-worker/__pycache__/
-fints-worker/*.pyc
+
+# Node.js / NPM
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+package-lock.json.backup
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+env/
+ENV/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+
+# Elixir / Mix
+deps/
+_build/
+.fetch
+*.ez
 
 # ============================================
-# OS Files
+# Build Output
 # ============================================
-.DS_Store
-Thumbs.db
+
+# Frontend (Vite/React)
+dist/
+dist-ssr/
+*.local
+build/
+out/
+.vite/
+.next/
+.nuxt/
+.cache/
+
+# Backend (Phoenix)
+priv/static/assets/
+priv/static/cache_manifest.json
+
+# Documentation
+doc/
 
 # ============================================
-# IDE Files
+# Test Coverage & Reports
 # ============================================
-.vscode/
-.idea/
+cover/
+coverage/
+.nyc_output/
+*.lcov
+.coverage
+htmlcov/
+
+# ============================================
+# Temporary Files
+# ============================================
+tmp/
+temp/
+*.tmp
+*.temp
 *.swp
 *.swo
 *~
+.DS_Store
+Thumbs.db
+erl_crash.dump
+
+# ============================================
+# Logs
+# ============================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ============================================
+# IDE & Editor
+# ============================================
+
+# VSCode
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.code-workspace
+
+# JetBrains (IntelliJ, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+
+# ============================================
+# OS-Specific
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+.directory
+.Trash-*
+.nfs*
+
+# ============================================
+# Database
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# PostgreSQL
+*.sql.backup
+*.dump
+
+# ============================================
+# Archives
+# ============================================
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.rar
+*.7z
+*.bz2
+*.gz
+wealth_backend-*.tar
+
+# ============================================
+# Security & Certificates
+# ============================================
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+certificates/
+secrets/
+
+# ============================================
+# Application-Specific
+# ============================================
+
+# Backend (Phoenix/Elixir)
+backend/_build/
+backend/cover/
+backend/deps/
+backend/doc/
+backend/.fetch
+backend/erl_crash.dump
+backend/*.ez
+backend/tmp/
+backend/priv/static/assets/
+backend/priv/static/cache_manifest.json
+backend/assets/node_modules/
+backend/cookies.txt
+
+# Frontend (React/Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+frontend/*.local
+frontend/coverage/
+
+# Python Worker (FinTS)
+fints-worker/venv/
+fints-worker/__pycache__/
+fints-worker/*.pyc
+fints-worker/*.pyo
+fints-worker/*.pyd
+fints-worker/.Python
+fints-worker/pip-log.txt
+
+# ============================================
+# Development Tools
+# ============================================
+
+# Git
+*.orig
+*.rej
+
+# Backup files
+*.bak
+*.backup
+
+# Local configuration overrides
+*.local.json
+*.local.yml
+*.local.yaml
+local_config.*
+
+# ============================================
+# CI/CD
+# ============================================
+.github/workflows/*.local
+.gitlab-ci.local.yml
+
+# ============================================
+# Docker
+# ============================================
+.docker/
+*.dockerignore.local
+docker-compose.override.yml
+
+# ============================================
+# Misc
+# ============================================
+.watchmanconfig
+.eslintcache
+.stylelintcache
+.yarn/
+.pnp.*
+
+# Lock files (uncomment if using different package managers)
+# yarn.lock
+# pnpm-lock.yaml
