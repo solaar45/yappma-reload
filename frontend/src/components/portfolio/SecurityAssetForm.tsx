@@ -41,17 +41,11 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
     try {
       const metadata = await enrichSecurityMetadata(identifier, 'auto');
       
-      // Merge enriched data with existing data
+      // Merge enriched data with existing data (only visible fields)
       onChange({
         ...value,
         ticker: metadata.ticker || value.ticker,
         security_type: metadata.security_type || value.security_type,
-        exchange: metadata.exchange || value.exchange,
-        sector: metadata.sector || value.sector,
-        distribution_type: metadata.distribution_type || value.distribution_type,
-        expense_ratio: metadata.expense_ratio?.toString() || value.expense_ratio,
-        country_of_domicile: metadata.country_of_domicile || value.country_of_domicile,
-        benchmark_index: metadata.benchmark_index || value.benchmark_index,
       });
 
       toast({
@@ -122,143 +116,24 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="security_type">{t('assets.security.type')}</Label>
-          <Select
-            value={value.security_type || ''}
-            onValueChange={(val) => onChange({ ...value, security_type: val as SecurityAsset['security_type'] })}
-            disabled={disabled}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('assets.security.selectType')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="stock">{t('assets.security.types.stock')}</SelectItem>
-              <SelectItem value="etf">{t('assets.security.types.etf')}</SelectItem>
-              <SelectItem value="bond">{t('assets.security.types.bond')}</SelectItem>
-              <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund')}</SelectItem>
-              <SelectItem value="index_fund">{t('assets.security.types.indexFund')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="distribution_type">{t('assets.security.distributionType')}</Label>
-          <Select
-            value={value.distribution_type || ''}
-            onValueChange={(val) => onChange({ ...value, distribution_type: val as SecurityAsset['distribution_type'] })}
-            disabled={disabled}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('assets.security.selectDistribution')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="accumulating">{t('assets.security.accumulating')}</SelectItem>
-              <SelectItem value="distributing">{t('assets.security.distributing')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="exchange">{t('assets.security.exchange')}</Label>
-          <Input
-            id="exchange"
-            value={value.exchange || ''}
-            onChange={(e) => onChange({ ...value, exchange: e.target.value })}
-            placeholder="NASDAQ"
-            disabled={disabled}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="sector">{t('assets.security.sector')}</Label>
-          <Input
-            id="sector"
-            value={value.sector || ''}
-            onChange={(e) => onChange({ ...value, sector: e.target.value })}
-            placeholder="Technology"
-            disabled={disabled}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="expense_ratio">{t('assets.security.expenseRatio')} (%)</Label>
-          <Input
-            id="expense_ratio"
-            type="number"
-            step="0.01"
-            value={value.expense_ratio || ''}
-            onChange={(e) => onChange({ ...value, expense_ratio: e.target.value })}
-            placeholder="0.45"
-            disabled={disabled}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="coupon_rate">{t('assets.security.couponRate')} (%)</Label>
-          <Input
-            id="coupon_rate"
-            type="number"
-            step="0.01"
-            value={value.coupon_rate || ''}
-            onChange={(e) => onChange({ ...value, coupon_rate: e.target.value })}
-            placeholder="2.5"
-            disabled={disabled}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="issuer">{t('assets.security.issuer')}</Label>
-          <Input
-            id="issuer"
-            value={value.issuer || ''}
-            onChange={(e) => onChange({ ...value, issuer: e.target.value })}
-            placeholder="BlackRock"
-            disabled={disabled}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="maturity_date">{t('assets.security.maturityDate')}</Label>
-          <Input
-            id="maturity_date"
-            type="date"
-            value={value.maturity_date || ''}
-            onChange={(e) => onChange({ ...value, maturity_date: e.target.value })}
-            disabled={disabled}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="country_of_domicile">{t('assets.security.countryOfDomicile')}</Label>
-          <Input
-            id="country_of_domicile"
-            value={value.country_of_domicile || ''}
-            onChange={(e) => onChange({ ...value, country_of_domicile: e.target.value })}
-            placeholder="USA"
-            disabled={disabled}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="benchmark_index">{t('assets.security.benchmarkIndex')}</Label>
-          <Input
-            id="benchmark_index"
-            value={value.benchmark_index || ''}
-            onChange={(e) => onChange({ ...value, benchmark_index: e.target.value })}
-            placeholder="S&P 500"
-            disabled={disabled}
-          />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="security_type">{t('assets.security.type')}</Label>
+        <Select
+          value={value.security_type || ''}
+          onValueChange={(val) => onChange({ ...value, security_type: val as SecurityAsset['security_type'] })}
+          disabled={disabled}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={t('assets.security.selectType')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="stock">{t('assets.security.types.stock')}</SelectItem>
+            <SelectItem value="etf">{t('assets.security.types.etf')}</SelectItem>
+            <SelectItem value="bond">{t('assets.security.types.bond')}</SelectItem>
+            <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund')}</SelectItem>
+            <SelectItem value="index_fund">{t('assets.security.types.indexFund')}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
