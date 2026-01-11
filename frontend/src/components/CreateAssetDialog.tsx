@@ -247,7 +247,8 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                       currency: security.currency || 'USD',
                       security_asset: {
                         ticker: security.ticker,
-                        security_type: security.type,  // Auto-populated from API
+                        // Cast security.type to the expected union type
+                        security_type: security.type as SecurityAsset['security_type'],
                         isin: undefined,
                       }
                     }));
