@@ -168,6 +168,7 @@
     "assetName": "Vermögenswert-Name",
     "assetType": "Vermögenswert-Typ",
     "type": "Typ",
+    "securityType": "Wertpapiertyp",
     "account": "Konto",
     "linkedAccount": "Verknüpftes Konto",
     "noAccountSelected": "Kein Konto ausgewählt",
