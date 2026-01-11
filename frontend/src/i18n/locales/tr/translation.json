@@ -39,7 +39,11 @@
     "previous": "Önceki",
     "next": "Sonraki",
     "close": "Kapat",
-    "quantity": "Miktar"
+    "quantity": "Miktar",
+    "searching": "Aranıyor...",
+    "noResults": "Sonuç bulunamadı",
+    "typeToSearch": "Aramak için en az 2 karakter girin",
+    "tickerOrName": "Ticker veya Şirket Adı"
   },
   "navigation": {
     "dashboard": "Panel",

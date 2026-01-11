@@ -37,7 +37,11 @@
     "showing": "Zeige {{from}} - {{to}} von {{total}}",
     "rowsPerPage": "Zeilen pro Seite",
     "previous": "Zurück",
-    "next": "Weiter"
+    "next": "Weiter",
+    "searching": "Suche läuft...",
+    "noResults": "Keine Ergebnisse gefunden",
+    "typeToSearch": "Mindestens 2 Zeichen eingeben",
+    "tickerOrName": "Ticker oder Firmenname"
   },
   "navigation": {
     "dashboard": "Dashboard",
