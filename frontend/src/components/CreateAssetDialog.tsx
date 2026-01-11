@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Search, Loader2, AlertCircle, Edit } from 'lucide-react';
+import { Plus, Search, Loader2, AlertCircle, Edit, Info } from 'lucide-react';
 import { useAccounts } from '@/lib/api/hooks';
 import InstitutionLogo from '@/components/InstitutionLogo';
 import { SecurityAssetForm } from '@/components/portfolio/SecurityAssetForm';
@@ -52,6 +52,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
   const [enrichmentError, setEnrichmentError] = useState<string | null>(null);
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [enrichmentSuccess, setEnrichmentSuccess] = useState(false);
+  const [isISINNotSupported, setIsISINNotSupported] = useState(false);
   
   const [formData, setFormData] = useState<{
     name: string;
@@ -103,6 +104,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       setEnrichmentError(null);
       setShowManualEntry(false);
       setEnrichmentSuccess(false);
+      setIsISINNotSupported(false);
       setFormData({
         name: '',
         asset_type_id: '',
@@ -122,6 +124,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
     setIsEnriching(true);
     setEnrichmentError(null);
     setEnrichmentSuccess(false);
+    setIsISINNotSupported(false);
 
     try {
       const response = await apiClient.post('securities/enrich', {
@@ -141,7 +144,6 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             ...prev.security_asset,
             ticker: enrichedData.ticker,
             isin: enrichedData.isin,
-            // Keep the security_type that was already selected
           }
         }));
 
@@ -153,7 +155,19 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       }
     } catch (err: any) {
       console.error('Enrichment error:', err);
-      setEnrichmentError('Wertpapier nicht gefunden');
+      
+      // Check if it's ISIN conversion error (422)
+      if (err.status === 422 || err.response?.status === 422) {
+        const isISIN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/i.test(identifier.trim());
+        if (isISIN) {
+          setIsISINNotSupported(true);
+          setEnrichmentError('ISIN-zu-Ticker Konvertierung wird derzeit nicht unterstützt');
+        } else {
+          setEnrichmentError('Wertpapier nicht gefunden');
+        }
+      } else {
+        setEnrichmentError('Wertpapier nicht gefunden');
+      }
     } finally {
       setIsEnriching(false);
     }
@@ -162,6 +176,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
   const handleManualEntry = () => {
     setShowManualEntry(true);
     setEnrichmentError(null);
+    setIsISINNotSupported(false);
     
     // Set identifier as ticker or isin based on format
     const isISIN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/i.test(identifier.trim());
@@ -232,15 +247,16 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       const errorDetail = errorData?.errors?.detail || '';
       const errorMessage = errorData?.errors?.message || err?.message || '';
       
-      // Handle specific security validation errors with i18n
+      // Handle specific security validation errors
       if (errorDetail === 'security_not_found') {
         const identifier = sanitizedSecurity?.ticker || sanitizedSecurity?.isin || 'unbekannt';
-        setValidationError(t('errors.securityNotFound', { identifier }));
+        setValidationError(`Wertpapier "${identifier}" konnte nicht validiert werden. Bitte überprüfen Sie den Ticker oder die ISIN.`);
       } else if (errorDetail === 'validation_failed') {
-        setValidationError(t('errors.validationFailed'));
+        setValidationError('Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.');
+      } else if (errorMessage.includes('FMP_API_KEY')) {
+        setValidationError('API-Konfiguration fehlt. Das Wertpapier kann derzeit nicht gespeichert werden. Bitte verwenden Sie einen Ticker anstelle der ISIN oder kontaktieren Sie den Administrator.');
       } else {
-        // Generic error - show backend message or fallback
-        setValidationError(errorMessage || t('errors.assetCreationFailed'));
+        setValidationError(errorMessage || 'Fehler beim Erstellen des Assets');
       }
     }
   };
@@ -274,6 +290,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                   setEnrichmentError(null);
                   setShowManualEntry(false);
                   setEnrichmentSuccess(false);
+                  setIsISINNotSupported(false);
                 }}
                 disabled={loadingTypes}
               >
@@ -309,6 +326,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                     setEnrichmentError(null);
                     setShowManualEntry(false);
                     setEnrichmentSuccess(false);
+                    setIsISINNotSupported(false);
                   }}
                 >
                   <SelectTrigger id="security_type">
@@ -329,9 +347,9 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             {selectedAssetType?.code === 'security' && formData.security_asset?.security_type && (
               <div className="grid gap-2">
                 <Label htmlFor="identifier">
-                  {t('assets.security.identifier')}
+                  Ticker Symbol
                   <span className="text-xs text-muted-foreground ml-2">
-                    ({t('assets.security.tickerOrIsin')})
+                    (z.B. AAPL, VWCE)
                   </span>
                 </Label>
                 <div className="flex gap-2">
@@ -341,8 +359,9 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                     onChange={(e) => {
                       setIdentifier(e.target.value);
                       setEnrichmentError(null);
+                      setIsISINNotSupported(false);
                     }}
-                    placeholder="z.B. AAPL oder US0378331005"
+                    placeholder="z.B. AAPL oder MSFT"
                     disabled={enrichmentSuccess}
                   />
                   {!enrichmentSuccess ? (
@@ -376,8 +395,35 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                   )}
                 </div>
                 
+                {/* ISIN Not Supported Info */}
+                {isISINNotSupported && (
+                  <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 p-3 text-sm">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-blue-800 dark:text-blue-200 font-medium">
+                          ISIN-Konvertierung nicht verfügbar
+                        </p>
+                        <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                          Bitte verwenden Sie das Ticker-Symbol anstelle der ISIN.
+                          Beispiel: Für Vanguard FTSE All-World verwenden Sie "VWCE" statt "IE00BK5BQT80".
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleManualEntry}
+                          className="mt-2"
+                        >
+                          Trotzdem manuell anlegen
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Enrichment Error with Manual Entry Option */}
-                {enrichmentError && !showManualEntry && (
+                {enrichmentError && !showManualEntry && !isISINNotSupported && (
                   <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-3 text-sm">
                     <div className="flex items-start gap-2">
                       <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
