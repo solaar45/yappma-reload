@@ -92,6 +92,7 @@
     "linkedAccount": "Verknüpftes Konto / Depot",
     "noAccountSelected": "Kein Konto ausgewählt",
     "noAccount": "Kein Konto",
+    "securityType": "Wertpapiertyp",
     "security": {
       "type": "Wertpapierart",
       "selectType": "Wertpapierart auswählen",
