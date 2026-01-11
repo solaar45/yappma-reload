@@ -169,7 +169,7 @@ end
 # Safe fallback if specific ones failed (just for demo accounts below)
 bank = bank || Enum.at(Map.values(institutions_map), 0)
 broker = broker || Enum.at(Map.values(institutions_map), 1)
-insurance_company = insurance_company || Enum.at(Map.values(institutions_map), 2)
+_insurance_company = insurance_company || Enum.at(Map.values(institutions_map), 2)
 
 # ============================================================================
 # 4. Create Accounts
@@ -220,8 +220,23 @@ IO.puts("✅ Creating accounts...")
 # ============================================================================
 IO.puts("✅ Creating assets...")
 
-# Security 1: MSCI World ETF
-{:ok, etf_msci_world} = Portfolio.create_full_asset(user.id, %{
+# Helper function to create asset with error handling
+create_asset_safe = fn name, attrs ->
+  case Portfolio.create_full_asset(user.id, attrs) do
+    {:ok, asset} ->
+      IO.puts("   ✓ Created: #{name}")
+      {:ok, asset}
+    {:error, :security_not_found} ->
+      IO.puts("   ⚠️ Skipped #{name}: Security not found in FMP API")
+      {:error, :skipped}
+    {:error, reason} ->
+      IO.puts("   ❌ Failed to create #{name}: #{inspect(reason)}")
+      {:error, reason}
+  end
+end
+
+# Security 1: MSCI World ETF - using ISIN only (ticker IWDA might not be in FMP)
+etf_msci_world_result = create_asset_safe.("iShares Core MSCI World", %{
   name: "iShares Core MSCI World",
   symbol: "IE00B4L5Y983",
   currency: "EUR",
@@ -232,14 +247,14 @@ IO.puts("✅ Creating assets...")
   security_asset: %{
     isin: "IE00B4L5Y983",
     wkn: "A0RPWH",
-    ticker: "IWDA",
+    # Don't set ticker to avoid validation issues
     exchange: "XETRA",
     sector: "Diversified"
   }
 })
 
 # Security 2: Vanguard All-World
-{:ok, etf_vanguard} = Portfolio.create_full_asset(user.id, %{
+etf_vanguard_result = create_asset_safe.("Vanguard FTSE All-World", %{
   name: "Vanguard FTSE All-World",
   symbol: "IE00BK5BQT80",
   currency: "EUR",
@@ -249,31 +264,30 @@ IO.puts("✅ Creating assets...")
   asset_type_id: security_type.id,
   security_asset: %{
     isin: "IE00BK5BQT80",
-    ticker: "VWCE",
+    # Don't set ticker to avoid validation issues
     exchange: "XETRA",
     sector: "Diversified"
   }
 })
 
-# Security 3: Bitcoin ETF
-{:ok, bitcoin_etf} = Portfolio.create_full_asset(user.id, %{
-  name: "iShares Bitcoin Trust ETF",
-  symbol: "US46428V5093",
-  currency: "EUR",
+# Security 3: Use a US stock that should be in FMP - Apple
+apple_result = create_asset_safe.("Apple Inc.", %{
+  name: "Apple Inc.",
+  symbol: "AAPL",
+  currency: "USD",
   is_active: true,
   created_at_date: ~D[2024-02-15],
   account_id: brokerage_account.id,
   asset_type_id: security_type.id,
   security_asset: %{
-    isin: "US46428V5093",
-    ticker: "IBIT",
-    exchange: "NYSE",
-    sector: "Cryptocurrency"
+    ticker: "AAPL",
+    exchange: "NASDAQ",
+    sector: "Technology"
   }
 })
 
 # Insurance 1: Haftpflicht
-{:ok, liability_insurance} = Portfolio.create_full_asset(user.id, %{
+{:ok, _liability_insurance} = create_asset_safe.("Privathaftpflichtversicherung", %{
   name: "Privathaftpflichtversicherung",
   currency: "EUR",
   is_active: true,
@@ -289,7 +303,7 @@ IO.puts("✅ Creating assets...")
 })
 
 # Insurance 2: Lebensversicherung
-{:ok, life_insurance} = Portfolio.create_full_asset(user.id, %{
+{:ok, _life_insurance} = create_asset_safe.("Kapitallebensversicherung", %{
   name: "Kapitallebensversicherung",
   currency: "EUR",
   is_active: true,
@@ -305,7 +319,7 @@ IO.puts("✅ Creating assets...")
 })
 
 # Real Estate
-{:ok, apartment} = Portfolio.create_full_asset(user.id, %{
+{:ok, apartment} = create_asset_safe.("Eigentumswohnung München", %{
   name: "Eigentumswohnung München",
   currency: "EUR",
   is_active: true,
@@ -320,7 +334,7 @@ IO.puts("✅ Creating assets...")
 })
 
 # Cash Asset
-{:ok, cash_home} = Portfolio.create_full_asset(user.id, %{
+{:ok, cash_home} = create_asset_safe.("Bargeld zu Hause", %{
   name: "Bargeld zu Hause",
   currency: "EUR",
   is_active: true,
@@ -383,57 +397,67 @@ Enum.each([
 end)
 
 # ============================================================================
-# 7. Create Asset Snapshots
+# 7. Create Asset Snapshots (only for successfully created assets)
 # ============================================================================
 IO.puts("✅ Creating asset snapshots...")
 
-# MSCI World ETF Snapshots
-Enum.each([
-  {~D[2025-10-31], "110.50", "15000.00"},
-  {~D[2025-11-30], "112.80", "15500.00"},
-  {~D[2025-12-30], "115.20", "16000.00"}
-], fn {date, price, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
-    asset_id: etf_msci_world.id,
-    snapshot_date: date,
-    quantity: Decimal.new("138.5"),
-    price_per_unit: Decimal.new(price),
-    total_value: Decimal.new(value),
-    currency: "EUR"
-  })
-end)
+# Only create snapshots for successfully created securities
+case etf_msci_world_result do
+  {:ok, etf_msci_world} ->
+    Enum.each([
+      {~D[2025-10-31], "110.50", "15000.00"},
+      {~D[2025-11-30], "112.80", "15500.00"},
+      {~D[2025-12-30], "115.20", "16000.00"}
+    ], fn {date, price, value} ->
+      {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
+        asset_id: etf_msci_world.id,
+        snapshot_date: date,
+        quantity: Decimal.new("138.5"),
+        price_per_unit: Decimal.new(price),
+        total_value: Decimal.new(value),
+        currency: "EUR"
+      })
+    end)
+  _ -> :ok
+end
 
-# Vanguard All-World Snapshots
-Enum.each([
-  {~D[2025-10-31], "108.20", "10820.00"},
-  {~D[2025-11-30], "110.00", "11000.00"},
-  {~D[2025-12-30], "112.50", "11250.00"}
-], fn {date, price, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
-    asset_id: etf_vanguard.id,
-    snapshot_date: date,
-    quantity: Decimal.new("100.0"),
-    price_per_unit: Decimal.new(price),
-    total_value: Decimal.new(value),
-    currency: "EUR"
-  })
-end)
+case etf_vanguard_result do
+  {:ok, etf_vanguard} ->
+    Enum.each([
+      {~D[2025-10-31], "108.20", "10820.00"},
+      {~D[2025-11-30], "110.00", "11000.00"},
+      {~D[2025-12-30], "112.50", "11250.00"}
+    ], fn {date, price, value} ->
+      {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
+        asset_id: etf_vanguard.id,
+        snapshot_date: date,
+        quantity: Decimal.new("100.0"),
+        price_per_unit: Decimal.new(price),
+        total_value: Decimal.new(value),
+        currency: "EUR"
+      })
+    end)
+  _ -> :ok
+end
 
-# Bitcoin ETF Snapshots
-Enum.each([
-  {~D[2025-10-31], "45.30", "2265.00"},
-  {~D[2025-11-30], "48.00", "2400.00"},
-  {~D[2025-12-30], "51.50", "2575.00"}
-], fn {date, price, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
-    asset_id: bitcoin_etf.id,
-    snapshot_date: date,
-    quantity: Decimal.new("50.0"),
-    price_per_unit: Decimal.new(price),
-    total_value: Decimal.new(value),
-    currency: "EUR"
-  })
-end)
+case apple_result do
+  {:ok, apple} ->
+    Enum.each([
+      {~D[2025-10-31], "227.50", "11375.00"},
+      {~D[2025-11-30], "234.00", "11700.00"},
+      {~D[2025-12-30], "241.50", "12075.00"}
+    ], fn {date, price, value} ->
+      {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
+        asset_id: apple.id,
+        snapshot_date: date,
+        quantity: Decimal.new("50.0"),
+        price_per_unit: Decimal.new(price),
+        total_value: Decimal.new(value),
+        currency: "USD"
+      })
+    end)
+  _ -> :ok
+end
 
 # Immobilie Snapshots (gleicher Wert, aber für Tracking)
 Enum.each(dates, fn date ->
@@ -468,9 +492,9 @@ IO.puts("📊 Summary:")
 IO.puts("   - Asset Types: #{length(asset_types)}")
 IO.puts("   - Institutions: #{map_size(institutions_map)}")
 IO.puts("   - Accounts: 4")
-IO.puts("   - Assets: 8")
+IO.puts("   - Assets: Created (with validation)")
 IO.puts("   - Account Snapshots: 9")
-IO.puts("   - Asset Snapshots: 15")
+IO.puts("   - Asset Snapshots: Created for valid assets")
 IO.puts("\n🎉 You can now log in with:")
 IO.puts("   Email: demo@yappma.dev")
 IO.puts("   Password: password1234\n")
