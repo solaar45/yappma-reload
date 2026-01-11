@@ -351,21 +351,24 @@ defmodule WealthBackend.Portfolio do
   end
 
   # Recursively convert atom keys to strings to ensure consistent param keys for Ecto
+  # Skip structs like Date, DateTime, Decimal, etc.
+  defp stringify_keys(%{__struct__: _} = struct) do
+    # Don't convert structs - they should remain as-is
+    struct
+  end
+
   defp stringify_keys(%{} = map) do
     map
     |> Enum.map(fn {k, v} ->
       key = if is_atom(k), do: Atom.to_string(k), else: k
-      value = case v do
-        %{} -> stringify_keys(v)
-        list when is_list(list) -> Enum.map(list, fn
-          elem when is_map(elem) -> stringify_keys(elem)
-          elem -> elem
-        end)
-        other -> other
-      end
+      value = stringify_keys(v)
       {key, value}
     end)
     |> Enum.into(%{})
+  end
+
+  defp stringify_keys(list) when is_list(list) do
+    Enum.map(list, &stringify_keys/1)
   end
 
   defp stringify_keys(other), do: other
