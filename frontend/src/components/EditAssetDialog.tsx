@@ -98,6 +98,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
           ticker: asset.security_asset.ticker,
           name: asset.name,
           currency: asset.currency,
+          type: asset.security_asset.security_type,
         });
       } else {
         setSelectedSecurity(undefined);
@@ -188,38 +189,8 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
               </Select>
             </div>
 
-            {/* Security Type field - only shown when Security is selected */}
+            {/* Security Search - Directly after selecting Security asset type */}
             {selectedAssetType?.code === 'security' && (
-              <div className="grid gap-2">
-                <Label htmlFor="edit-security-type">{t('assets.security.type')}</Label>
-                <Select
-                  value={formData.security_asset?.security_type || ''}
-                  onValueChange={(val) =>
-                    setFormData({
-                      ...formData,
-                      security_asset: {
-                        ...formData.security_asset,
-                        security_type: val as SecurityAsset['security_type'],
-                      },
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('assets.security.selectType')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stock">{t('assets.security.types.stock')}</SelectItem>
-                    <SelectItem value="etf">{t('assets.security.types.etf')}</SelectItem>
-                    <SelectItem value="bond">{t('assets.security.types.bond')}</SelectItem>
-                    <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund')}</SelectItem>
-                    <SelectItem value="index_fund">{t('assets.security.types.indexFund')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Security Search - when security type is selected */}
-            {selectedAssetType?.code === 'security' && formData.security_asset?.security_type && (
               <div className="grid gap-2">
                 <Label>{t('common.tickerOrName')}</Label>
                 <SecuritySearchCombobox
@@ -233,7 +204,8 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
                       security_asset: {
                         ...prev.security_asset,
                         ticker: security.ticker,
-                        isin: undefined, // Clear ISIN as we're using ticker
+                        security_type: security.type,  // Auto-populated from API
+                        isin: undefined,
                       }
                     }));
                   }}
