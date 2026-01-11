@@ -125,7 +125,7 @@ defmodule WealthBackend.Portfolio do
       end
     else
       {:error, :security_not_found} ->
-        Logger.warn("Security validation failed: security not found")
+        Logger.warning("Security validation failed: security not found")
         {:error, :security_not_found}
 
       {:error, reason} ->
@@ -190,7 +190,7 @@ defmodule WealthBackend.Portfolio do
         {:ok, :validated}
 
       {:error, :not_found} ->
-        Logger.warn("Security #{identifier} not found in FMP API")
+        Logger.warning("Security #{identifier} not found in FMP API")
         {:error, :security_not_found}
 
       {:error, reason} ->
