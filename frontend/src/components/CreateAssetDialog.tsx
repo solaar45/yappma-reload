@@ -210,7 +210,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
           <div className="grid gap-4 py-4">
             {/* Step 1: Asset Type - Always shown */}
             <div className="grid gap-2">
-              <Label htmlFor="asset_type">{t('assets.assetType')} *</Label>
+              <Label htmlFor="asset_type" required>{t('assets.assetType')}</Label>
               <Select
                 value={formData.asset_type_id}
                 onValueChange={(value) => {
@@ -236,7 +236,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             {/* Step 2: Security Type - Only for security assets */}
             {selectedAssetType?.code === 'security' && (
               <div className="grid gap-2">
-                <Label htmlFor="security_type">{t('assets.security.type')} *</Label>
+                <Label htmlFor="security_type" required>{t('assets.security.type')}</Label>
                 <Select
                   value={formData.security_asset?.security_type || ''}
                   onValueChange={(val) => {
@@ -268,7 +268,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             {/* Step 3: Security Search - Only when security type is selected */}
             {selectedAssetType?.code === 'security' && formData.security_asset?.security_type && (
               <div className="grid gap-2">
-                <Label>{t('common.tickerOrName')} *</Label>
+                <Label required>{t('common.tickerOrName')}</Label>
                 <SecuritySearchCombobox
                   value={selectedSecurity}
                   onSelect={(security) => {
@@ -319,7 +319,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               <>
                 <div className="border-t pt-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="name">{t('assets.assetName')} *</Label>
+                    <Label htmlFor="name" required>{t('assets.assetName')}</Label>
                     <Input
                       id="name"
                       value={formData.name}
@@ -330,7 +330,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="currency">{t('common.currency')} *</Label>
+                  <Label htmlFor="currency" required>{t('common.currency')}</Label>
                   <Input
                     id="currency"
                     value={formData.currency}

@@ -170,7 +170,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="edit-asset-type">{t('assets.assetType')} *</Label>
+              <Label htmlFor="edit-asset-type" required>{t('assets.assetType')}</Label>
               <Select
                 value={formData.asset_type_id}
                 onValueChange={(value) => setFormData({ ...formData, asset_type_id: value })}
@@ -265,7 +265,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
 
             <div className="border-t pt-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-name">{t('assets.assetName')} *</Label>
+                <Label htmlFor="edit-name" required>{t('assets.assetName')}</Label>
                 <Input
                   id="edit-name"
                   value={formData.name}
@@ -276,7 +276,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="edit-currency">{t('common.currency')} *</Label>
+              <Label htmlFor="edit-currency" required>{t('common.currency')}</Label>
               <Input
                 id="edit-currency"
                 value={formData.currency}
