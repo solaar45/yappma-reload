@@ -413,9 +413,8 @@ case etf_msci_world_result do
         asset_id: etf_msci_world.id,
         snapshot_date: date,
         quantity: Decimal.new("138.5"),
-        price_per_unit: Decimal.new(price),
-        total_value: Decimal.new(value),
-        currency: "EUR"
+        market_price_per_unit: Decimal.new(price),
+        value: Decimal.new(value)
       })
     end)
   _ -> :ok
@@ -432,9 +431,8 @@ case etf_vanguard_result do
         asset_id: etf_vanguard.id,
         snapshot_date: date,
         quantity: Decimal.new("100.0"),
-        price_per_unit: Decimal.new(price),
-        total_value: Decimal.new(value),
-        currency: "EUR"
+        market_price_per_unit: Decimal.new(price),
+        value: Decimal.new(value)
       })
     end)
   _ -> :ok
@@ -451,9 +449,8 @@ case apple_result do
         asset_id: apple.id,
         snapshot_date: date,
         quantity: Decimal.new("50.0"),
-        price_per_unit: Decimal.new(price),
-        total_value: Decimal.new(value),
-        currency: "USD"
+        market_price_per_unit: Decimal.new(price),
+        value: Decimal.new(value)
       })
     end)
   _ -> :ok
@@ -465,9 +462,8 @@ Enum.each(dates, fn date ->
     asset_id: apartment.id,
     snapshot_date: date,
     quantity: Decimal.new("1.0"),
-    price_per_unit: Decimal.new("480000.00"),
-    total_value: Decimal.new("480000.00"),
-    currency: "EUR"
+    market_price_per_unit: Decimal.new("480000.00"),
+    value: Decimal.new("480000.00")
   })
 end)
 
@@ -481,9 +477,8 @@ Enum.each([
     asset_id: cash_home.id,
     snapshot_date: date,
     quantity: Decimal.new("1.0"),
-    price_per_unit: Decimal.new(value),
-    total_value: Decimal.new(value),
-    currency: "EUR"
+    market_price_per_unit: Decimal.new(value),
+    value: Decimal.new(value)
   })
 end)
 
