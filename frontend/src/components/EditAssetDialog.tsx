@@ -25,7 +25,6 @@ import {
 import { Pencil } from 'lucide-react';
 import { useAccounts } from '@/lib/api/hooks';
 import InstitutionLogo from '@/components/InstitutionLogo';
-import { SecurityAssetForm } from '@/components/portfolio/SecurityAssetForm';
 import { InsuranceAssetForm } from '@/components/portfolio/InsuranceAssetForm';
 import { RealEstateAssetForm } from '@/components/portfolio/RealEstateAssetForm';
 import { SecuritySearchCombobox } from '@/components/portfolio/SecuritySearchCombobox';
@@ -244,16 +243,6 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
             )}
 
             {/* Conditionally render specialized forms based on asset type */}
-            {selectedAssetType?.code === 'security' && (
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-3">{t('assets.security.details')}</h4>
-                <SecurityAssetForm
-                  value={formData.security_asset || {}}
-                  onChange={(value) => setFormData({ ...formData, security_asset: value })}
-                />
-              </div>
-            )}
-
             {selectedAssetType?.code === 'insurance' && (
               <div className="border-t pt-4">
                 <h4 className="text-sm font-medium mb-3">{t('assets.insurance.details')}</h4>
