@@ -233,40 +233,8 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               </Select>
             </div>
 
-            {/* Step 2: Security Type - Only for security assets */}
+            {/* Step 2: Security Search - Directly after selecting Security asset type */}
             {selectedAssetType?.code === 'security' && (
-              <div className="grid gap-2">
-                <Label htmlFor="security_type" required>{t('assets.security.type')}</Label>
-                <Select
-                  value={formData.security_asset?.security_type || ''}
-                  onValueChange={(val) => {
-                    setFormData({
-                      ...formData,
-                      security_asset: {
-                        ...formData.security_asset,
-                        security_type: val as SecurityAsset['security_type'],
-                      },
-                    });
-                    // Reset security selection when type changes
-                    setSelectedSecurity(undefined);
-                  }}
-                >
-                  <SelectTrigger id="security_type">
-                    <SelectValue placeholder={t('assets.security.selectType')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stock">{t('assets.security.types.stock')}</SelectItem>
-                    <SelectItem value="etf">{t('assets.security.types.etf')}</SelectItem>
-                    <SelectItem value="bond">{t('assets.security.types.bond')}</SelectItem>
-                    <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund')}</SelectItem>
-                    <SelectItem value="index_fund">{t('assets.security.types.indexFund')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Step 3: Security Search - Only when security type is selected */}
-            {selectedAssetType?.code === 'security' && formData.security_asset?.security_type && (
               <div className="grid gap-2">
                 <Label required>{t('common.tickerOrName')}</Label>
                 <SecuritySearchCombobox
@@ -278,9 +246,9 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                       name: security.name,
                       currency: security.currency || 'USD',
                       security_asset: {
-                        ...prev.security_asset,
                         ticker: security.ticker,
-                        isin: undefined, // Clear ISIN as we're using ticker
+                        security_type: security.type,  // Auto-populated from API
+                        isin: undefined,
                       }
                     }));
                   }}
