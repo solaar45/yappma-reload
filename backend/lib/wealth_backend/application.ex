@@ -16,6 +16,8 @@ defmodule WealthBackend.Application do
       {Cachex, name: :security_validation_cache},
       # Start FMP Type Cache for security type lookups
       Yappma.Services.FMPTypeCache,
+      # Start scheduler for weekly cache refresh
+      Yappma.Services.FMPTypeCacheScheduler,
       # Start a worker by calling: WealthBackend.Worker.start_link(arg)
       # {WealthBackend.Worker, arg},
       # Start to serve requests, typically the last entry
