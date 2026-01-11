@@ -285,6 +285,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                       }
                     }));
                   }}
+                  placeholder={t('common.search')}
                 />
               </div>
             )}
