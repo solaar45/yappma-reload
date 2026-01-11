@@ -151,13 +151,16 @@ defmodule Yappma.Services.FMPTypeCache do
   end
   
   defp insert_list(items, type) do
-    items
-    |> Enum.filter(fn item -> is_map(item) and Map.has_key?(item, "symbol") end)
-    |> Enum.each(fn item ->
+    filtered_items = Enum.filter(items, fn item -> 
+      is_map(item) and Map.has_key?(item, "symbol") 
+    end)
+    
+    Enum.each(filtered_items, fn item ->
       symbol = Map.get(item, "symbol")
       :ets.insert(@table_name, {symbol, type})
     end)
-    |> length()
+    
+    length(filtered_items)
   end
   
   defp count_by_type(type) do
