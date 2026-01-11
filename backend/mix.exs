@@ -43,7 +43,8 @@ defmodule WealthBackend.MixProject do
       {:httpoison, "~> 2.2"},
       {:bcrypt_elixir, "~> 3.0"},
       {:phoenix_html, "~> 4.1"},
-      {:cachex, "~> 3.6"}
+      {:cachex, "~> 3.6"},
+      {:dotenvy, "~> 0.8.0", only: [:dev, :test]}
     ]
   end
 
