@@ -269,12 +269,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             {/* Step 3: Security Search - Only when security type is selected */}
             {selectedAssetType?.code === 'security' && formData.security_asset?.security_type && (
               <div className="grid gap-2">
-                <Label>
-                  Ticker or Company Name *
-                  <span className="text-xs text-muted-foreground ml-2">
-                    (e.g. MSFT, Microsoft, AAPL, Apple)
-                  </span>
-                </Label>
+                <Label>{t('common.tickerOrName')} *</Label>
                 <SecuritySearchCombobox
                   value={selectedSecurity}
                   onSelect={(security) => {
@@ -290,7 +285,6 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                       }
                     }));
                   }}
-                  placeholder="Search by ticker or name (e.g. MSFT, Microsoft)..."
                 />
               </div>
             )}
