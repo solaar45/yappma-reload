@@ -48,6 +48,7 @@ defmodule WealthBackendWeb.Router do
       resources "/assets", AssetController, except: [:new, :edit, :index]
 
       # Securities
+      post "/securities/search", SecurityController, :search
       post "/securities/enrich", SecurityController, :enrich
 
       # Account Snapshots
