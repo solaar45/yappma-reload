@@ -23,6 +23,12 @@ end
 config :wealth_backend, WealthBackendWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+# Financial Modeling Prep API Configuration
+# Used for security validation (ticker/ISIN lookup)
+config :yappma, :fmp_api,
+  api_key: System.get_env("FMP_API_KEY"),
+  base_url: "https://financialmodelingprep.com/stable"
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
