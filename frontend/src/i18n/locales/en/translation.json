@@ -175,6 +175,7 @@
     "assetName": "Asset Name",
     "assetType": "Asset Type",
     "type": "Type",
+    "securityType": "Security Type",
     "account": "Account",
     "linkedAccount": "Linked Account",
     "noAccountSelected": "No account selected",
