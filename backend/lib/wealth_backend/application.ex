@@ -14,6 +14,8 @@ defmodule WealthBackend.Application do
       {Phoenix.PubSub, name: WealthBackend.PubSub},
       # Start Cachex for security validation caching
       {Cachex, name: :security_validation_cache},
+      # Start FMP Type Cache for security type lookups
+      Yappma.Services.FMPTypeCache,
       # Start a worker by calling: WealthBackend.Worker.start_link(arg)
       # {WealthBackend.Worker, arg},
       # Start to serve requests, typically the last entry
