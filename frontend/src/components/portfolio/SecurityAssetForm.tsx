@@ -56,9 +56,9 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="identifier">
-          {t('assets.security.identifier') || 'Security Identifier'}
+          {t('assets.security.identifier')}
           <span className="text-xs text-muted-foreground ml-2">
-            ({t('assets.security.tickerOrIsin') || 'Ticker or ISIN'})
+            ({t('assets.security.tickerOrIsin')})
           </span>
         </Label>
         <Input
@@ -69,26 +69,7 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
           placeholder="AAPL or US0378331005"
         />
         <p className="text-xs text-muted-foreground">
-          {t('assets.security.identifierHint') || 'Enter a ticker symbol (e.g. AAPL) or ISIN code (e.g. US0378331005). The type will be detected automatically.'}
-        </p>
-      </div>
-
-      {/* WKN as optional info field (no validation) */}
-      <div className="space-y-2">
-        <Label htmlFor="wkn">
-          {t('assets.security.wkn') || 'WKN'}
-          <span className="text-xs text-muted-foreground ml-2">
-            ({t('common.optional') || 'optional'})
-          </span>
-        </Label>
-        <Input
-          id="wkn"
-          value={value.wkn || ''}
-          onChange={(e) => onChange({ ...value, wkn: e.target.value })}
-          disabled={disabled}
-        />
-        <p className="text-xs text-muted-foreground">
-          {t('assets.security.wknNoValidation') || 'WKN is stored as additional information only (no validation)'}
+          {t('assets.security.enrichment.noIdentifier')}
         </p>
       </div>
     </div>

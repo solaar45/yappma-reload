@@ -113,7 +113,6 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
     const sanitizedSecurity = sanitize(formData.security_asset) as {
       isin?: string;
       ticker?: string;
-      wkn?: string;
       security_type?: string;
     } | undefined;
 
@@ -138,40 +137,28 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
         });
         setAccountId('');
         toast({
-          title: t('common.success') || 'Success',
+          title: t('common.success'),
           description: 'Asset erfolgreich angelegt',
         });
         onSuccess?.();
       }
     } catch (err: any) {
       console.error('Asset creation error:', err);
-      console.log('Error data:', err?.data);
       
       // Extract error details from ApiError structure
-      // err.data contains the JSON response from backend
       const errorData = err?.data || {};
       const errorDetail = errorData?.errors?.detail || '';
       const errorMessage = errorData?.errors?.message || err?.message || '';
       
-      console.log('Parsed error:', { errorDetail, errorMessage });
-      
-      // Handle specific security validation errors
+      // Handle specific security validation errors with i18n
       if (errorDetail === 'security_not_found') {
         const identifier = sanitizedSecurity?.ticker || sanitizedSecurity?.isin || 'unbekannt';
-        setValidationError(
-          `Das Wertpapier "${identifier}" wurde in der Datenbank nicht gefunden. ` +
-          `Bitte überprüfe die Schreibweise des Tickers oder der ISIN und versuche es erneut.`
-        );
+        setValidationError(t('errors.securityNotFound', { identifier }));
       } else if (errorDetail === 'validation_failed') {
-        setValidationError(
-          'Die Validierung des Wertpapiers ist fehlgeschlagen. ' +
-          'Möglicherweise ist der Service vorübergehend nicht verfügbar. Bitte versuche es später erneut.'
-        );
+        setValidationError(t('errors.validationFailed'));
       } else {
         // Generic error - show backend message or fallback
-        setValidationError(
-          errorMessage || 'Beim Anlegen des Assets ist ein Fehler aufgetreten. Bitte versuche es erneut.'
-        );
+        setValidationError(errorMessage || t('errors.assetCreationFailed'));
       }
     }
   };
@@ -181,20 +168,20 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4" />
-          {t('assets.createAsset') || 'Add Asset'}
+          {t('assets.createAsset')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{t('assets.createAsset') || 'Create New Asset'}</DialogTitle>
+            <DialogTitle>{t('assets.createAsset')}</DialogTitle>
             <DialogDescription>
-              {t('assets.addFirstDescription') || 'Add a new asset to track your investments.'}
+              {t('assets.addFirstDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">{t('assets.assetName') || 'Asset Name'} *</Label>
+              <Label htmlFor="name">{t('assets.assetName')} *</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -203,7 +190,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="asset_type">{t('assets.assetType') || 'Asset Type'} *</Label>
+              <Label htmlFor="asset_type">{t('assets.assetType')} *</Label>
               <Select
                 value={formData.asset_type_id}
                 onValueChange={(value) =>
@@ -212,7 +199,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 disabled={loadingTypes}
               >
                 <SelectTrigger id="asset_type">
-                  <SelectValue placeholder={t('assets.allTypes') || "Select asset type"} />
+                  <SelectValue placeholder={t('assets.allTypes')} />
                 </SelectTrigger>
                 <SelectContent>
                   {assetTypes.map((type) => (
@@ -227,7 +214,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             {/* Security Type field - only shown when Security is selected */}
             {selectedAssetType?.code === 'security' && (
               <div className="grid gap-2">
-                <Label htmlFor="security_type">{t('assets.security.type') || 'Security Type'}</Label>
+                <Label htmlFor="security_type">{t('assets.security.type')}</Label>
                 <Select
                   value={formData.security_asset?.security_type || ''}
                   onValueChange={(val) =>
@@ -241,14 +228,14 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t('assets.security.selectType') || 'Select security type'} />
+                    <SelectValue placeholder={t('assets.security.selectType')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="stock">{t('assets.security.types.stock') || 'Stock'}</SelectItem>
-                    <SelectItem value="etf">{t('assets.security.types.etf') || 'ETF'}</SelectItem>
-                    <SelectItem value="bond">{t('assets.security.types.bond') || 'Bond'}</SelectItem>
-                    <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund') || 'Mutual Fund'}</SelectItem>
-                    <SelectItem value="index_fund">{t('assets.security.types.indexFund') || 'Index Fund'}</SelectItem>
+                    <SelectItem value="stock">{t('assets.security.types.stock')}</SelectItem>
+                    <SelectItem value="etf">{t('assets.security.types.etf')}</SelectItem>
+                    <SelectItem value="bond">{t('assets.security.types.bond')}</SelectItem>
+                    <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund')}</SelectItem>
+                    <SelectItem value="index_fund">{t('assets.security.types.indexFund')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -258,7 +245,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             {selectedAssetType?.code === 'security' && (
               <div className="border-t pt-4">
                 <h4 className="text-sm font-medium mb-3">
-                  {t('assets.security.details') || 'Security Details'}
+                  {t('assets.security.details')}
                 </h4>
                 <SecurityAssetForm
                   value={formData.security_asset || {}}
@@ -273,7 +260,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             {selectedAssetType?.code === 'insurance' && (
               <div className="border-t pt-4">
                 <h4 className="text-sm font-medium mb-3">
-                  {t('assets.insurance.details') || 'Insurance Details'}
+                  {t('assets.insurance.details')}
                 </h4>
                 <InsuranceAssetForm
                   value={formData.insurance_asset || {}}
@@ -285,7 +272,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             {selectedAssetType?.code === 'real_estate' && (
               <div className="border-t pt-4">
                 <h4 className="text-sm font-medium mb-3">
-                  {t('assets.realEstate.details') || 'Real Estate Details'}
+                  {t('assets.realEstate.details')}
                 </h4>
                 <RealEstateAssetForm
                   value={formData.real_estate_asset || {}}
@@ -296,7 +283,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
 
             <div className="border-t pt-4">
               <div className="grid gap-2">
-                <Label htmlFor="currency">{t('common.currency') || 'Currency'} *</Label>
+                <Label htmlFor="currency">{t('common.currency')} *</Label>
                 <Input
                   id="currency"
                   value={formData.currency}
@@ -307,13 +294,13 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="account">{t('assets.account') || 'Linked Account'} ({t('common.optional') || 'optional'})</Label>
+              <Label htmlFor="account">{t('assets.account')} ({t('common.optional')})</Label>
               <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
                 <SelectTrigger id="account">
-                  <SelectValue placeholder={t('assets.allAccounts') || "No account"} />
+                  <SelectValue placeholder={t('assets.allAccounts')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">{t('assets.allAccounts') || "No Account"}</SelectItem>
+                  <SelectItem value="_none">{t('assets.allAccounts')}</SelectItem>
                   {accounts
                     ?.filter((a) => a.is_active)
                     .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
@@ -334,10 +321,10 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="is-active" className="text-base">
-                  {t('assets.status') || 'Asset Status'}
+                  {t('assets.status')}
                 </Label>
                 <div className="text-sm text-muted-foreground">
-                  {formData.is_active ? (t('assets.active') || 'Active') : (t('assets.inactive') || 'Inactive')}
+                  {formData.is_active ? t('assets.active') : t('assets.inactive')}
                 </div>
               </div>
               <Switch
@@ -368,7 +355,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               type="submit"
               disabled={loading || !formData.name || !formData.asset_type_id}
             >
-              {loading ? (t('common.loading') || 'Creating...') : (t('common.create') || 'Create Asset')}
+              {loading ? t('common.loading') : t('common.create')}
             </Button>
           </DialogFooter>
         </form>
