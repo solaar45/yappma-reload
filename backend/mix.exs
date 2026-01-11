@@ -42,7 +42,8 @@ defmodule WealthBackend.MixProject do
       {:cors_plug, "~> 3.0"},
       {:httpoison, "~> 2.2"},
       {:bcrypt_elixir, "~> 3.0"},
-      {:phoenix_html, "~> 4.1"}
+      {:phoenix_html, "~> 4.1"},
+      {:cachex, "~> 3.6"}
     ]
   end
 
