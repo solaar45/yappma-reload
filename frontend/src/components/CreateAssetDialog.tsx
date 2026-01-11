@@ -144,15 +144,25 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
         onSuccess?.();
       }
     } catch (err: any) {
-      // Handle specific security validation errors
-      const errorMessage = err?.message || err?.toString() || '';
+      console.error('Asset creation error:', err);
       
-      if (errorMessage.includes('security_not_found')) {
+      // Try to extract error details from response
+      const errorDetail = err?.response?.data?.errors?.detail || 
+                         err?.errors?.detail ||
+                         err?.detail;
+      const errorMessage = err?.response?.data?.errors?.message ||
+                          err?.errors?.message ||
+                          err?.message || 
+                          err?.toString() || 
+                          '';
+      
+      // Handle specific security validation errors
+      if (errorDetail === 'security_not_found' || errorMessage.includes('security_not_found')) {
         const identifier = sanitizedSecurity?.ticker || sanitizedSecurity?.isin || 'unknown';
         setValidationError(
           `Das Wertpapier "${identifier}" konnte nicht gefunden werden. Bitte überprüfe den Ticker oder die ISIN.`
         );
-      } else if (errorMessage.includes('validation_failed')) {
+      } else if (errorDetail === 'validation_failed' || errorMessage.includes('validation_failed')) {
         setValidationError(
           'Die Validierung ist fehlgeschlagen. Bitte versuche es später erneut.'
         );
