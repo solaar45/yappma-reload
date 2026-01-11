@@ -120,7 +120,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">{t('accounts.accountName')} *</Label>
+              <Label htmlFor="name" required>{t('accounts.accountName')}</Label>
               <Input
                 id="name"
                 value={name}
@@ -130,7 +130,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
             </div>
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="institution">{t('accounts.institution')} *</Label>
+                <Label htmlFor="institution" required>{t('accounts.institution')}</Label>
               </div>
               {institutionsLoading ? (
                 <div className="flex items-center justify-center h-10 border rounded-md bg-muted">
@@ -167,7 +167,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
               )}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="type">{t('accounts.accountType')} *</Label>
+              <Label htmlFor="type" required>{t('accounts.accountType')}</Label>
               <Select
                 value={type}
                 onValueChange={(value) => setType(value as any)}
@@ -185,7 +185,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="currency">{t('common.currency')} *</Label>
+              <Label htmlFor="currency" required>{t('common.currency')}</Label>
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger id="currency">
                   <SelectValue />

@@ -101,7 +101,7 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="date">{t('common.date')} *</Label>
+              <Label htmlFor="date" required>{t('common.date')}</Label>
               <Input
                 id="date"
                 type="date"
@@ -112,8 +112,8 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="value">
-                {isAccount ? t('common.balance') : t('common.value')} *
+              <Label htmlFor="value" required>
+                {isAccount ? t('common.balance') : t('common.value')}
               </Label>
               <Input
                 id="value"
@@ -128,7 +128,7 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
 
             {isAccount && (
               <div className="grid gap-2">
-                <Label htmlFor="currency">{t('common.currency')} *</Label>
+                <Label htmlFor="currency" required>{t('common.currency')}</Label>
                 <Select 
                   value={formData.currency} 
                   onValueChange={(value) => setFormData({ ...formData, currency: value })}
