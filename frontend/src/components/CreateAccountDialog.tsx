@@ -124,7 +124,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">{t('accounts.name') || 'Account Name'} *</Label>
+              <Label htmlFor="name" required>{t('accounts.name') || 'Account Name'}</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -133,7 +133,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="institution">{t('accounts.institution') || 'Institution'} *</Label>
+              <Label htmlFor="institution" required>{t('accounts.institution') || 'Institution'}</Label>
               <Popover open={institutionOpen} onOpenChange={setInstitutionOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -188,7 +188,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               </Popover>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="type">{t('accounts.type') || 'Account Type'} *</Label>
+              <Label htmlFor="type" required>{t('accounts.type') || 'Account Type'}</Label>
               <Select
                 value={formData.type}
                 onValueChange={(value) => setFormData({ ...formData, type: value })}
@@ -206,7 +206,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="currency">{t('common.currency') || 'Currency'} *</Label>
+              <Label htmlFor="currency" required>{t('common.currency') || 'Currency'}</Label>
               <Select
                 value={formData.currency}
                 onValueChange={(value) => setFormData({ ...formData, currency: value })}

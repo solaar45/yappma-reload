@@ -110,7 +110,7 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="type">{t('common.type') || 'Snapshot Type'} *</Label>
+              <Label htmlFor="type" required>{t('common.type') || 'Snapshot Type'}</Label>
               <Select 
                 value={snapshotType} 
                 onValueChange={(value: 'account' | 'asset') => {
@@ -129,8 +129,8 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="entity">
-                {snapshotType === 'account' ? t('common.account') : t('common.asset')} *
+              <Label htmlFor="entity" required>
+                {snapshotType === 'account' ? t('common.account') : t('common.asset')}
               </Label>
               <Select 
                 value={formData.entity_id} 
@@ -150,7 +150,7 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="date">{t('common.date') || 'Date'} *</Label>
+              <Label htmlFor="date" required>{t('common.date') || 'Date'}</Label>
               <Input
                 id="date"
                 type="date"
@@ -161,8 +161,8 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="value">
-                {snapshotType === 'account' ? t('accounts.balance') : t('common.value')} *
+              <Label htmlFor="value" required>
+                {snapshotType === 'account' ? t('accounts.balance') : t('common.value')}
               </Label>
               <Input
                 id="value"
@@ -177,7 +177,7 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
 
             {snapshotType === 'account' && (
               <div className="grid gap-2">
-                <Label htmlFor="currency">{t('common.currency') || 'Currency'} *</Label>
+                <Label htmlFor="currency" required>{t('common.currency') || 'Currency'}</Label>
                 <Select 
                   value={formData.currency} 
                   onValueChange={(value) => setFormData({ ...formData, currency: value })}

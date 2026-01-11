@@ -106,7 +106,7 @@ export function EditInstitutionDialog({ institution, onSuccess }: EditInstitutio
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name" required>Name</Label>
               <Input
                 id="name"
                 placeholder="e.g., ING DiBa, Sparkasse"
@@ -125,7 +125,7 @@ export function EditInstitutionDialog({ institution, onSuccess }: EditInstitutio
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="type">Type *</Label>
+              <Label htmlFor="type" required>Type</Label>
               <Select
                 value={type}
                 onValueChange={(value) => setType(value as any)}
@@ -143,7 +143,7 @@ export function EditInstitutionDialog({ institution, onSuccess }: EditInstitutio
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="country">Country *</Label>
+              <Label htmlFor="country" required>Country</Label>
               <Select value={country} onValueChange={setCountry}>
                 <SelectTrigger id="country">
                   <SelectValue />

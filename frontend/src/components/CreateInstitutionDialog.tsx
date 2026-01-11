@@ -129,7 +129,7 @@ export function CreateInstitutionDialog({ onSuccess, compact = false, children }
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="name">{t('common.name') || 'Name'} *</Label>
+              <Label htmlFor="name" required>{t('common.name') || 'Name'}</Label>
               <Input
                 id="name"
                 value={name}
@@ -146,7 +146,7 @@ export function CreateInstitutionDialog({ onSuccess, compact = false, children }
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="type">{t('common.type') || 'Type'} *</Label>
+              <Label htmlFor="type" required>{t('common.type') || 'Type'}</Label>
               <Select value={type} onValueChange={setType}>
                 <SelectTrigger id="type">
                   <SelectValue />
@@ -161,7 +161,7 @@ export function CreateInstitutionDialog({ onSuccess, compact = false, children }
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="country">{t('institutions.country') || 'Country'} *</Label>
+              <Label htmlFor="country" required>{t('institutions.country') || 'Country'}</Label>
               <Select value={country} onValueChange={setCountry}>
                 <SelectTrigger id="country">
                   <SelectValue />
