@@ -250,6 +250,25 @@ export default function AssetsPage() {
       },
     },
     {
+      accessorKey: 'security_asset.security_type',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('assets.securityType') || 'Security Type'} />
+      ),
+      cell: ({ row }) => {
+        const securityType = row.original.security_asset?.security_type;
+        
+        if (!securityType) {
+          return <div className="text-sm text-muted-foreground">-</div>;
+        }
+
+        return (
+          <Badge variant="secondary" className="capitalize">
+            {securityType.replace('_', ' ')}
+          </Badge>
+        );
+      },
+    },
+    {
       accessorKey: 'risk_class',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('assets.risk') || 'Risk'} />
