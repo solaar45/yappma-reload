@@ -16,6 +16,7 @@ interface CreateAssetData {
     wkn?: string;
     exchange?: string;
     sector?: string;
+    security_type?: string;
   };
 }
 
@@ -39,10 +40,11 @@ export function useCreateAsset() {
         asset: assetData,
       });
       return asset;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create asset';
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Failed to create asset';
       setError(errorMessage);
-      return null;
+      // Re-throw the error so the component can handle it with specific error details
+      throw err;
     } finally {
       setLoading(false);
     }
