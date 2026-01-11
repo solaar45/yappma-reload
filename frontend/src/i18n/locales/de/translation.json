@@ -204,9 +204,10 @@
     "provider": "Anbieter",
     "security": {
       "details": "Wertpapier-Details",
+      "identifier": "Kennung",
+      "tickerOrIsin": "Ticker oder ISIN",
       "ticker": "Ticker",
       "isin": "ISIN",
-      "wkn": "WKN",
       "autoFill": "Auto-Ausfüllen",
       "type": "Wertpapiertyp",
       "selectType": "Typ wählen",
@@ -230,7 +231,7 @@
       "countryOfDomicile": "Fondsdomizil",
       "benchmarkIndex": "Benchmark-Index",
       "enrichment": {
-        "noIdentifier": "Bitte Ticker, ISIN oder WKN eingeben",
+        "noIdentifier": "Bitte Ticker oder ISIN eingeben",
         "success": "Metadaten erfolgreich abgerufen",
         "failed": "Fehler beim Abrufen der Metadaten"
       }
@@ -351,5 +352,10 @@
     "theme": "Design",
     "currency": "Währung",
     "notifications": "Benachrichtigungen"
+  },
+  "errors": {
+    "securityNotFound": "Das Wertpapier \"{{identifier}}\" wurde in der Datenbank nicht gefunden. Bitte überprüfe die Schreibweise des Tickers oder der ISIN und versuche es erneut.",
+    "validationFailed": "Die Validierung des Wertpapiers ist fehlgeschlagen. Möglicherweise ist der Service vorübergehend nicht verfügbar. Bitte versuche es später erneut.",
+    "assetCreationFailed": "Beim Anlegen des Assets ist ein Fehler aufgetreten. Bitte versuche es erneut."
   }
 }
