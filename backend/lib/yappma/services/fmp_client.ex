@@ -18,6 +18,8 @@ defmodule Yappma.Services.FMPClient do
   """
 
   require Logger
+  
+  alias Yappma.Services.FMPTypeCache
 
   # Only use /stable endpoints - /api/v3 is legacy-only
   @base_url "https://financialmodelingprep.com/stable"
@@ -43,14 +45,14 @@ defmodule Yappma.Services.FMPClient do
   ## Examples
       iex> FMPClient.search_securities("MSFT")
       {:ok, [
-        %{ticker: "MSFT", name: "Microsoft Corporation", exchange: "NASDAQ", ...},
-        %{ticker: "MSFO", name: "YieldMax MSFT ETF", exchange: "AMEX", ...}
+        %{ticker: "MSFT", name: "Microsoft Corporation", exchange: "NASDAQ", type: "stock", ...},
+        %{ticker: "MSFO", name: "YieldMax MSFT ETF", exchange: "AMEX", type: "etf", ...}
       ]}
       
       iex> FMPClient.search_securities("Microsoft")
       {:ok, [
-        %{ticker: "MSFT", name: "Microsoft Corporation", ...},
-        %{ticker: "MSFT.NE", name: "Microsoft Corporation", exchange: "NEO", ...}
+        %{ticker: "MSFT", name: "Microsoft Corporation", type: "stock", ...},
+        %{ticker: "MSFT.NE", name: "Microsoft Corporation", exchange: "NEO", type: "stock", ...}
       ]}
   """
   def search_securities(query, limit \\ 10) when is_binary(query) do
@@ -349,14 +351,82 @@ defmodule Yappma.Services.FMPClient do
   end
 
   # Determine security type from FMP data
+  # Priority: Product structure > Asset class (ETF > REIT, ETC > Commodity)
   defp determine_security_type(data) do
     symbol = Map.get(data, "symbol", "")
-    name = Map.get(data, "name", "")
+    name = Map.get(data, "name", "") |> String.downcase()
     
-    cond do
-      String.contains?(String.downcase(name), "etf") -> "etf"
-      String.contains?(symbol, ".") -> "etf"
-      true -> "stock"
+    # 1. Try ETS cache first (crypto, forex, commodity, index - 100% accurate)
+    case FMPTypeCache.lookup_type(symbol) do
+      {:ok, type} -> 
+        type
+      
+      # 2. Fallback to name-based heuristic
+      {:error, :not_found} ->
+        cond do
+          # Exchange Traded Products - Priority: Product structure
+          String.contains?(name, " etf") or String.ends_with?(name, "etf") -> 
+            "etf"
+          
+          String.contains?(name, " etn") or String.ends_with?(name, "etn") or
+          String.contains?(name, "exchange traded note") -> 
+            "etn"
+          
+          String.contains?(name, " etc") or 
+          String.contains?(name, "exchange traded commodity") or
+          String.contains?(name, "exchange-traded commodity") -> 
+            "etc"
+          
+          String.contains?(name, " etp") or 
+          String.contains?(name, "exchange traded product") -> 
+            "etp"
+          
+          # Bonds & Fixed Income
+          String.contains?(name, " bond") or 
+          String.contains?(name, "treasury") or
+          String.contains?(name, "government bond") or
+          (String.contains?(name, " note") and not String.contains?(name, "etn")) -> 
+            "bond"
+          
+          # Funds (Mutual Funds, Index Funds)
+          String.contains?(name, "mutual fund") or 
+          String.contains?(name, "fonds") or
+          String.contains?(name, "index fund") -> 
+            "mutual_fund"
+          
+          # REITs - Real Estate Investment Trusts
+          String.contains?(name, " reit") or
+          String.contains?(name, "real estate investment trust") -> 
+            "reit"
+          
+          # ADRs - American Depositary Receipts
+          String.contains?(name, " adr") or
+          String.contains?(name, "american depositary receipt") or
+          String.contains?(name, "depositary receipt") -> 
+            "adr"
+          
+          # Preferred Stocks (Symbol pattern: contains -P)
+          String.contains?(symbol, "-P") or 
+          String.contains?(name, "preferred") -> 
+            "preferred_stock"
+          
+          # Warrants
+          String.contains?(name, "warrant") -> 
+            "warrant"
+          
+          # Rights
+          String.contains?(name, "right") and not String.contains?(name, "copyright") -> 
+            "right"
+          
+          # Certificates / Zertifikate
+          String.contains?(name, "certificate") or
+          String.contains?(name, "zertifikat") -> 
+            "certificate"
+          
+          # Default: Stock
+          true -> 
+            "stock"
+        end
     end
   end
 
