@@ -36,11 +36,19 @@ defmodule Yappma.Services.FMPClient do
     case HTTPoison.get(url, [], timeout: @timeout, recv_timeout: @recv_timeout) do
       {:ok, %{status_code: 200, body: body}} ->
         case Jason.decode(body) do
-          {:ok, [result | _]} ->
-            Logger.info("FMP API: Ticker #{ticker} found")
-            {:ok, format_search_result(result)}
+          {:ok, results} when is_list(results) ->
+            # Filter for exact ticker match
+            case find_exact_ticker_match(results, ticker) do
+              {:ok, result} ->
+                Logger.info("FMP API: Ticker #{ticker} found")
+                {:ok, format_search_result(result)}
+              
+              :error ->
+                Logger.info("FMP API: Ticker #{ticker} not found (no exact match)")
+                {:error, :not_found}
+            end
 
-          {:ok, []} ->
+          {:ok, _} ->
             Logger.info("FMP API: Ticker #{ticker} not found")
             {:error, :not_found}
 
@@ -131,7 +139,7 @@ defmodule Yappma.Services.FMPClient do
   """
   def enrich_by_ticker(ticker) when is_binary(ticker) do
     ticker = String.trim(ticker) |> String.upcase()
-    url = "#{@base_url}/search-name?query=#{URI.encode(ticker)}&limit=1&apikey=#{api_key()}"
+    url = "#{@base_url}/search-name?query=#{URI.encode(ticker)}&apikey=#{api_key()}"
 
     Logger.info("FMP API: Enriching ticker #{ticker}")
 
@@ -171,7 +179,7 @@ defmodule Yappma.Services.FMPClient do
     Logger.info("FMP API: Enriching ISIN #{isin}")
 
     # Search by ISIN directly
-    url = "#{@base_url}/search-name?query=#{URI.encode(isin)}&limit=1&apikey=#{api_key()}"
+    url = "#{@base_url}/search-name?query=#{URI.encode(isin)}&limit=10&apikey=#{api_key()}"
 
     case HTTPoison.get(url, [], timeout: @timeout, recv_timeout: @recv_timeout) do
       {:ok, %{status_code: 200, body: body}} ->
@@ -241,11 +249,32 @@ defmodule Yappma.Services.FMPClient do
   # Private Functions
   # ============================================================================
 
+  # Find exact ticker match in search results
+  # FMP's search-name does text search, so "MSFT" also matches "MSFO"
+  defp find_exact_ticker_match(results, ticker) when is_list(results) do
+    ticker_upper = String.upcase(ticker)
+    
+    case Enum.find(results, fn result -> 
+      String.upcase(Map.get(result, "symbol", "")) == ticker_upper
+    end) do
+      nil -> :error
+      result -> {:ok, result}
+    end
+  end
+
   # Parse enrichment response from FMP search endpoint
   defp parse_enrichment_response(body, identifier) do
     case Jason.decode(body) do
-      {:ok, [data | _]} when is_map(data) ->
-        extract_enriched_metadata(data, identifier)
+      {:ok, results} when is_list(results) and length(results) > 0 ->
+        # For ticker search, find exact match
+        identifier_upper = String.upcase(identifier)
+        
+        result = case find_exact_ticker_match(results, identifier) do
+          {:ok, match} -> match
+          :error -> List.first(results)  # Fallback to first result for ISIN
+        end
+        
+        extract_enriched_metadata(result, identifier)
 
       {:ok, []} ->
         Logger.warning("FMP API: No data found for #{identifier}")
