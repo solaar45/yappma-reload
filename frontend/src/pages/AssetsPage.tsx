@@ -238,32 +238,25 @@ export default function AssetsPage() {
         <DataTableColumnHeader column={column} title={t('assets.type') || 'Type'} />
       ),
       cell: ({ row }) => {
-        const code = row.original.asset_type?.code || 'other';
+        const assetTypeCode = row.original.asset_type?.code || 'other';
+        const securityType = row.original.security_asset?.security_type;
+        
+        // If asset type is 'security' and we have a security_type, show that instead
+        if (assetTypeCode === 'security' && securityType) {
+          return (
+            <Badge variant="outline" className="capitalize">
+              {securityType.replace('_', ' ')}
+            </Badge>
+          );
+        }
+        
+        // Otherwise show the asset type
         const description = row.original.asset_type?.description || 'Other';
-        const translatedType = t(`assetTypes.${code}`, { defaultValue: description });
+        const translatedType = t(`assetTypes.${assetTypeCode}`, { defaultValue: description });
 
         return (
           <Badge variant="outline" className="capitalize">
             {translatedType}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: 'security_asset.security_type',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('assets.securityType') || 'Security Type'} />
-      ),
-      cell: ({ row }) => {
-        const securityType = row.original.security_asset?.security_type;
-        
-        if (!securityType) {
-          return <div className="text-sm text-muted-foreground">-</div>;
-        }
-
-        return (
-          <Badge variant="secondary" className="capitalize">
-            {securityType.replace('_', ' ')}
           </Badge>
         );
       },
