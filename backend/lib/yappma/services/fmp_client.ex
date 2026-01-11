@@ -130,7 +130,7 @@ defmodule Yappma.Services.FMPClient do
 
   # Get API key from application config
   defp api_key do
-    Application.get_env(:yappma, :fmp_api)[:api_key] ||
+    Application.get_env(:wealth_backend, :fmp_api)[:api_key] ||
       System.get_env("FMP_API_KEY") ||
       raise "FMP_API_KEY not configured"
   end
