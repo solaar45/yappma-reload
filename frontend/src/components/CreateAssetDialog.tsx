@@ -139,7 +139,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
         setAccountId('');
         toast({
           title: t('common.success') || 'Success',
-          description: t('assets.created') || 'Asset created successfully',
+          description: 'Asset created successfully',
         });
         onSuccess?.();
       }
@@ -150,20 +150,17 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       if (errorMessage.includes('security_not_found')) {
         const identifier = sanitizedSecurity?.ticker || sanitizedSecurity?.isin || 'unknown';
         setValidationError(
-          t('assets.security.notFoundMessage', { 
-            identifier,
-            defaultValue: `The security "${identifier}" could not be found. Please verify the ticker or ISIN.`
-          })
+          `Das Wertpapier "${identifier}" konnte nicht gefunden werden. Bitte überprüfe den Ticker oder die ISIN.`
         );
       } else if (errorMessage.includes('validation_failed')) {
         setValidationError(
-          t('assets.security.validationFailed') || 'Security validation failed. Please try again later.'
+          'Die Validierung ist fehlgeschlagen. Bitte versuche es später erneut.'
         );
       } else {
         // Generic error
         toast({
           title: t('common.error') || 'Error',
-          description: errorMessage || t('assets.createError') || 'Failed to create asset',
+          description: errorMessage || 'Failed to create asset',
           variant: 'destructive',
         });
       }
@@ -346,7 +343,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               <div className="flex items-start gap-2 rounded-lg border border-destructive bg-destructive/10 p-3">
                 <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-destructive">Validation Error</p>
+                  <p className="text-sm font-medium text-destructive">Validierungsfehler</p>
                   <p className="text-sm text-destructive/90 mt-1">{validationError}</p>
                 </div>
               </div>
