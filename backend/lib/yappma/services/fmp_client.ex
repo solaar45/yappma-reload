@@ -1,7 +1,7 @@
 defmodule Yappma.Services.FMPClient do
   @moduledoc """
   Client for Financial Modeling Prep API integration.
-  Handles security validation and metadata enrichment via ticker, ISIN, or company name.
+  Handles security validation and metadata enrichment via ticker or company name.
   
   Get your API key at: https://site.financialmodelingprep.com/
   Free tier: 250 API calls total
@@ -13,7 +13,8 @@ defmodule Yappma.Services.FMPClient do
   Available Search Methods:
   - /stable/search-symbol - Search by ticker symbol (exact matches)
   - /stable/search-name - Search by company name (fuzzy matches)
-  - ISIN detection via pattern matching
+  
+  Note: ISIN search not available in free tier.
   """
 
   require Logger
@@ -24,15 +25,15 @@ defmodule Yappma.Services.FMPClient do
   @recv_timeout 10_000
 
   # ============================================================================
-  # Public API - Universal Search (NEW)
+  # Public API - Universal Search
   # ============================================================================
 
   @doc """
-  Universal search for securities by ticker, company name, or ISIN.
-  Searches all three methods in parallel and returns merged, deduplicated results.
+  Universal search for securities by ticker or company name.
+  Searches both methods in parallel and returns merged, deduplicated results.
   
   ## Parameters
-  - query: String - ticker symbol, company name, or ISIN
+  - query: String - ticker symbol or company name
   - limit: Integer - max results to return (default: 10)
   
   ## Returns
@@ -51,27 +52,15 @@ defmodule Yappma.Services.FMPClient do
         %{ticker: "MSFT", name: "Microsoft Corporation", ...},
         %{ticker: "MSFT.NE", name: "Microsoft Corporation", exchange: "NEO", ...}
       ]}
-      
-      iex> FMPClient.search_securities("US5949181045")  # MSFT ISIN
-      {:ok, [%{ticker: "MSFT", name: "Microsoft Corporation", isin: "US5949181045", ...}]}
   """
   def search_securities(query, limit \\ 10) when is_binary(query) do
     query = String.trim(query)
     
-    cond do
-      # Empty query
-      String.length(query) == 0 ->
-        {:ok, []}
-      
-      # ISIN: 12 characters, starts with 2 letters (country code)
-      is_isin?(query) ->
-        Logger.info("FMP API: Searching by ISIN: #{query}")
-        search_by_isin(query, limit)
-      
-      # Otherwise: Search both ticker and company name
-      true ->
-        Logger.info("FMP API: Universal search for: #{query}")
-        search_ticker_and_name(query, limit)
+    if String.length(query) == 0 do
+      {:ok, []}
+    else
+      Logger.info("FMP API: Universal search for: #{query}")
+      search_ticker_and_name(query, limit)
     end
   end
 
@@ -126,24 +115,12 @@ defmodule Yappma.Services.FMPClient do
 
   @doc """
   Validates an ISIN against FMP API.
-  Uses general search endpoint as ISIN-specific endpoint is not available.
+  Note: Not available via search in free tier, but kept for manual ISIN entry.
   Returns {:ok, security_data} if found, {:error, :not_found} otherwise.
   """
   def validate_isin(isin) when is_binary(isin) do
-    isin = String.trim(isin) |> String.upcase()
-    
-    case search_by_isin(isin, 1) do
-      {:ok, [result | _]} ->
-        Logger.info("FMP API: ISIN #{isin} found")
-        {:ok, format_search_result(result)}
-      
-      {:ok, []} ->
-        Logger.info("FMP API: ISIN #{isin} not found")
-        {:error, :not_found}
-      
-      {:error, reason} ->
-        {:error, reason}
-    end
+    Logger.warning("FMP API: ISIN validation not supported in free tier: #{isin}")
+    {:error, :not_supported}
   end
 
   @doc """
@@ -228,49 +205,21 @@ defmodule Yappma.Services.FMPClient do
 
   @doc """
   Enriches security metadata by ISIN.
-  Searches for ISIN, then returns available data.
-  Returns {:ok, enriched_data} with available metadata or error tuple.
+  Note: Not supported in FMP free tier via API.
+  Manual ISIN entry is still possible but won't be validated.
   """
   def enrich_by_isin(isin) when is_binary(isin) do
-    isin = String.trim(isin) |> String.upcase()
-    Logger.info("FMP API: Enriching ISIN #{isin}")
-
-    case search_by_isin(isin, 1) do
-      {:ok, [result | _]} ->
-        case extract_enriched_metadata(result, isin) do
-          {:ok, data} ->
-            # Add ISIN to enriched data
-            {:ok, Map.put(data, :isin, isin)}
-          
-          error ->
-            error
-        end
-      
-      {:ok, []} ->
-        {:error, :not_found}
-      
-      {:error, reason} ->
-        {:error, reason}
-    end
+    Logger.warning("FMP API: ISIN enrichment not supported in free tier: #{isin}")
+    {:error, :not_supported}
   end
 
   @doc """
-  Converts ISIN to ticker symbol using FMP search endpoint.
-  Returns {:ok, ticker} or error tuple.
+  Converts ISIN to ticker symbol.
+  Note: Not supported in FMP free tier.
   """
   def convert_isin_to_ticker(isin) when is_binary(isin) do
-    case search_by_isin(isin, 1) do
-      {:ok, [%{ticker: ticker} | _]} when is_binary(ticker) ->
-        Logger.info("FMP API: Converted ISIN #{isin} to ticker #{ticker}")
-        {:ok, ticker}
-      
-      {:ok, []} ->
-        Logger.info("FMP API: ISIN #{isin} not found")
-        {:error, :not_found}
-      
-      {:error, reason} ->
-        {:error, reason}
-    end
+    Logger.warning("FMP API: ISIN to ticker conversion not supported in free tier: #{isin}")
+    {:error, :not_supported}
   end
 
   # ============================================================================
@@ -345,34 +294,6 @@ defmodule Yappma.Services.FMPClient do
       _ ->
         {:ok, []}
     end
-  end
-
-  # Search by ISIN - searches both endpoints for ISIN pattern
-  defp search_by_isin(isin, limit) do
-    isin_upper = String.upcase(isin)
-    
-    # Try both endpoints - ISINs might appear in either
-    tasks = [
-      Task.async(fn -> search_by_ticker_symbol(isin_upper, limit) end),
-      Task.async(fn -> search_by_company_name(isin_upper, limit) end)
-    ]
-    
-    results = Task.await_many(tasks, @timeout)
-    
-    merged = results
-    |> Enum.flat_map(fn
-      {:ok, list} -> list
-      {:error, _} -> []
-    end)
-    |> deduplicate_by_ticker()
-    |> Enum.map(fn result -> Map.put(result, :isin, isin_upper) end)
-    |> Enum.take(limit)
-    
-    {:ok, merged}
-  rescue
-    e ->
-      Logger.error("FMP API: Error searching ISIN: #{inspect(e)}")
-      {:error, :search_failed}
   end
 
   # Check if string is an ISIN (12 chars, starts with 2-letter country code)
