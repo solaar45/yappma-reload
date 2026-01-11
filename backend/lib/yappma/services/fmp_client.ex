@@ -7,13 +7,14 @@ defmodule Yappma.Services.FMPClient do
   Free tier: 250 API calls total
   
   API Documentation: https://site.financialmodelingprep.com/developer/docs/quickstart
+  
+  Note: Only /stable endpoints are used as /api/v3 is legacy-only since Aug 2025.
   """
 
   require Logger
 
-  # Updated base URLs according to FMP documentation
+  # Only use /stable endpoints - /api/v3 is legacy-only
   @base_url "https://financialmodelingprep.com/stable"
-  @api_v3 "https://financialmodelingprep.com/api/v3"
   @timeout 10_000
   @recv_timeout 10_000
 
@@ -37,7 +38,7 @@ defmodule Yappma.Services.FMPClient do
         case Jason.decode(body) do
           {:ok, [result | _]} ->
             Logger.info("FMP API: Ticker #{ticker} found")
-            {:ok, format_ticker_result(result)}
+            {:ok, format_search_result(result)}
 
           {:ok, []} ->
             Logger.info("FMP API: Ticker #{ticker} not found")
@@ -60,12 +61,11 @@ defmodule Yappma.Services.FMPClient do
 
   @doc """
   Validates an ISIN against FMP API.
-  Note: ISIN endpoint might not be available on free tier.
+  Uses general search endpoint as ISIN-specific endpoint is not available.
   Returns {:ok, security_data} if found, {:error, :not_found} otherwise.
   """
   def validate_isin(isin) when is_binary(isin) do
     isin = String.trim(isin) |> String.upcase()
-    # Try search by ISIN in the general search first
     url = "#{@base_url}/search-name?query=#{URI.encode(isin)}&apikey=#{api_key()}"
 
     Logger.debug("FMP API: Validating ISIN #{isin}")
@@ -75,7 +75,7 @@ defmodule Yappma.Services.FMPClient do
         case Jason.decode(body) do
           {:ok, [result | _]} when is_map(result) ->
             Logger.info("FMP API: ISIN #{isin} found")
-            {:ok, format_isin_result(result)}
+            {:ok, format_search_result(result)}
 
           {:ok, []} ->
             Logger.info("FMP API: ISIN #{isin} not found")
@@ -124,12 +124,14 @@ defmodule Yappma.Services.FMPClient do
 
   @doc """
   Enriches security metadata by ticker symbol.
-  Uses /api/v3/profile endpoint for detailed company data.
-  Returns {:ok, enriched_data} with comprehensive metadata or error tuple.
+  Uses /stable/search-name endpoint (only available endpoint on free tier).
+  Returns {:ok, enriched_data} with available metadata or error tuple.
+  
+  Note: Returns limited data compared to legacy /api/v3/profile endpoint.
   """
   def enrich_by_ticker(ticker) when is_binary(ticker) do
     ticker = String.trim(ticker) |> String.upcase()
-    url = "#{@api_v3}/profile/#{URI.encode(ticker)}?apikey=#{api_key()}"
+    url = "#{@base_url}/search-name?query=#{URI.encode(ticker)}&limit=1&apikey=#{api_key()}"
 
     Logger.info("FMP API: Enriching ticker #{ticker}")
 
@@ -140,6 +142,10 @@ defmodule Yappma.Services.FMPClient do
       {:ok, %{status_code: 404}} ->
         Logger.info("FMP API: Ticker #{ticker} not found")
         {:error, :not_found}
+
+      {:ok, %{status_code: 403}} ->
+        Logger.error("FMP API: Access forbidden (403) - check API key validity")
+        {:error, :api_error}
 
       {:ok, %{status_code: status}} ->
         Logger.error("FMP API: Unexpected status code #{status} for ticker #{ticker}")
@@ -157,28 +163,34 @@ defmodule Yappma.Services.FMPClient do
 
   @doc """
   Enriches security metadata by ISIN.
-  First converts ISIN to ticker, then fetches full profile.
-  Returns {:ok, enriched_data} with comprehensive metadata or error tuple.
+  First searches for ISIN, then returns available data.
+  Returns {:ok, enriched_data} with available metadata or error tuple.
   """
   def enrich_by_isin(isin) when is_binary(isin) do
     isin = String.trim(isin) |> String.upcase()
     Logger.info("FMP API: Enriching ISIN #{isin}")
 
-    # Step 1: Convert ISIN to ticker
-    case convert_isin_to_ticker(isin) do
-      {:ok, ticker} ->
-        # Step 2: Enrich by ticker
-        case enrich_by_ticker(ticker) do
+    # Search by ISIN directly
+    url = "#{@base_url}/search-name?query=#{URI.encode(isin)}&limit=1&apikey=#{api_key()}"
+
+    case HTTPoison.get(url, [], timeout: @timeout, recv_timeout: @recv_timeout) do
+      {:ok, %{status_code: 200, body: body}} ->
+        case parse_enrichment_response(body, isin) do
           {:ok, data} ->
-            # Add ISIN to enriched data
-            {:ok, Map.put(data, :isin, isin)}
+            # Add ISIN to enriched data if not already present
+            {:ok, Map.put_new(data, :isin, isin)}
           
           error ->
             error
         end
 
-      error ->
-        error
+      {:ok, %{status_code: status}} ->
+        Logger.error("FMP API: Unexpected status code #{status} for ISIN #{isin}")
+        {:error, :api_error}
+
+      {:error, reason} ->
+        Logger.error("FMP API: Request failed for ISIN #{isin}: #{inspect(reason)}")
+        {:error, :network_error}
     end
   end
 
@@ -229,18 +241,15 @@ defmodule Yappma.Services.FMPClient do
   # Private Functions
   # ============================================================================
 
-  # Parse enrichment response from FMP profile endpoint
-  defp parse_enrichment_response(body, ticker) do
+  # Parse enrichment response from FMP search endpoint
+  defp parse_enrichment_response(body, identifier) do
     case Jason.decode(body) do
       {:ok, [data | _]} when is_map(data) ->
-        extract_enriched_metadata(data, ticker)
+        extract_enriched_metadata(data, identifier)
 
       {:ok, []} ->
-        Logger.warning("FMP API: Empty profile data for #{ticker}")
+        Logger.warning("FMP API: No data found for #{identifier}")
         {:error, :not_found}
-
-      {:ok, data} when is_map(data) ->
-        extract_enriched_metadata(data, ticker)
 
       {:error, reason} ->
         Logger.error("FMP API: Failed to parse enrichment response: #{inspect(reason)}")
@@ -248,36 +257,24 @@ defmodule Yappma.Services.FMPClient do
     end
   end
 
-  # Extract and format enriched metadata from FMP profile response
-  defp extract_enriched_metadata(data, ticker) do
+  # Extract and format enriched metadata from FMP search response
+  # Note: /stable/search-name returns limited data compared to legacy /api/v3/profile
+  defp extract_enriched_metadata(data, identifier) do
     metadata = %{
-      ticker: Map.get(data, "symbol") || ticker,
-      isin: Map.get(data, "isin"),
-      name: Map.get(data, "companyName"),
+      ticker: Map.get(data, "symbol"),
+      name: Map.get(data, "name"),
       security_type: determine_security_type(data),
-      exchange: Map.get(data, "exchange"),
+      exchange: Map.get(data, "stockExchange"),
       exchange_short: Map.get(data, "exchangeShortName"),
-      currency: Map.get(data, "currency"),
-      country: Map.get(data, "country"),
-      country_of_domicile: Map.get(data, "country"),
-      sector: Map.get(data, "sector"),
-      industry: Map.get(data, "industry"),
-      description: Map.get(data, "description"),
-      website: Map.get(data, "website"),
-      ceo: Map.get(data, "ceo"),
-      market_cap: parse_number(Map.get(data, "mktCap")),
-      employees: parse_integer(Map.get(data, "fullTimeEmployees")),
-      ipo_date: Map.get(data, "ipoDate"),
-      is_etf: Map.get(data, "isEtf"),
-      is_actively_trading: Map.get(data, "isActivelyTrading")
+      currency: Map.get(data, "currency")
     }
     |> remove_nil_values()
 
-    if map_size(metadata) > 2 do
-      Logger.info("FMP API: Successfully enriched #{ticker} with #{map_size(metadata)} fields")
+    if map_size(metadata) > 1 do
+      Logger.info("FMP API: Successfully enriched #{identifier} with #{map_size(metadata)} fields")
       {:ok, metadata}
     else
-      Logger.warning("FMP API: Insufficient data for #{ticker}")
+      Logger.warning("FMP API: Insufficient data for #{identifier}")
       {:error, :insufficient_data}
     end
   rescue
@@ -286,40 +283,20 @@ defmodule Yappma.Services.FMPClient do
       {:error, :extraction_error}
   end
 
-  # Determine security type from FMP data
+  # Determine security type from limited FMP search data
   defp determine_security_type(data) do
+    # Search endpoint doesn't provide detailed type info
+    # Default to "stock" for now
+    symbol = Map.get(data, "symbol", "")
+    
     cond do
-      Map.get(data, "isEtf") == true -> "etf"
-      Map.get(data, "isAdr") == true -> "stock"
-      Map.get(data, "isFund") == true -> "mutual_fund"
+      String.contains?(symbol, ".") -> "etf"  # Many ETFs have dots in symbols
       true -> "stock"
     end
   end
 
-  # Parse number from various formats
-  defp parse_number(nil), do: nil
-  defp parse_number(num) when is_number(num), do: num
-  defp parse_number(str) when is_binary(str) do
-    case Float.parse(str) do
-      {num, _} -> num
-      :error -> nil
-    end
-  end
-  defp parse_number(_), do: nil
-
-  # Parse integer from various formats
-  defp parse_integer(nil), do: nil
-  defp parse_integer(num) when is_integer(num), do: num
-  defp parse_integer(str) when is_binary(str) do
-    case Integer.parse(str) do
-      {num, _} -> num
-      :error -> nil
-    end
-  end
-  defp parse_integer(_), do: nil
-
-  # Format ticker search result
-  defp format_ticker_result(result) do
+  # Format search result for validation
+  defp format_search_result(result) do
     %{
       symbol: Map.get(result, "symbol"),
       name: Map.get(result, "name"),
@@ -327,16 +304,6 @@ defmodule Yappma.Services.FMPClient do
       exchange: Map.get(result, "stockExchange"),
       exchange_short: Map.get(result, "exchangeShortName"),
       type: "ticker"
-    }
-  end
-
-  # Format ISIN search result
-  defp format_isin_result(result) do
-    %{
-      symbol: Map.get(result, "symbol"),
-      name: Map.get(result, "name"),
-      isin: Map.get(result, "isin"),
-      type: "isin"
     }
   end
 
