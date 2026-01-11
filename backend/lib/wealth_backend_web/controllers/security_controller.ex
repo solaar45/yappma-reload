@@ -1,112 +1,99 @@
 defmodule WealthBackendWeb.SecurityController do
   use WealthBackendWeb, :controller
-
-  alias WealthBackend.Portfolio.MetadataEnricher
-
   require Logger
 
-  action_fallback WealthBackendWeb.FallbackController
+  alias WealthBackend.Portfolio.MetadataEnricher
+  alias Yappma.Services.FMPClient
 
   @doc """
-  POST /api/securities/enrich
+  Universal search endpoint for securities.
+  Searches by ticker, company name, or ISIN and returns all matches.
   
-  Enriches security metadata based on provided identifier.
-  
-  Body:
-  {
-    "identifier": "AAPL" or "US0378331005" or "865985",
-    "type": "ticker" | "isin" | "wkn" | "auto" (optional, defaults to "auto")
-  }
+  POST /api/securities/search
+  Body: {"query": "MSFT"} or {"query": "Microsoft"} or {"query": "US5949181045"}
   
   Returns:
   {
-    "data": {
-      "ticker": "AAPL",
-      "name": "Apple Inc.",
-      "security_type": "stock",
-      "exchange": "NASDAQ",
-      "currency": "USD",
-      "sector": "Technology",
+    "results": [
+      {
+        "ticker": "MSFT",
+        "name": "Microsoft Corporation",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "type": "stock"
+      },
       ...
-    }
+    ]
   }
   """
-  def enrich(conn, %{"identifier" => identifier} = params) when is_binary(identifier) do
-    # Safely convert type parameter to atom
-    type = 
-      params
-      |> Map.get("type", "auto")
-      |> normalize_type()
+  def search(conn, %{"query" => query}) when is_binary(query) do
+    Logger.info("Searching securities: query=#{query}")
     
+    case FMPClient.search_securities(query, 10) do
+      {:ok, results} ->
+        Logger.info("Found #{length(results)} securities for query: #{query}")
+        json(conn, %{results: results})
+      
+      {:error, reason} ->
+        Logger.error("Security search failed: #{inspect(reason)}")
+        conn
+        |> put_status(:internal_server_error)
+        |> json(%{error: "Search failed"})
+    end
+  end
+
+  def search(conn, _params) do
+    conn
+    |> put_status(:bad_request)
+    |> json(%{error: "Missing 'query' parameter"})
+  end
+
+  @doc """
+  Enrich security metadata by identifier (ticker, ISIN, or auto-detect).
+  
+  POST /api/securities/enrich
+  Body: {"identifier": "MSFT", "type": "auto"}
+  
+  Returns enriched metadata or error.
+  """
+  def enrich(conn, %{"identifier" => identifier, "type" => type}) do
+    type_atom = case type do
+      "ticker" -> :ticker
+      "isin" -> :isin
+      "wkn" -> :wkn
+      _ -> :auto
+    end
+
     Logger.info("Enriching security: identifier=#{identifier}, type=#{type}")
-    
-    case MetadataEnricher.enrich(identifier, type) do
+
+    case MetadataEnricher.enrich(identifier, type_atom) do
       {:ok, metadata} ->
         Logger.info("Successfully enriched security: #{identifier}")
-        conn
-        |> put_status(:ok)
-        |> json(%{data: metadata})
-      
+        json(conn, metadata)
+
       {:error, :not_found} ->
         Logger.warning("Security not found: #{identifier}")
         conn
         |> put_status(:not_found)
         |> json(%{error: "Security not found"})
-      
+
       {:error, :conversion_not_supported} ->
-        Logger.info("ISIN/WKN conversion not supported for: #{identifier}")
+        Logger.warning("Conversion not supported for: #{identifier}")
         conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{error: "ISIN/WKN to ticker conversion not yet supported. Please use ticker symbol directly."})
-      
-      {:error, :api_error} ->
+        |> put_status(:not_implemented)
+        |> json(%{error: "WKN conversion not yet supported"})
+
+      {:error, reason} ->
         Logger.error("External API error for: #{identifier}")
         conn
         |> put_status(:service_unavailable)
-        |> json(%{error: "External API error. Please try again later."})
-      
-      {:error, :network_error} ->
-        Logger.error("Network error for: #{identifier}")
-        conn
-        |> put_status(:service_unavailable)
-        |> json(%{error: "Network error. Please check your connection."})
-      
-      {:error, :parse_error} ->
-        Logger.error("Parse error for: #{identifier}")
-        conn
-        |> put_status(:internal_server_error)
-        |> json(%{error: "Failed to parse API response"})
-      
-      {:error, :extraction_error} ->
-        Logger.error("Extraction error for: #{identifier}")
-        conn
-        |> put_status(:internal_server_error)
-        |> json(%{error: "Failed to extract metadata from API response"})
-      
-      {:error, reason} ->
-        Logger.error("Unknown error enriching security #{identifier}: #{inspect(reason)}")
-        conn
-        |> put_status(:internal_server_error)
-        |> json(%{error: "Failed to enrich security data"})
+        |> json(%{error: "Failed to fetch security data: #{inspect(reason)}"})
     end
   end
 
   def enrich(conn, _params) do
-    Logger.warning("Invalid enrich request: missing identifier")
     conn
     |> put_status(:bad_request)
-    |> json(%{error: "Missing required parameter: identifier"})
+    |> json(%{error: "Missing required parameters"})
   end
-
-  # Normalize type parameter to atom safely
-  defp normalize_type(type) when is_binary(type) do
-    case String.downcase(type) do
-      "ticker" -> :ticker
-      "isin" -> :isin
-      "wkn" -> :wkn
-      "auto" -> :auto
-      _ -> :auto
-    end
-  end
-  defp normalize_type(_), do: :auto
 end
