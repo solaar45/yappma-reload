@@ -27,7 +27,6 @@ import {
 import { Plus } from 'lucide-react';
 import { useAccounts } from '@/lib/api/hooks';
 import InstitutionLogo from '@/components/InstitutionLogo';
-import { SecurityAssetForm } from '@/components/portfolio/SecurityAssetForm';
 import { InsuranceAssetForm } from '@/components/portfolio/InsuranceAssetForm';
 import { RealEstateAssetForm } from '@/components/portfolio/RealEstateAssetForm';
 import { SecuritySearchCombobox } from '@/components/portfolio/SecuritySearchCombobox';
@@ -341,13 +340,13 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="account">{t('assets.account')} ({t('common.optional')})</Label>
+                  <Label htmlFor="account">{t('assets.linkedAccount')}</Label>
                   <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
                     <SelectTrigger id="account">
-                      <SelectValue placeholder={t('assets.allAccounts')} />
+                      <SelectValue placeholder={t('assets.noAccountSelected')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="_none">{t('assets.allAccounts')}</SelectItem>
+                      <SelectItem value="_none">{t('assets.noAccount')}</SelectItem>
                       {accounts
                         ?.filter((a) => a.is_active)
                         .sort((a, b) => (a.name || '').localeCompare(b.name || ''))

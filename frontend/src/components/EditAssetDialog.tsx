@@ -286,7 +286,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="edit-account">{t('assets.linkedAccount')} ({t('common.optional')})</Label>
+              <Label htmlFor="edit-account">{t('assets.linkedAccount')}</Label>
               <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
                 <SelectTrigger id="edit-account">
                   <SelectValue placeholder={t('assets.noAccountSelected')} />
@@ -314,7 +314,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="is-active" className="text-base">
-                  {t('assets.assetStatus')}
+                  {t('assets.status')}
                 </Label>
                 <div className="text-sm text-muted-foreground">
                   {formData.is_active ? t('assets.active') : t('assets.inactive')}
