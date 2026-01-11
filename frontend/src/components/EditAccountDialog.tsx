@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUser } from '@/contexts/UserContext';
 import { useInstitutions } from '@/lib/api/hooks';
 import { apiClient } from '@/lib/api/client';
@@ -50,6 +51,7 @@ const CURRENCIES = [
 ] as const;
 
 export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps) {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const { institutions, loading: institutionsLoading } = useInstitutions({ userId: userId! });
   const [open, setOpen] = useState(false);
@@ -101,8 +103,6 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
     }
   };
 
-
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -113,17 +113,16 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit Account</DialogTitle>
+            <DialogTitle>{t('accounts.editAccount')}</DialogTitle>
             <DialogDescription>
-              Update the account details.
+              {t('accounts.editAccountDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Account Name *</Label>
+              <Label htmlFor="name">{t('accounts.accountName')} *</Label>
               <Input
                 id="name"
-                placeholder="e.g., Main Checking, Savings Account"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -131,16 +130,16 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
             </div>
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="institution">Institution *</Label>
+                <Label htmlFor="institution">{t('accounts.institution')} *</Label>
               </div>
               {institutionsLoading ? (
                 <div className="flex items-center justify-center h-10 border rounded-md bg-muted">
-                  <span className="text-sm text-muted-foreground">Loading institutions...</span>
+                  <span className="text-sm text-muted-foreground">{t('accounts.loadingInstitutions')}</span>
                 </div>
               ) : institutions && institutions.length > 0 ? (
                 <Select value={institutionId} onValueChange={setInstitutionId}>
                   <SelectTrigger id="institution">
-                    <SelectValue placeholder="Select institution" />
+                    <SelectValue placeholder={t('accounts.selectInstitution')} />
                   </SelectTrigger>
                   <SelectContent>
                     {institutions.map((inst) => (
@@ -149,7 +148,9 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                           <InstitutionLogo name={inst.name} domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
                           <div className="flex flex-col">
                             <span>{inst.name}</span>
-                            <span className="text-[10px] text-muted-foreground capitalize">{inst.type || inst.category}</span>
+                            <span className="text-[10px] text-muted-foreground capitalize">
+                              {inst.type ? t(`institutions.types.${inst.type}`, { defaultValue: inst.type }) : inst.category}
+                            </span>
                           </div>
                         </div>
                       </SelectItem>
@@ -160,13 +161,13 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                 <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
                   <AlertCircle className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    No institutions found. Please create one first.
+                    {t('accounts.noInstitutionsFound')}
                   </span>
                 </div>
               )}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="type">Account Type *</Label>
+              <Label htmlFor="type">{t('accounts.accountType')} *</Label>
               <Select
                 value={type}
                 onValueChange={(value) => setType(value as any)}
@@ -184,7 +185,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="currency">Currency *</Label>
+              <Label htmlFor="currency">{t('common.currency')} *</Label>
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger id="currency">
                   <SelectValue />
@@ -201,10 +202,10 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="is-active" className="text-base">
-                  Account Status
+                  {t('accounts.status')}
                 </Label>
                 <div className="text-sm text-muted-foreground">
-                  {isActive ? 'Active' : 'Inactive'}
+                  {isActive ? t('accounts.active') : t('accounts.inactive')}
                 </div>
               </div>
               <Switch
@@ -216,13 +217,13 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
               disabled={loading || !name.trim() || !institutionId || institutions?.length === 0}
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? t('common.saving') : t('common.saveChanges')}
             </Button>
           </DialogFooter>
         </form>

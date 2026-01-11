@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '@/lib/api/client';
 import type { CombinedSnapshot } from '@/lib/api/hooks/useSnapshots';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ interface EditSnapshotDialogProps {
 }
 
 export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   
@@ -92,14 +94,14 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit Snapshot</DialogTitle>
+            <DialogTitle>{t('snapshots.editSnapshot')}</DialogTitle>
             <DialogDescription>
-              Update snapshot for {snapshot.entity_name}
+              {t('snapshots.editSnapshotDescription', { entityName: snapshot.entity_name })}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="date">Date *</Label>
+              <Label htmlFor="date">{t('common.date')} *</Label>
               <Input
                 id="date"
                 type="date"
@@ -111,7 +113,7 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
 
             <div className="grid gap-2">
               <Label htmlFor="value">
-                {isAccount ? 'Balance' : 'Value'} *
+                {isAccount ? t('common.balance') : t('common.value')} *
               </Label>
               <Input
                 id="value"
@@ -126,7 +128,7 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
 
             {isAccount && (
               <div className="grid gap-2">
-                <Label htmlFor="currency">Currency *</Label>
+                <Label htmlFor="currency">{t('common.currency')} *</Label>
                 <Select 
                   value={formData.currency} 
                   onValueChange={(value) => setFormData({ ...formData, currency: value })}
@@ -146,12 +148,12 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
 
             {!isAccount && (
               <div className="grid gap-2">
-                <Label htmlFor="quantity">Quantity (optional)</Label>
+                <Label htmlFor="quantity">{t('snapshots.quantityOptional')}</Label>
                 <Input
                   id="quantity"
                   type="number"
                   step="0.0001"
-                  placeholder="e.g., number of shares"
+                  placeholder={t('snapshots.quantityPlaceholder')}
                   value={formData.quantity}
                   onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                 />
@@ -160,10 +162,10 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={loading || !formData.value}>
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? t('common.saving') : t('common.saveChanges')}
             </Button>
           </DialogFooter>
         </form>

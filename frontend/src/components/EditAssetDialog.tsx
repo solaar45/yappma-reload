@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUser } from '@/contexts/UserContext';
 import { apiClient } from '@/lib/api/client';
 import type { Asset, AssetType, SecurityAsset, InsuranceAsset, RealEstateAsset } from '@/lib/api/types';
@@ -34,6 +35,7 @@ interface EditAssetDialogProps {
 }
 
 export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -122,7 +124,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
       setOpen(false);
       onSuccess?.();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update asset';
+      const errorMessage = err instanceof Error ? err.message : t('errors.assetCreationFailed');
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -137,14 +139,14 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit Asset</DialogTitle>
+            <DialogTitle>{t('assets.editAsset')}</DialogTitle>
             <DialogDescription>
-              Make changes to your asset. Click save when you're done.
+              {t('assets.editAssetDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="edit-name">Asset Name *</Label>
+              <Label htmlFor="edit-name">{t('assets.assetName')} *</Label>
               <Input
                 id="edit-name"
                 value={formData.name}
@@ -153,18 +155,18 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-asset-type">Asset Type *</Label>
+              <Label htmlFor="edit-asset-type">{t('assets.assetType')} *</Label>
               <Select
                 value={formData.asset_type_id}
                 onValueChange={(value) => setFormData({ ...formData, asset_type_id: value })}
               >
                 <SelectTrigger id="edit-asset-type">
-                  <SelectValue placeholder="Select asset type" />
+                  <SelectValue placeholder={t('assets.selectAssetType')} />
                 </SelectTrigger>
                 <SelectContent>
                   {assetTypes.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
-                      {type.description || type.code}
+                      {t(`assetTypes.${type.code}`, { defaultValue: type.description || type.code })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -174,7 +176,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
             {/* Security Type field - only shown when Security is selected */}
             {selectedAssetType?.code === 'security' && (
               <div className="grid gap-2">
-                <Label htmlFor="edit-security-type">Security Type</Label>
+                <Label htmlFor="edit-security-type">{t('assets.security.type')}</Label>
                 <Select
                   value={formData.security_asset?.security_type || ''}
                   onValueChange={(val) =>
@@ -188,14 +190,14 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select security type" />
+                    <SelectValue placeholder={t('assets.security.selectType')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="stock">Stock</SelectItem>
-                    <SelectItem value="etf">ETF</SelectItem>
-                    <SelectItem value="bond">Bond</SelectItem>
-                    <SelectItem value="mutual_fund">Mutual Fund</SelectItem>
-                    <SelectItem value="index_fund">Index Fund</SelectItem>
+                    <SelectItem value="stock">{t('assets.security.types.stock')}</SelectItem>
+                    <SelectItem value="etf">{t('assets.security.types.etf')}</SelectItem>
+                    <SelectItem value="bond">{t('assets.security.types.bond')}</SelectItem>
+                    <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund')}</SelectItem>
+                    <SelectItem value="index_fund">{t('assets.security.types.indexFund')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -204,7 +206,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
             {/* Conditionally render specialized forms based on asset type */}
             {selectedAssetType?.code === 'security' && (
               <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-3">Security Details</h4>
+                <h4 className="text-sm font-medium mb-3">{t('assets.security.details')}</h4>
                 <SecurityAssetForm
                   value={formData.security_asset || {}}
                   onChange={(value) => setFormData({ ...formData, security_asset: value })}
@@ -214,7 +216,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
 
             {selectedAssetType?.code === 'insurance' && (
               <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-3">Insurance Details</h4>
+                <h4 className="text-sm font-medium mb-3">{t('assets.insurance.details')}</h4>
                 <InsuranceAssetForm
                   value={formData.insurance_asset || {}}
                   onChange={(value) => setFormData({ ...formData, insurance_asset: value })}
@@ -224,7 +226,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
 
             {selectedAssetType?.code === 'real_estate' && (
               <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-3">Real Estate Details</h4>
+                <h4 className="text-sm font-medium mb-3">{t('assets.realEstate.details')}</h4>
                 <RealEstateAssetForm
                   value={formData.real_estate_asset || {}}
                   onChange={(value) => setFormData({ ...formData, real_estate_asset: value })}
@@ -234,13 +236,13 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
 
             <div className="border-t pt-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-account">Verknüpftes Konto / Depot (optional)</Label>
+                <Label htmlFor="edit-account">{t('assets.linkedAccount')} ({t('common.optional')})</Label>
                 <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
                   <SelectTrigger id="edit-account">
-                    <SelectValue placeholder="Kein Konto ausgewählt" />
+                    <SelectValue placeholder={t('assets.noAccountSelected')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="_none">Kein Konto</SelectItem>
+                    <SelectItem value="_none">{t('assets.noAccount')}</SelectItem>
                     {accounts
                       ?.filter((a) => a.is_active)
                       .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
@@ -261,7 +263,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="edit-currency">Currency *</Label>
+              <Label htmlFor="edit-currency">{t('common.currency')} *</Label>
               <Input
                 id="edit-currency"
                 value={formData.currency}
@@ -272,10 +274,10 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="is-active" className="text-base">
-                  Asset Status
+                  {t('assets.assetStatus')}
                 </Label>
                 <div className="text-sm text-muted-foreground">
-                  {formData.is_active ? 'Active' : 'Inactive'}
+                  {formData.is_active ? t('assets.active') : t('assets.inactive')}
                 </div>
               </div>
               <Switch
@@ -288,10 +290,10 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : 'Save changes'}
+              {loading ? t('common.saving') : t('common.saveChanges')}
             </Button>
           </DialogFooter>
         </form>
