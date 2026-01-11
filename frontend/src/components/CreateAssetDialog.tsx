@@ -145,31 +145,30 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       }
     } catch (err: any) {
       console.error('Asset creation error:', err);
+      console.log('Error data:', err?.data);
       
-      // Try to extract error details from response
-      const errorDetail = err?.response?.data?.errors?.detail || 
-                         err?.errors?.detail ||
-                         err?.detail;
-      const errorMessage = err?.response?.data?.errors?.message ||
-                          err?.errors?.message ||
-                          err?.message || 
-                          err?.toString() || 
-                          '';
+      // Extract error details from ApiError structure
+      // err.data contains the JSON response from backend
+      const errorData = err?.data || {};
+      const errorDetail = errorData?.errors?.detail || '';
+      const errorMessage = errorData?.errors?.message || err?.message || '';
+      
+      console.log('Parsed error:', { errorDetail, errorMessage });
       
       // Handle specific security validation errors
-      if (errorDetail === 'security_not_found' || errorMessage.includes('security_not_found')) {
+      if (errorDetail === 'security_not_found') {
         const identifier = sanitizedSecurity?.ticker || sanitizedSecurity?.isin || 'unbekannt';
         setValidationError(
           `Das Wertpapier "${identifier}" wurde in der Datenbank nicht gefunden. ` +
           `Bitte überprüfe die Schreibweise des Tickers oder der ISIN und versuche es erneut.`
         );
-      } else if (errorDetail === 'validation_failed' || errorMessage.includes('validation_failed')) {
+      } else if (errorDetail === 'validation_failed') {
         setValidationError(
           'Die Validierung des Wertpapiers ist fehlgeschlagen. ' +
           'Möglicherweise ist der Service vorübergehend nicht verfügbar. Bitte versuche es später erneut.'
         );
       } else {
-        // Generic error - show as validation error for better visibility
+        // Generic error - show backend message or fallback
         setValidationError(
           errorMessage || 'Beim Anlegen des Assets ist ein Fehler aufgetreten. Bitte versuche es erneut.'
         );
