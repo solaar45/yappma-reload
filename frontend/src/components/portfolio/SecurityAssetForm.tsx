@@ -66,7 +66,6 @@ export function SecurityAssetForm({ value, onChange, disabled }: SecurityAssetFo
           value={identifier}
           onChange={(e) => handleIdentifierChange(e.target.value)}
           disabled={disabled}
-          placeholder="AAPL or US0378331005"
         />
         <p className="text-xs text-muted-foreground">
           {t('assets.security.enrichment.noIdentifier')}
