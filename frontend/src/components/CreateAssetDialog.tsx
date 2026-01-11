@@ -74,11 +74,6 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
         const response = await apiClient.get<{ data: AssetType[] }>('asset_types');
         const types = Array.isArray(response) ? response : (response.data || []);
         setAssetTypes(types);
-        
-        const securityType = types.find((t) => t.code === 'security');
-        if (securityType) {
-          setFormData((prev) => ({ ...prev, asset_type_id: securityType.id.toString() }));
-        }
       } catch (err) {
         console.error('Failed to load asset types:', err);
       } finally {
@@ -89,6 +84,18 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
     if (open) {
       fetchAssetTypes();
       setValidationError(null);
+      // Reset asset_type_id when dialog opens to ensure clean state
+      setFormData((prev) => ({ 
+        ...prev, 
+        asset_type_id: '',
+        name: '',
+        currency: 'EUR',
+        is_active: true,
+        security_asset: undefined,
+        insurance_asset: undefined,
+        real_estate_asset: undefined
+      }));
+      setAccountId('');
     }
   }, [open]);
 
@@ -180,15 +187,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">{t('assets.assetName')} *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
+            {/* Asset Type - Always shown */}
             <div className="grid gap-2">
               <Label htmlFor="asset_type">{t('assets.assetType')} *</Label>
               <Select
@@ -211,128 +210,143 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               </Select>
             </div>
 
-            {/* Security Type field - only shown when Security is selected */}
-            {selectedAssetType?.code === 'security' && (
-              <div className="grid gap-2">
-                <Label htmlFor="security_type">{t('assets.security.type')}</Label>
-                <Select
-                  value={formData.security_asset?.security_type || ''}
-                  onValueChange={(val) =>
-                    setFormData({
-                      ...formData,
-                      security_asset: {
-                        ...formData.security_asset,
-                        security_type: val as SecurityAsset['security_type'],
-                      },
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('assets.security.selectType')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stock">{t('assets.security.types.stock')}</SelectItem>
-                    <SelectItem value="etf">{t('assets.security.types.etf')}</SelectItem>
-                    <SelectItem value="bond">{t('assets.security.types.bond')}</SelectItem>
-                    <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund')}</SelectItem>
-                    <SelectItem value="index_fund">{t('assets.security.types.indexFund')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Conditionally render specialized forms based on asset type */}
-            {selectedAssetType?.code === 'security' && (
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-3">
-                  {t('assets.security.details')}
-                </h4>
-                <SecurityAssetForm
-                  value={formData.security_asset || {}}
-                  onChange={(value) => {
-                    setFormData({ ...formData, security_asset: value });
-                    setValidationError(null); // Clear error when user modifies
-                  }}
-                />
-              </div>
-            )}
-
-            {selectedAssetType?.code === 'insurance' && (
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-3">
-                  {t('assets.insurance.details')}
-                </h4>
-                <InsuranceAssetForm
-                  value={formData.insurance_asset || {}}
-                  onChange={(value) => setFormData({ ...formData, insurance_asset: value })}
-                />
-              </div>
-            )}
-
-            {selectedAssetType?.code === 'real_estate' && (
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-3">
-                  {t('assets.realEstate.details')}
-                </h4>
-                <RealEstateAssetForm
-                  value={formData.real_estate_asset || {}}
-                  onChange={(value) => setFormData({ ...formData, real_estate_asset: value })}
-                />
-              </div>
-            )}
-
-            <div className="border-t pt-4">
-              <div className="grid gap-2">
-                <Label htmlFor="currency">{t('common.currency')} *</Label>
-                <Input
-                  id="currency"
-                  value={formData.currency}
-                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="account">{t('assets.account')} ({t('common.optional')})</Label>
-              <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
-                <SelectTrigger id="account">
-                  <SelectValue placeholder={t('assets.allAccounts')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_none">{t('assets.allAccounts')}</SelectItem>
-                  {accounts
-                    ?.filter((a) => a.is_active)
-                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-                    .map((a) => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
-                        <div className="flex items-center gap-2">
-                          <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
-                          <div className="flex flex-col">
-                            <span>{a.name}</span>
-                            <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="is-active" className="text-base">
-                  {t('assets.status')}
-                </Label>
-                <div className="text-sm text-muted-foreground">
-                  {formData.is_active ? t('assets.active') : t('assets.inactive')}
+            {/* All other fields - Only shown when asset type is selected */}
+            {formData.asset_type_id && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="name">{t('assets.assetName')} *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
                 </div>
-              </div>
-              <Switch
-                id="is-active"
-                checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-              />
-            </div>
+
+                {/* Security Type field - only shown when Security is selected */}
+                {selectedAssetType?.code === 'security' && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="security_type">{t('assets.security.type')}</Label>
+                    <Select
+                      value={formData.security_asset?.security_type || ''}
+                      onValueChange={(val) =>
+                        setFormData({
+                          ...formData,
+                          security_asset: {
+                            ...formData.security_asset,
+                            security_type: val as SecurityAsset['security_type'],
+                          },
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('assets.security.selectType')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="stock">{t('assets.security.types.stock')}</SelectItem>
+                        <SelectItem value="etf">{t('assets.security.types.etf')}</SelectItem>
+                        <SelectItem value="bond">{t('assets.security.types.bond')}</SelectItem>
+                        <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund')}</SelectItem>
+                        <SelectItem value="index_fund">{t('assets.security.types.indexFund')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Conditionally render specialized forms based on asset type */}
+                {selectedAssetType?.code === 'security' && (
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium mb-3">
+                      {t('assets.security.details')}
+                    </h4>
+                    <SecurityAssetForm
+                      value={formData.security_asset || {}}
+                      onChange={(value) => {
+                        setFormData({ ...formData, security_asset: value });
+                        setValidationError(null); // Clear error when user modifies
+                      }}
+                    />
+                  </div>
+                )}
+
+                {selectedAssetType?.code === 'insurance' && (
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium mb-3">
+                      {t('assets.insurance.details')}
+                    </h4>
+                    <InsuranceAssetForm
+                      value={formData.insurance_asset || {}}
+                      onChange={(value) => setFormData({ ...formData, insurance_asset: value })}
+                    />
+                  </div>
+                )}
+
+                {selectedAssetType?.code === 'real_estate' && (
+                  <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium mb-3">
+                      {t('assets.realEstate.details')}
+                    </h4>
+                    <RealEstateAssetForm
+                      value={formData.real_estate_asset || {}}
+                      onChange={(value) => setFormData({ ...formData, real_estate_asset: value })}
+                    />
+                  </div>
+                )}
+
+                <div className="border-t pt-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="currency">{t('common.currency')} *</Label>
+                    <Input
+                      id="currency"
+                      value={formData.currency}
+                      onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="account">{t('assets.account')} ({t('common.optional')})</Label>
+                  <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
+                    <SelectTrigger id="account">
+                      <SelectValue placeholder={t('assets.allAccounts')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">{t('assets.allAccounts')}</SelectItem>
+                      {accounts
+                        ?.filter((a) => a.is_active)
+                        .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                        .map((a) => (
+                          <SelectItem key={a.id} value={a.id.toString()}>
+                            <div className="flex items-center gap-2">
+                              <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                              <div className="flex flex-col">
+                                <span>{a.name}</span>
+                                <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="is-active" className="text-base">
+                      {t('assets.status')}
+                    </Label>
+                    <div className="text-sm text-muted-foreground">
+                      {formData.is_active ? t('assets.active') : t('assets.inactive')}
+                    </div>
+                  </div>
+                  <Switch
+                    id="is-active"
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                  />
+                </div>
+              </>
+            )}
             
             {/* Error Display - matching DeleteAssetDialog pattern */}
             {validationError && (
