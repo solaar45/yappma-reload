@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, AlertCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useAccounts } from '@/lib/api/hooks';
 import InstitutionLogo from '@/components/InstitutionLogo';
 import { SecurityAssetForm } from '@/components/portfolio/SecurityAssetForm';
@@ -139,7 +139,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
         setAccountId('');
         toast({
           title: t('common.success') || 'Success',
-          description: 'Asset created successfully',
+          description: 'Asset erfolgreich angelegt',
         });
         onSuccess?.();
       }
@@ -158,21 +158,21 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       
       // Handle specific security validation errors
       if (errorDetail === 'security_not_found' || errorMessage.includes('security_not_found')) {
-        const identifier = sanitizedSecurity?.ticker || sanitizedSecurity?.isin || 'unknown';
+        const identifier = sanitizedSecurity?.ticker || sanitizedSecurity?.isin || 'unbekannt';
         setValidationError(
-          `Das Wertpapier "${identifier}" konnte nicht gefunden werden. Bitte überprüfe den Ticker oder die ISIN.`
+          `Das Wertpapier "${identifier}" wurde in der Datenbank nicht gefunden. ` +
+          `Bitte überprüfe die Schreibweise des Tickers oder der ISIN und versuche es erneut.`
         );
       } else if (errorDetail === 'validation_failed' || errorMessage.includes('validation_failed')) {
         setValidationError(
-          'Die Validierung ist fehlgeschlagen. Bitte versuche es später erneut.'
+          'Die Validierung des Wertpapiers ist fehlgeschlagen. ' +
+          'Möglicherweise ist der Service vorübergehend nicht verfügbar. Bitte versuche es später erneut.'
         );
       } else {
-        // Generic error
-        toast({
-          title: t('common.error') || 'Error',
-          description: errorMessage || 'Failed to create asset',
-          variant: 'destructive',
-        });
+        // Generic error - show as validation error for better visibility
+        setValidationError(
+          errorMessage || 'Beim Anlegen des Assets ist ein Fehler aufgetreten. Bitte versuche es erneut.'
+        );
       }
     }
   };
@@ -348,18 +348,18 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               />
             </div>
             
-            {/* Security Validation Error */}
+            {/* Error Display - matching DeleteAssetDialog pattern */}
             {validationError && (
-              <div className="flex items-start gap-2 rounded-lg border border-destructive bg-destructive/10 p-3">
-                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-destructive">Validierungsfehler</p>
-                  <p className="text-sm text-destructive/90 mt-1">{validationError}</p>
-                </div>
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {validationError}
               </div>
             )}
             
-            {error && !validationError && <div className="text-sm text-destructive">{error}</div>}
+            {error && !validationError && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
