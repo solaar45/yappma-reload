@@ -24,13 +24,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Search, Loader2, AlertCircle, Edit, Info } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useAccounts } from '@/lib/api/hooks';
 import InstitutionLogo from '@/components/InstitutionLogo';
 import { SecurityAssetForm } from '@/components/portfolio/SecurityAssetForm';
 import { InsuranceAssetForm } from '@/components/portfolio/InsuranceAssetForm';
 import { RealEstateAssetForm } from '@/components/portfolio/RealEstateAssetForm';
+import { SecuritySearchCombobox } from '@/components/portfolio/SecuritySearchCombobox';
 import { useToast } from '@/hooks/use-toast';
+
+interface SecurityResult {
+  ticker: string;
+  name: string;
+  exchange?: string;
+  exchange_short?: string;
+  currency?: string;
+  type?: string;
+}
 
 interface CreateAssetDialogProps {
   onSuccess?: () => void;
@@ -46,13 +56,8 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
   const [loadingTypes, setLoadingTypes] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   
-  // Progressive form state
-  const [identifier, setIdentifier] = useState('');
-  const [isEnriching, setIsEnriching] = useState(false);
-  const [enrichmentError, setEnrichmentError] = useState<string | null>(null);
-  const [showManualEntry, setShowManualEntry] = useState(false);
-  const [enrichmentSuccess, setEnrichmentSuccess] = useState(false);
-  const [isISINNotSupported, setIsISINNotSupported] = useState(false);
+  // Security search state
+  const [selectedSecurity, setSelectedSecurity] = useState<SecurityResult | undefined>();
   
   const [formData, setFormData] = useState<{
     name: string;
@@ -79,7 +84,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
   // Check if we should show remaining fields
   const shouldShowRemainingFields = 
     selectedAssetType?.code === 'security' 
-      ? (enrichmentSuccess || showManualEntry)
+      ? selectedSecurity !== undefined
       : formData.asset_type_id !== '';
 
   useEffect(() => {
@@ -100,11 +105,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       fetchAssetTypes();
       // Reset all form state
       setValidationError(null);
-      setIdentifier('');
-      setEnrichmentError(null);
-      setShowManualEntry(false);
-      setEnrichmentSuccess(false);
-      setIsISINNotSupported(false);
+      setSelectedSecurity(undefined);
       setFormData({
         name: '',
         asset_type_id: '',
@@ -117,77 +118,6 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       setAccountId('');
     }
   }, [open]);
-
-  const handleEnrichSecurity = async () => {
-    if (!identifier) return;
-
-    setIsEnriching(true);
-    setEnrichmentError(null);
-    setEnrichmentSuccess(false);
-    setIsISINNotSupported(false);
-
-    try {
-      const response = await apiClient.post('securities/enrich', {
-        identifier: identifier.trim(),
-        type: 'auto'
-      });
-
-      if (response.data) {
-        const enrichedData = response.data;
-        
-        // Auto-fill form with enriched data
-        setFormData(prev => ({
-          ...prev,
-          name: enrichedData.name || '',
-          currency: enrichedData.currency || 'EUR',
-          security_asset: {
-            ...prev.security_asset,
-            ticker: enrichedData.ticker,
-            isin: enrichedData.isin,
-          }
-        }));
-
-        setEnrichmentSuccess(true);
-        toast({
-          title: t('common.success'),
-          description: `Wertpapier "${enrichedData.name}" gefunden`,
-        });
-      }
-    } catch (err: any) {
-      console.error('Enrichment error:', err);
-      
-      // Check if it's ISIN conversion error (422)
-      if (err.status === 422 || err.response?.status === 422) {
-        const isISIN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/i.test(identifier.trim());
-        if (isISIN) {
-          setIsISINNotSupported(true);
-          setEnrichmentError('ISIN-zu-Ticker Konvertierung wird derzeit nicht unterstützt');
-        } else {
-          setEnrichmentError('Wertpapier nicht gefunden');
-        }
-      } else {
-        setEnrichmentError('Wertpapier nicht gefunden');
-      }
-    } finally {
-      setIsEnriching(false);
-    }
-  };
-
-  const handleManualEntry = () => {
-    setShowManualEntry(true);
-    setEnrichmentError(null);
-    setIsISINNotSupported(false);
-    
-    // Set identifier as ticker or isin based on format
-    const isISIN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/i.test(identifier.trim());
-    setFormData(prev => ({
-      ...prev,
-      security_asset: {
-        ...prev.security_asset,
-        [isISIN ? 'isin' : 'ticker']: identifier.trim().toUpperCase()
-      }
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,6 +163,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
           is_active: true,
         });
         setAccountId('');
+        setSelectedSecurity(undefined);
         toast({
           title: t('common.success'),
           description: 'Asset erfolgreich angelegt',
@@ -285,12 +216,8 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 value={formData.asset_type_id}
                 onValueChange={(value) => {
                   setFormData({ ...formData, asset_type_id: value });
-                  // Reset progressive states when asset type changes
-                  setIdentifier('');
-                  setEnrichmentError(null);
-                  setShowManualEntry(false);
-                  setEnrichmentSuccess(false);
-                  setIsISINNotSupported(false);
+                  // Reset security selection when asset type changes
+                  setSelectedSecurity(undefined);
                 }}
                 disabled={loadingTypes}
               >
@@ -321,12 +248,8 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                         security_type: val as SecurityAsset['security_type'],
                       },
                     });
-                    // Reset states when security type changes
-                    setIdentifier('');
-                    setEnrichmentError(null);
-                    setShowManualEntry(false);
-                    setEnrichmentSuccess(false);
-                    setIsISINNotSupported(false);
+                    // Reset security selection when type changes
+                    setSelectedSecurity(undefined);
                   }}
                 >
                   <SelectTrigger id="security_type">
@@ -343,120 +266,32 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               </div>
             )}
 
-            {/* Step 3: Identifier - Only when security type is selected */}
+            {/* Step 3: Security Search - Only when security type is selected */}
             {selectedAssetType?.code === 'security' && formData.security_asset?.security_type && (
               <div className="grid gap-2">
-                <Label htmlFor="identifier">
-                  Ticker Symbol
+                <Label>
+                  Ticker or Company Name *
                   <span className="text-xs text-muted-foreground ml-2">
-                    (z.B. AAPL, VWCE)
+                    (e.g. MSFT, Microsoft, AAPL, Apple)
                   </span>
                 </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="identifier"
-                    value={identifier}
-                    onChange={(e) => {
-                      setIdentifier(e.target.value);
-                      setEnrichmentError(null);
-                      setIsISINNotSupported(false);
-                    }}
-                    placeholder="z.B. AAPL oder MSFT"
-                    disabled={enrichmentSuccess}
-                  />
-                  {!enrichmentSuccess ? (
-                    <Button
-                      type="button"
-                      onClick={handleEnrichSecurity}
-                      disabled={!identifier || isEnriching}
-                      className="flex-shrink-0"
-                    >
-                      {isEnriching ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Search className="h-4 w-4" />
-                      )}
-                      {isEnriching ? 'Suche...' : 'Suchen'}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setEnrichmentSuccess(false);
-                        setShowManualEntry(false);
-                        setIdentifier('');
-                      }}
-                      className="flex-shrink-0"
-                    >
-                      <Edit className="h-4 w-4" />
-                      Ändern
-                    </Button>
-                  )}
-                </div>
-                
-                {/* ISIN Not Supported Info */}
-                {isISINNotSupported && (
-                  <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 p-3 text-sm">
-                    <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-blue-800 dark:text-blue-200 font-medium">
-                          ISIN-Konvertierung nicht verfügbar
-                        </p>
-                        <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                          Bitte verwenden Sie das Ticker-Symbol anstelle der ISIN.
-                          Beispiel: Für Vanguard FTSE All-World verwenden Sie "VWCE" statt "IE00BK5BQT80".
-                        </p>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handleManualEntry}
-                          className="mt-2"
-                        >
-                          Trotzdem manuell anlegen
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Enrichment Error with Manual Entry Option */}
-                {enrichmentError && !showManualEntry && !isISINNotSupported && (
-                  <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-3 text-sm">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-yellow-800 dark:text-yellow-200 font-medium">
-                          {enrichmentError}
-                        </p>
-                        <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                          Möchten Sie das Asset manuell anlegen?
-                        </p>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handleManualEntry}
-                          className="mt-2"
-                        >
-                          Manuell anlegen
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Success Indicator */}
-                {enrichmentSuccess && (
-                  <div className="rounded-md bg-green-50 dark:bg-green-900/20 p-3 text-sm">
-                    <p className="text-green-800 dark:text-green-200 flex items-center gap-2">
-                      <span className="text-green-600">✓</span>
-                      Wertpapier gefunden und Felder automatisch ausgefüllt
-                    </p>
-                  </div>
-                )}
+                <SecuritySearchCombobox
+                  value={selectedSecurity}
+                  onSelect={(security) => {
+                    setSelectedSecurity(security);
+                    setFormData(prev => ({
+                      ...prev,
+                      name: security.name,
+                      currency: security.currency || 'USD',
+                      security_asset: {
+                        ...prev.security_asset,
+                        ticker: security.ticker,
+                        isin: undefined, // Clear ISIN as we're using ticker
+                      }
+                    }));
+                  }}
+                  placeholder="Search by ticker or name (e.g. MSFT, Microsoft)..."
+                />
               </div>
             )}
 
@@ -485,7 +320,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               </div>
             )}
 
-            {/* Remaining fields - shown after enrichment or manual entry for securities, or immediately for other types */}
+            {/* Remaining fields - shown after security selection or immediately for other types */}
             {shouldShowRemainingFields && (
               <>
                 <div className="border-t pt-4">
