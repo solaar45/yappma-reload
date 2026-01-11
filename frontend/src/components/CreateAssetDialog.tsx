@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Plus, Search, Loader2, AlertCircle, Edit } from 'lucide-react';
 import { useAccounts } from '@/lib/api/hooks';
 import InstitutionLogo from '@/components/InstitutionLogo';
 import { SecurityAssetForm } from '@/components/portfolio/SecurityAssetForm';
@@ -45,6 +45,14 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  
+  // Progressive form state
+  const [identifier, setIdentifier] = useState('');
+  const [isEnriching, setIsEnriching] = useState(false);
+  const [enrichmentError, setEnrichmentError] = useState<string | null>(null);
+  const [showManualEntry, setShowManualEntry] = useState(false);
+  const [enrichmentSuccess, setEnrichmentSuccess] = useState(false);
+  
   const [formData, setFormData] = useState<{
     name: string;
     asset_type_id: string;
@@ -67,6 +75,12 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
     (t) => t.id.toString() === formData.asset_type_id
   );
 
+  // Check if we should show remaining fields
+  const shouldShowRemainingFields = 
+    selectedAssetType?.code === 'security' 
+      ? (enrichmentSuccess || showManualEntry)
+      : formData.asset_type_id !== '';
+
   useEffect(() => {
     const fetchAssetTypes = async () => {
       setLoadingTypes(true);
@@ -83,21 +97,82 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
 
     if (open) {
       fetchAssetTypes();
+      // Reset all form state
       setValidationError(null);
-      // Reset asset_type_id when dialog opens to ensure clean state
-      setFormData((prev) => ({ 
-        ...prev, 
-        asset_type_id: '',
+      setIdentifier('');
+      setEnrichmentError(null);
+      setShowManualEntry(false);
+      setEnrichmentSuccess(false);
+      setFormData({
         name: '',
+        asset_type_id: '',
         currency: 'EUR',
         is_active: true,
         security_asset: undefined,
         insurance_asset: undefined,
         real_estate_asset: undefined
-      }));
+      });
       setAccountId('');
     }
   }, [open]);
+
+  const handleEnrichSecurity = async () => {
+    if (!identifier) return;
+
+    setIsEnriching(true);
+    setEnrichmentError(null);
+    setEnrichmentSuccess(false);
+
+    try {
+      const response = await apiClient.post('securities/enrich', {
+        identifier: identifier.trim(),
+        type: 'auto'
+      });
+
+      if (response.data) {
+        const enrichedData = response.data;
+        
+        // Auto-fill form with enriched data
+        setFormData(prev => ({
+          ...prev,
+          name: enrichedData.name || '',
+          currency: enrichedData.currency || 'EUR',
+          security_asset: {
+            ...prev.security_asset,
+            ticker: enrichedData.ticker,
+            isin: enrichedData.isin,
+            // Keep the security_type that was already selected
+          }
+        }));
+
+        setEnrichmentSuccess(true);
+        toast({
+          title: t('common.success'),
+          description: `Wertpapier "${enrichedData.name}" gefunden`,
+        });
+      }
+    } catch (err: any) {
+      console.error('Enrichment error:', err);
+      setEnrichmentError('Wertpapier nicht gefunden');
+    } finally {
+      setIsEnriching(false);
+    }
+  };
+
+  const handleManualEntry = () => {
+    setShowManualEntry(true);
+    setEnrichmentError(null);
+    
+    // Set identifier as ticker or isin based on format
+    const isISIN = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/i.test(identifier.trim());
+    setFormData(prev => ({
+      ...prev,
+      security_asset: {
+        ...prev.security_asset,
+        [isISIN ? 'isin' : 'ticker']: identifier.trim().toUpperCase()
+      }
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,14 +262,19 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {/* Asset Type - Always shown */}
+            {/* Step 1: Asset Type - Always shown */}
             <div className="grid gap-2">
               <Label htmlFor="asset_type">{t('assets.assetType')} *</Label>
               <Select
                 value={formData.asset_type_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, asset_type_id: value })
-                }
+                onValueChange={(value) => {
+                  setFormData({ ...formData, asset_type_id: value });
+                  // Reset progressive states when asset type changes
+                  setIdentifier('');
+                  setEnrichmentError(null);
+                  setShowManualEntry(false);
+                  setEnrichmentSuccess(false);
+                }}
                 disabled={loadingTypes}
               >
                 <SelectTrigger id="asset_type">
@@ -210,99 +290,178 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               </Select>
             </div>
 
-            {/* All other fields - Only shown when asset type is selected */}
-            {formData.asset_type_id && (
-              <>
-                <div className="grid gap-2">
-                  <Label htmlFor="name">{t('assets.assetName')} *</Label>
+            {/* Step 2: Security Type - Only for security assets */}
+            {selectedAssetType?.code === 'security' && (
+              <div className="grid gap-2">
+                <Label htmlFor="security_type">{t('assets.security.type')} *</Label>
+                <Select
+                  value={formData.security_asset?.security_type || ''}
+                  onValueChange={(val) => {
+                    setFormData({
+                      ...formData,
+                      security_asset: {
+                        ...formData.security_asset,
+                        security_type: val as SecurityAsset['security_type'],
+                      },
+                    });
+                    // Reset states when security type changes
+                    setIdentifier('');
+                    setEnrichmentError(null);
+                    setShowManualEntry(false);
+                    setEnrichmentSuccess(false);
+                  }}
+                >
+                  <SelectTrigger id="security_type">
+                    <SelectValue placeholder={t('assets.security.selectType')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="stock">{t('assets.security.types.stock')}</SelectItem>
+                    <SelectItem value="etf">{t('assets.security.types.etf')}</SelectItem>
+                    <SelectItem value="bond">{t('assets.security.types.bond')}</SelectItem>
+                    <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund')}</SelectItem>
+                    <SelectItem value="index_fund">{t('assets.security.types.indexFund')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Step 3: Identifier - Only when security type is selected */}
+            {selectedAssetType?.code === 'security' && formData.security_asset?.security_type && (
+              <div className="grid gap-2">
+                <Label htmlFor="identifier">
+                  {t('assets.security.identifier')}
+                  <span className="text-xs text-muted-foreground ml-2">
+                    ({t('assets.security.tickerOrIsin')})
+                  </span>
+                </Label>
+                <div className="flex gap-2">
                   <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
+                    id="identifier"
+                    value={identifier}
+                    onChange={(e) => {
+                      setIdentifier(e.target.value);
+                      setEnrichmentError(null);
+                    }}
+                    placeholder="z.B. AAPL oder US0378331005"
+                    disabled={enrichmentSuccess}
                   />
-                </div>
-
-                {/* Security Type field - only shown when Security is selected */}
-                {selectedAssetType?.code === 'security' && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="security_type">{t('assets.security.type')}</Label>
-                    <Select
-                      value={formData.security_asset?.security_type || ''}
-                      onValueChange={(val) =>
-                        setFormData({
-                          ...formData,
-                          security_asset: {
-                            ...formData.security_asset,
-                            security_type: val as SecurityAsset['security_type'],
-                          },
-                        })
-                      }
+                  {!enrichmentSuccess ? (
+                    <Button
+                      type="button"
+                      onClick={handleEnrichSecurity}
+                      disabled={!identifier || isEnriching}
+                      className="flex-shrink-0"
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('assets.security.selectType')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="stock">{t('assets.security.types.stock')}</SelectItem>
-                        <SelectItem value="etf">{t('assets.security.types.etf')}</SelectItem>
-                        <SelectItem value="bond">{t('assets.security.types.bond')}</SelectItem>
-                        <SelectItem value="mutual_fund">{t('assets.security.types.mutualFund')}</SelectItem>
-                        <SelectItem value="index_fund">{t('assets.security.types.indexFund')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* Conditionally render specialized forms based on asset type */}
-                {selectedAssetType?.code === 'security' && (
-                  <div className="border-t pt-4">
-                    <h4 className="text-sm font-medium mb-3">
-                      {t('assets.security.details')}
-                    </h4>
-                    <SecurityAssetForm
-                      value={formData.security_asset || {}}
-                      onChange={(value) => {
-                        setFormData({ ...formData, security_asset: value });
-                        setValidationError(null); // Clear error when user modifies
+                      {isEnriching ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Search className="h-4 w-4" />
+                      )}
+                      {isEnriching ? 'Suche...' : 'Suchen'}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setEnrichmentSuccess(false);
+                        setShowManualEntry(false);
+                        setIdentifier('');
                       }}
-                    />
+                      className="flex-shrink-0"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Ändern
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Enrichment Error with Manual Entry Option */}
+                {enrichmentError && !showManualEntry && (
+                  <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-3 text-sm">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-yellow-800 dark:text-yellow-200 font-medium">
+                          {enrichmentError}
+                        </p>
+                        <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                          Möchten Sie das Asset manuell anlegen?
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleManualEntry}
+                          className="mt-2"
+                        >
+                          Manuell anlegen
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {selectedAssetType?.code === 'insurance' && (
-                  <div className="border-t pt-4">
-                    <h4 className="text-sm font-medium mb-3">
-                      {t('assets.insurance.details')}
-                    </h4>
-                    <InsuranceAssetForm
-                      value={formData.insurance_asset || {}}
-                      onChange={(value) => setFormData({ ...formData, insurance_asset: value })}
-                    />
+                {/* Success Indicator */}
+                {enrichmentSuccess && (
+                  <div className="rounded-md bg-green-50 dark:bg-green-900/20 p-3 text-sm">
+                    <p className="text-green-800 dark:text-green-200 flex items-center gap-2">
+                      <span className="text-green-600">✓</span>
+                      Wertpapier gefunden und Felder automatisch ausgefüllt
+                    </p>
                   </div>
                 )}
+              </div>
+            )}
 
-                {selectedAssetType?.code === 'real_estate' && (
-                  <div className="border-t pt-4">
-                    <h4 className="text-sm font-medium mb-3">
-                      {t('assets.realEstate.details')}
-                    </h4>
-                    <RealEstateAssetForm
-                      value={formData.real_estate_asset || {}}
-                      onChange={(value) => setFormData({ ...formData, real_estate_asset: value })}
-                    />
-                  </div>
-                )}
+            {/* Specialized forms for non-security assets */}
+            {selectedAssetType?.code === 'insurance' && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-3">
+                  {t('assets.insurance.details')}
+                </h4>
+                <InsuranceAssetForm
+                  value={formData.insurance_asset || {}}
+                  onChange={(value) => setFormData({ ...formData, insurance_asset: value })}
+                />
+              </div>
+            )}
 
+            {selectedAssetType?.code === 'real_estate' && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-3">
+                  {t('assets.realEstate.details')}
+                </h4>
+                <RealEstateAssetForm
+                  value={formData.real_estate_asset || {}}
+                  onChange={(value) => setFormData({ ...formData, real_estate_asset: value })}
+                />
+              </div>
+            )}
+
+            {/* Remaining fields - shown after enrichment or manual entry for securities, or immediately for other types */}
+            {shouldShowRemainingFields && (
+              <>
                 <div className="border-t pt-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="currency">{t('common.currency')} *</Label>
+                    <Label htmlFor="name">{t('assets.assetName')} *</Label>
                     <Input
-                      id="currency"
-                      value={formData.currency}
-                      onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
                     />
                   </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="currency">{t('common.currency')} *</Label>
+                  <Input
+                    id="currency"
+                    value={formData.currency}
+                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                    required
+                  />
                 </div>
 
                 <div className="grid gap-2">
@@ -330,6 +489,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div className="flex items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
                     <Label htmlFor="is-active" className="text-base">
@@ -348,7 +508,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
               </>
             )}
             
-            {/* Error Display - matching DeleteAssetDialog pattern */}
+            {/* Error Display */}
             {validationError && (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 {validationError}
@@ -367,7 +527,7 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
             </Button>
             <Button
               type="submit"
-              disabled={loading || !formData.name || !formData.asset_type_id}
+              disabled={loading || !formData.name || !formData.asset_type_id || !shouldShowRemainingFields}
             >
               {loading ? t('common.loading') : t('common.create')}
             </Button>
