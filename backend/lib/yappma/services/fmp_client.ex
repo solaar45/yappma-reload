@@ -9,6 +9,10 @@ defmodule Yappma.Services.FMPClient do
   API Documentation: https://site.financialmodelingprep.com/developer/docs/quickstart
   
   Note: Only /stable endpoints are used as /api/v3 is legacy-only since Aug 2025.
+  
+  Important: FMP's /stable/search-name searches by COMPANY NAME, not ticker symbol.
+  Searching 'MSFT' finds derivative ETFs (MSFO, MSFW) but NOT Microsoft itself.
+  Must search 'Microsoft' to find MSFT ticker.
   """
 
   require Logger
@@ -24,46 +28,16 @@ defmodule Yappma.Services.FMPClient do
 
   @doc """
   Validates a ticker symbol against FMP API.
-  Uses /stable/search-name endpoint.
+  Tries direct ticker search, falls back to searching common stock names.
   Returns {:ok, security_data} if found, {:error, :not_found} otherwise.
   """
   def validate_ticker(ticker) when is_binary(ticker) do
     ticker = String.trim(ticker) |> String.upcase()
-    url = "#{@base_url}/search-name?query=#{URI.encode(ticker)}&apikey=#{api_key()}"
-
-    Logger.debug("FMP API: Validating ticker #{ticker}")
-
-    case HTTPoison.get(url, [], timeout: @timeout, recv_timeout: @recv_timeout) do
-      {:ok, %{status_code: 200, body: body}} ->
-        case Jason.decode(body) do
-          {:ok, results} when is_list(results) ->
-            # Filter for exact ticker match
-            case find_exact_ticker_match(results, ticker) do
-              {:ok, result} ->
-                Logger.info("FMP API: Ticker #{ticker} found")
-                {:ok, format_search_result(result)}
-              
-              :error ->
-                Logger.info("FMP API: Ticker #{ticker} not found (no exact match)")
-                {:error, :not_found}
-            end
-
-          {:ok, _} ->
-            Logger.info("FMP API: Ticker #{ticker} not found")
-            {:error, :not_found}
-
-          {:error, reason} ->
-            Logger.error("FMP API: Failed to decode ticker response: #{inspect(reason)}")
-            {:error, :invalid_response}
-        end
-
-      {:ok, %{status_code: status}} ->
-        Logger.error("FMP API: Unexpected status code #{status} for ticker #{ticker}")
-        {:error, :api_error}
-
-      {:error, reason} ->
-        Logger.error("FMP API: Request failed for ticker #{ticker}: #{inspect(reason)}")
-        {:error, :api_error}
+    
+    # Try ticker-based search first (searches in name field)
+    case search_and_find_ticker(ticker, ticker) do
+      {:ok, _} = result -> result
+      {:error, :not_found} -> try_common_ticker_names(ticker)
     end
   end
 
@@ -132,73 +106,36 @@ defmodule Yappma.Services.FMPClient do
 
   @doc """
   Enriches security metadata by ticker symbol.
-  Uses /stable/search-name endpoint (only available endpoint on free tier).
+  Tries ticker search first, then falls back to known company names.
   Returns {:ok, enriched_data} with available metadata or error tuple.
-  
-  Note: Returns limited data compared to legacy /api/v3/profile endpoint.
   """
   def enrich_by_ticker(ticker) when is_binary(ticker) do
     ticker = String.trim(ticker) |> String.upcase()
-    url = "#{@base_url}/search-name?query=#{URI.encode(ticker)}&apikey=#{api_key()}"
-
     Logger.info("FMP API: Enriching ticker #{ticker}")
-
-    case HTTPoison.get(url, [], timeout: @timeout, recv_timeout: @recv_timeout) do
-      {:ok, %{status_code: 200, body: body}} ->
-        parse_enrichment_response(body, ticker)
-
-      {:ok, %{status_code: 404}} ->
-        Logger.info("FMP API: Ticker #{ticker} not found")
-        {:error, :not_found}
-
-      {:ok, %{status_code: 403}} ->
-        Logger.error("FMP API: Access forbidden (403) - check API key validity")
-        {:error, :api_error}
-
-      {:ok, %{status_code: status}} ->
-        Logger.error("FMP API: Unexpected status code #{status} for ticker #{ticker}")
-        {:error, :api_error}
-
-      {:error, reason} ->
-        Logger.error("FMP API: Request failed for ticker #{ticker}: #{inspect(reason)}")
-        {:error, :network_error}
+    
+    # Try ticker-based search first
+    case search_and_extract(ticker, ticker) do
+      {:ok, _} = result -> result
+      {:error, :not_found} -> try_common_ticker_enrichment(ticker)
     end
-  rescue
-    e ->
-      Logger.error("FMP API: Exception enriching ticker #{ticker}: #{inspect(e)}")
-      {:error, :api_error}
   end
 
   @doc """
   Enriches security metadata by ISIN.
-  First searches for ISIN, then returns available data.
+  Searches for ISIN, then returns available data.
   Returns {:ok, enriched_data} with available metadata or error tuple.
   """
   def enrich_by_isin(isin) when is_binary(isin) do
     isin = String.trim(isin) |> String.upcase()
     Logger.info("FMP API: Enriching ISIN #{isin}")
 
-    # Search by ISIN directly
-    url = "#{@base_url}/search-name?query=#{URI.encode(isin)}&limit=10&apikey=#{api_key()}"
-
-    case HTTPoison.get(url, [], timeout: @timeout, recv_timeout: @recv_timeout) do
-      {:ok, %{status_code: 200, body: body}} ->
-        case parse_enrichment_response(body, isin) do
-          {:ok, data} ->
-            # Add ISIN to enriched data if not already present
-            {:ok, Map.put_new(data, :isin, isin)}
-          
-          error ->
-            error
-        end
-
-      {:ok, %{status_code: status}} ->
-        Logger.error("FMP API: Unexpected status code #{status} for ISIN #{isin}")
-        {:error, :api_error}
-
-      {:error, reason} ->
-        Logger.error("FMP API: Request failed for ISIN #{isin}: #{inspect(reason)}")
-        {:error, :network_error}
+    case search_and_extract(isin, nil) do
+      {:ok, data} ->
+        # Add ISIN to enriched data if not already present
+        {:ok, Map.put_new(data, :isin, isin)}
+      
+      error ->
+        error
     end
   end
 
@@ -246,11 +183,128 @@ defmodule Yappma.Services.FMPClient do
   end
 
   # ============================================================================
-  # Private Functions
+  # Private Functions - Search Logic
+  # ============================================================================
+
+  # Try searching by ticker, look for exact match in results
+  defp search_and_find_ticker(query, expected_ticker) do
+    url = "#{@base_url}/search-name?query=#{URI.encode(query)}&apikey=#{api_key()}"
+    Logger.debug("FMP API: Searching for '#{query}' expecting ticker '#{expected_ticker}'")
+
+    case HTTPoison.get(url, [], timeout: @timeout, recv_timeout: @recv_timeout) do
+      {:ok, %{status_code: 200, body: body}} ->
+        case Jason.decode(body) do
+          {:ok, results} when is_list(results) ->
+            case find_exact_ticker_match(results, expected_ticker) do
+              {:ok, result} ->
+                Logger.info("FMP API: Found exact match for ticker #{expected_ticker}")
+                {:ok, format_search_result(result)}
+              
+              :error ->
+                Logger.debug("FMP API: No exact match for ticker #{expected_ticker} in #{length(results)} results")
+                {:error, :not_found}
+            end
+
+          {:ok, _} ->
+            {:error, :not_found}
+
+          {:error, reason} ->
+            Logger.error("FMP API: Failed to decode response: #{inspect(reason)}")
+            {:error, :invalid_response}
+        end
+
+      {:ok, %{status_code: status}} ->
+        Logger.error("FMP API: Unexpected status code #{status}")
+        {:error, :api_error}
+
+      {:error, reason} ->
+        Logger.error("FMP API: Request failed: #{inspect(reason)}")
+        {:error, :api_error}
+    end
+  end
+
+  # Search and extract metadata for enrichment
+  defp search_and_extract(query, expected_ticker) do
+    url = "#{@base_url}/search-name?query=#{URI.encode(query)}&apikey=#{api_key()}"
+
+    case HTTPoison.get(url, [], timeout: @timeout, recv_timeout: @recv_timeout) do
+      {:ok, %{status_code: 200, body: body}} ->
+        parse_enrichment_response(body, query, expected_ticker)
+
+      {:ok, %{status_code: 404}} ->
+        Logger.info("FMP API: Not found (404) for query #{query}")
+        {:error, :not_found}
+
+      {:ok, %{status_code: 403}} ->
+        Logger.error("FMP API: Access forbidden (403) - check API key validity")
+        {:error, :api_error}
+
+      {:ok, %{status_code: status}} ->
+        Logger.error("FMP API: Unexpected status code #{status}")
+        {:error, :api_error}
+
+      {:error, reason} ->
+        Logger.error("FMP API: Request failed: #{inspect(reason)}")
+        {:error, :network_error}
+    end
+  rescue
+    e ->
+      Logger.error("FMP API: Exception during search: #{inspect(e)}")
+      {:error, :api_error}
+  end
+
+  # Try common ticker to company name mappings
+  defp try_common_ticker_names(ticker) do
+    company_name = ticker_to_company_name(ticker)
+    
+    if company_name do
+      Logger.info("FMP API: Trying company name search for #{ticker} -> #{company_name}")
+      search_and_find_ticker(company_name, ticker)
+    else
+      Logger.info("FMP API: No known company name mapping for ticker #{ticker}")
+      {:error, :not_found}
+    end
+  end
+
+  # Try enrichment with company name fallback
+  defp try_common_ticker_enrichment(ticker) do
+    company_name = ticker_to_company_name(ticker)
+    
+    if company_name do
+      Logger.info("FMP API: Trying company name enrichment for #{ticker} -> #{company_name}")
+      search_and_extract(company_name, ticker)
+    else
+      Logger.info("FMP API: Ticker #{ticker} not found")
+      {:error, :not_found}
+    end
+  end
+
+  # Map common tickers to company names for fallback search
+  # FMP's search-name searches company names, not tickers!
+  defp ticker_to_company_name(ticker) do
+    case String.upcase(ticker) do
+      "AAPL" -> "Apple"
+      "MSFT" -> "Microsoft"
+      "GOOGL" -> "Alphabet"
+      "GOOG" -> "Alphabet"
+      "AMZN" -> "Amazon"
+      "NVDA" -> "NVIDIA"
+      "TSLA" -> "Tesla"
+      "META" -> "Meta"
+      "BRK.A" -> "Berkshire"
+      "BRK.B" -> "Berkshire"
+      "JPM" -> "JPMorgan"
+      "V" -> "Visa"
+      "WMT" -> "Walmart"
+      _ -> nil
+    end
+  end
+
+  # ============================================================================
+  # Private Functions - Data Processing
   # ============================================================================
 
   # Find exact ticker match in search results
-  # FMP's search-name does text search, so "MSFT" also matches "MSFO"
   defp find_exact_ticker_match(results, ticker) when is_list(results) do
     ticker_upper = String.upcase(ticker)
     
@@ -263,38 +317,39 @@ defmodule Yappma.Services.FMPClient do
   end
 
   # Parse enrichment response from FMP search endpoint
-  defp parse_enrichment_response(body, identifier) do
+  defp parse_enrichment_response(body, query, expected_ticker) do
     case Jason.decode(body) do
       {:ok, results} when is_list(results) and length(results) > 0 ->
-        # For ticker search, find exact match
-        identifier_upper = String.upcase(identifier)
-        
-        result = case find_exact_ticker_match(results, identifier) do
-          {:ok, match} -> match
-          :error -> List.first(results)  # Fallback to first result for ISIN
+        # Try to find exact ticker match if we know what we're looking for
+        result = if expected_ticker do
+          case find_exact_ticker_match(results, expected_ticker) do
+            {:ok, match} -> match
+            :error -> List.first(results)  # Fallback to first result
+          end
+        else
+          List.first(results)
         end
         
-        extract_enriched_metadata(result, identifier)
+        extract_enriched_metadata(result, query)
 
       {:ok, []} ->
-        Logger.warning("FMP API: No data found for #{identifier}")
+        Logger.warning("FMP API: No data found for #{query}")
         {:error, :not_found}
 
       {:error, reason} ->
-        Logger.error("FMP API: Failed to parse enrichment response: #{inspect(reason)}")
+        Logger.error("FMP API: Failed to parse response: #{inspect(reason)}")
         {:error, :parse_error}
     end
   end
 
   # Extract and format enriched metadata from FMP search response
-  # Note: /stable/search-name returns limited data compared to legacy /api/v3/profile
   defp extract_enriched_metadata(data, identifier) do
     metadata = %{
       ticker: Map.get(data, "symbol"),
       name: Map.get(data, "name"),
       security_type: determine_security_type(data),
-      exchange: Map.get(data, "stockExchange"),
-      exchange_short: Map.get(data, "exchangeShortName"),
+      exchange: Map.get(data, "stockExchange") || Map.get(data, "exchange"),
+      exchange_short: Map.get(data, "exchangeShortName") || Map.get(data, "exchange"),
       currency: Map.get(data, "currency")
     }
     |> remove_nil_values()
@@ -314,12 +369,10 @@ defmodule Yappma.Services.FMPClient do
 
   # Determine security type from limited FMP search data
   defp determine_security_type(data) do
-    # Search endpoint doesn't provide detailed type info
-    # Default to "stock" for now
     symbol = Map.get(data, "symbol", "")
     
     cond do
-      String.contains?(symbol, ".") -> "etf"  # Many ETFs have dots in symbols
+      String.contains?(symbol, ".") -> "etf"
       true -> "stock"
     end
   end
@@ -330,8 +383,8 @@ defmodule Yappma.Services.FMPClient do
       symbol: Map.get(result, "symbol"),
       name: Map.get(result, "name"),
       currency: Map.get(result, "currency"),
-      exchange: Map.get(result, "stockExchange"),
-      exchange_short: Map.get(result, "exchangeShortName"),
+      exchange: Map.get(result, "stockExchange") || Map.get(result, "exchange"),
+      exchange_short: Map.get(result, "exchangeShortName") || Map.get(result, "exchange"),
       type: "ticker"
     }
   end
