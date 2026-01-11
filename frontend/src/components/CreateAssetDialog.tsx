@@ -24,12 +24,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Plus, AlertCircle } from 'lucide-react';
 import { useAccounts } from '@/lib/api/hooks';
 import InstitutionLogo from '@/components/InstitutionLogo';
 import { SecurityAssetForm } from '@/components/portfolio/SecurityAssetForm';
 import { InsuranceAssetForm } from '@/components/portfolio/InsuranceAssetForm';
 import { RealEstateAssetForm } from '@/components/portfolio/RealEstateAssetForm';
+import { useToast } from '@/hooks/use-toast';
 
 interface CreateAssetDialogProps {
   onSuccess?: () => void;
@@ -39,9 +40,11 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
   const { t } = useTranslation();
   const { userId } = useUser();
   const { createAsset, loading, error } = useCreateAsset();
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
     name: string;
     asset_type_id: string;
@@ -85,12 +88,16 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
 
     if (open) {
       fetchAssetTypes();
+      setValidationError(null);
     }
   }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId || !formData.asset_type_id) return;
+
+    // Clear previous validation errors
+    setValidationError(null);
 
     // Helper to convert null values to undefined to satisfy API types
     const sanitize = <T,>(obj?: T) => {
@@ -110,26 +117,56 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       security_type?: string;
     } | undefined;
 
-    const result = await createAsset({
-      user_id: userId,
-      asset_type_id: parseInt(formData.asset_type_id),
-      name: formData.name,
-      currency: formData.currency,
-      is_active: formData.is_active,
-      security_asset: sanitizedSecurity,
-      ...(accountId ? { account_id: parseInt(accountId) } : {}),
-    });
-
-    if (result) {
-      setOpen(false);
-      setFormData({
-        name: '',
-        asset_type_id: '',
-        currency: 'EUR',
-        is_active: true,
+    try {
+      const result = await createAsset({
+        user_id: userId,
+        asset_type_id: parseInt(formData.asset_type_id),
+        name: formData.name,
+        currency: formData.currency,
+        is_active: formData.is_active,
+        security_asset: sanitizedSecurity,
+        ...(accountId ? { account_id: parseInt(accountId) } : {}),
       });
-      setAccountId('');
-      onSuccess?.();
+
+      if (result) {
+        setOpen(false);
+        setFormData({
+          name: '',
+          asset_type_id: '',
+          currency: 'EUR',
+          is_active: true,
+        });
+        setAccountId('');
+        toast({
+          title: t('common.success') || 'Success',
+          description: t('assets.created') || 'Asset created successfully',
+        });
+        onSuccess?.();
+      }
+    } catch (err: any) {
+      // Handle specific security validation errors
+      const errorMessage = err?.message || err?.toString() || '';
+      
+      if (errorMessage.includes('security_not_found')) {
+        const identifier = sanitizedSecurity?.ticker || sanitizedSecurity?.isin || 'unknown';
+        setValidationError(
+          t('assets.security.notFoundMessage', { 
+            identifier,
+            defaultValue: `The security "${identifier}" could not be found. Please verify the ticker or ISIN.`
+          })
+        );
+      } else if (errorMessage.includes('validation_failed')) {
+        setValidationError(
+          t('assets.security.validationFailed') || 'Security validation failed. Please try again later.'
+        );
+      } else {
+        // Generic error
+        toast({
+          title: t('common.error') || 'Error',
+          description: errorMessage || t('assets.createError') || 'Failed to create asset',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -219,7 +256,10 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 </h4>
                 <SecurityAssetForm
                   value={formData.security_asset || {}}
-                  onChange={(value) => setFormData({ ...formData, security_asset: value })}
+                  onChange={(value) => {
+                    setFormData({ ...formData, security_asset: value });
+                    setValidationError(null); // Clear error when user modifies
+                  }}
                 />
               </div>
             )}
@@ -300,7 +340,19 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
               />
             </div>
-            {error && <div className="text-sm text-destructive">{error}</div>}
+            
+            {/* Security Validation Error */}
+            {validationError && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive bg-destructive/10 p-3">
+                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-destructive">Validation Error</p>
+                  <p className="text-sm text-destructive/90 mt-1">{validationError}</p>
+                </div>
+              </div>
+            )}
+            
+            {error && !validationError && <div className="text-sm text-destructive">{error}</div>}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
