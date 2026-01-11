@@ -28,6 +28,16 @@ import InstitutionLogo from '@/components/InstitutionLogo';
 import { SecurityAssetForm } from '@/components/portfolio/SecurityAssetForm';
 import { InsuranceAssetForm } from '@/components/portfolio/InsuranceAssetForm';
 import { RealEstateAssetForm } from '@/components/portfolio/RealEstateAssetForm';
+import { SecuritySearchCombobox } from '@/components/portfolio/SecuritySearchCombobox';
+
+interface SecurityResult {
+  ticker: string;
+  name: string;
+  exchange?: string;
+  exchange_short?: string;
+  currency?: string;
+  type?: string;
+}
 
 interface EditAssetDialogProps {
   asset: Asset;
@@ -41,6 +51,10 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
+  
+  // Security search state
+  const [selectedSecurity, setSelectedSecurity] = useState<SecurityResult | undefined>();
+  
   const [formData, setFormData] = useState<{
     name: string;
     asset_type_id: string;
@@ -78,6 +92,17 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
         insurance_asset: asset.insurance_asset ?? undefined,
         real_estate_asset: asset.real_estate_asset ?? undefined,
       });
+      
+      // Initialize selectedSecurity from existing asset data
+      if (asset.security_asset?.ticker) {
+        setSelectedSecurity({
+          ticker: asset.security_asset.ticker,
+          name: asset.name,
+          currency: asset.currency,
+        });
+      } else {
+        setSelectedSecurity(undefined);
+      }
     }
   }, [open, asset]);
 
@@ -146,15 +171,6 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="edit-name">{t('assets.assetName')} *</Label>
-              <Input
-                id="edit-name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
               <Label htmlFor="edit-asset-type">{t('assets.assetType')} *</Label>
               <Select
                 value={formData.asset_type_id}
@@ -203,6 +219,30 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
               </div>
             )}
 
+            {/* Security Search - when security type is selected */}
+            {selectedAssetType?.code === 'security' && formData.security_asset?.security_type && (
+              <div className="grid gap-2">
+                <Label>{t('common.tickerOrName')}</Label>
+                <SecuritySearchCombobox
+                  value={selectedSecurity}
+                  onSelect={(security) => {
+                    setSelectedSecurity(security);
+                    setFormData(prev => ({
+                      ...prev,
+                      name: security.name,
+                      currency: security.currency || 'USD',
+                      security_asset: {
+                        ...prev.security_asset,
+                        ticker: security.ticker,
+                        isin: undefined, // Clear ISIN as we're using ticker
+                      }
+                    }));
+                  }}
+                  placeholder={t('common.search')}
+                />
+              </div>
+            )}
+
             {/* Conditionally render specialized forms based on asset type */}
             {selectedAssetType?.code === 'security' && (
               <div className="border-t pt-4">
@@ -236,29 +276,13 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
 
             <div className="border-t pt-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-account">{t('assets.linkedAccount')} ({t('common.optional')})</Label>
-                <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
-                  <SelectTrigger id="edit-account">
-                    <SelectValue placeholder={t('assets.noAccountSelected')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">{t('assets.noAccount')}</SelectItem>
-                    {accounts
-                      ?.filter((a) => a.is_active)
-                      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-                      .map((a) => (
-                        <SelectItem key={a.id} value={a.id.toString()}>
-                          <div className="flex items-center gap-2">
-                            <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
-                            <div className="flex flex-col">
-                              <span>{a.name}</span>
-                              <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="edit-name">{t('assets.assetName')} *</Label>
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
               </div>
             </div>
 
@@ -271,6 +295,33 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
                 required
               />
             </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-account">{t('assets.linkedAccount')} ({t('common.optional')})</Label>
+              <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
+                <SelectTrigger id="edit-account">
+                  <SelectValue placeholder={t('assets.noAccountSelected')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">{t('assets.noAccount')}</SelectItem>
+                  {accounts
+                    ?.filter((a) => a.is_active)
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map((a) => (
+                      <SelectItem key={a.id} value={a.id.toString()}>
+                        <div className="flex items-center gap-2">
+                          <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                          <div className="flex flex-col">
+                            <span>{a.name}</span>
+                            <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="is-active" className="text-base">
