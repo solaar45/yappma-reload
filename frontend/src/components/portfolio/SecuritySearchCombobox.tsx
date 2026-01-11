@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -37,13 +38,17 @@ export function SecuritySearchCombobox({
   value,
   onSelect,
   disabled = false,
-  placeholder = 'Search by ticker or company name...',
+  placeholder,
 }: SecuritySearchComboboxProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<SecurityResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const debouncedQuery = useDebounce(searchQuery, 300);
+
+  // Use translated placeholder if none provided
+  const effectivePlaceholder = placeholder || t('common.tickerOrName');
 
   // Search function
   const searchSecurities = useCallback(async (query: string) => {
@@ -76,22 +81,8 @@ export function SecuritySearchCombobox({
 
   // Format display label
   const getDisplayLabel = (security?: SecurityResult) => {
-    if (!security) return placeholder;
+    if (!security) return effectivePlaceholder;
     return `${security.ticker} - ${security.name}`;
-  };
-
-  // Format result item with exchange info
-  const formatResultItem = (security: SecurityResult) => {
-    const parts = [
-      security.ticker,
-      security.name,
-    ];
-    
-    if (security.exchange_short || security.exchange) {
-      parts.push(`(${security.exchange_short || security.exchange})`);
-    }
-    
-    return parts.join(' ');
   };
 
   return (
@@ -113,7 +104,7 @@ export function SecuritySearchCombobox({
       <PopoverContent className="w-full p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder={placeholder}
+            placeholder={t('common.search')}
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
@@ -121,15 +112,15 @@ export function SecuritySearchCombobox({
             {isSearching ? (
               <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Searching...</span>
+                <span>{t('common.searching')}</span>
               </div>
             ) : searchQuery.length < 2 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
-                Type at least 2 characters to search
+                {t('common.typeToSearch')}
               </div>
             ) : (
               <div className="py-6 text-center text-sm text-muted-foreground">
-                No results found
+                {t('common.noResults')}
               </div>
             )}
           </CommandEmpty>
