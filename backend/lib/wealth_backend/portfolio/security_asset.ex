@@ -56,14 +56,7 @@ defmodule WealthBackend.Portfolio.SecurityAsset do
       :country_of_domicile,
       :benchmark_index
     ])
-    |> validate_inclusion(:security_type, [
-      "stock",
-      "etf",
-      "bond",
-      "mutual_fund",
-      "index_fund",
-      nil
-    ])
+    # Removed validate_inclusion for security_type to allow any value from FMP API
     |> validate_inclusion(:distribution_type, [
       "accumulating",
       "distributing",
