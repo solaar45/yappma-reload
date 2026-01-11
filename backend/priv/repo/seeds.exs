@@ -33,8 +33,6 @@ IO.puts("✅ Creating asset types...")
 asset_types = [
   %{code: "cash", description: "Cash & Accounts"},
   %{code: "security", description: "Securities"},
-  %{code: "crypto", description: "Crypto"},
-  %{code: "commodity", description: "Commodities"},
   %{code: "real_estate", description: "Real Estate"},
   %{code: "collectible", description: "Valuables"},
   %{code: "insurance", description: "Insurance"},
@@ -66,11 +64,6 @@ IO.puts("✅ Creating demo user...")
 
 # Mark as confirmed
 user |> Ecto.Changeset.change(%{confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)}) |> Repo.update!()
-
-# ============================================================================
-# 3. Create Institutions (Global Master Data)
-# ============================================================================
-IO.puts("✅ Creating institutions...")
 
 # ============================================================================
 # 3. Create Institutions (Global Master Data)
@@ -141,7 +134,7 @@ institutions_data = [
   %{name: "AOK", website: "aok.de", type: "insurance", category: "insurance", country: "DE"},
   %{name: "BARMER", website: "barmer.de", type: "insurance", category: "insurance", country: "DE"},
 
-  # --- Crypto ---
+  # --- Crypto Exchanges (moved to "other" type, crypto category) ---
   %{name: "Binance", website: "binance.com", type: "other", category: "crypto", country: "MT"},
   %{name: "Coinbase", website: "coinbase.com", type: "other", category: "crypto", country: "US"},
   %{name: "Kraken", website: "kraken.com", type: "other", category: "crypto", country: "US"},
@@ -375,14 +368,14 @@ Enum.each([
   })
 end)
 
-# Bargeld Snapshots
+# Depot Snapshots
 Enum.each([
-  {~D[2025-10-31], "500.00"},
-  {~D[2025-11-30], "450.00"},
-  {~D[2025-12-30], "600.00"}
+  {~D[2025-10-31], "28000.00"},
+  {~D[2025-11-30], "29500.00"},
+  {~D[2025-12-30], "31000.00"}
 ], fn {date, balance} ->
   {:ok, _} = Analytics.create_account_snapshot(user.id, %{
-    account_id: cash_account.id,
+    account_id: brokerage_account.id,
     snapshot_date: date,
     balance: Decimal.new(balance),
     currency: "EUR"
@@ -394,125 +387,90 @@ end)
 # ============================================================================
 IO.puts("✅ Creating asset snapshots...")
 
-# MSCI World ETF Snapshots (100 Stück)
+# MSCI World ETF Snapshots
 Enum.each([
-  {~D[2025-10-31], "100", "85.50"},
-  {~D[2025-11-30], "100", "87.20"},
-  {~D[2025-12-30], "100", "89.75"}
-], fn {date, qty, price} ->
+  {~D[2025-10-31], "110.50", "15000.00"},
+  {~D[2025-11-30], "112.80", "15500.00"},
+  {~D[2025-12-30], "115.20", "16000.00"}
+], fn {date, price, value} ->
   {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: etf_msci_world.id,
     snapshot_date: date,
-    quantity: Decimal.new(qty),
-    market_price_per_unit: Decimal.new(price),
-    value: Decimal.mult(Decimal.new(qty), Decimal.new(price))
+    quantity: Decimal.new("138.5"),
+    price_per_unit: Decimal.new(price),
+    total_value: Decimal.new(value),
+    currency: "EUR"
   })
 end)
 
-# Vanguard All-World ETF Snapshots (50 Stück)
+# Vanguard All-World Snapshots
 Enum.each([
-  {~D[2025-10-31], "50", "98.00"},
-  {~D[2025-11-30], "50", "99.50"},
-  {~D[2025-12-30], "50", "101.20"}
-], fn {date, qty, price} ->
+  {~D[2025-10-31], "108.20", "10820.00"},
+  {~D[2025-11-30], "110.00", "11000.00"},
+  {~D[2025-12-30], "112.50", "11250.00"}
+], fn {date, price, value} ->
   {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: etf_vanguard.id,
     snapshot_date: date,
-    quantity: Decimal.new(qty),
-    market_price_per_unit: Decimal.new(price),
-    value: Decimal.mult(Decimal.new(qty), Decimal.new(price))
+    quantity: Decimal.new("100.0"),
+    price_per_unit: Decimal.new(price),
+    total_value: Decimal.new(value),
+    currency: "EUR"
   })
 end)
 
-# Bitcoin ETF Snapshots (20 Stück)
+# Bitcoin ETF Snapshots
 Enum.each([
-  {~D[2025-10-31], "20", "42.50"},
-  {~D[2025-11-30], "20", "45.80"},
-  {~D[2025-12-30], "20", "48.25"}
-], fn {date, qty, price} ->
+  {~D[2025-10-31], "45.30", "2265.00"},
+  {~D[2025-11-30], "48.00", "2400.00"},
+  {~D[2025-12-30], "51.50", "2575.00"}
+], fn {date, price, value} ->
   {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: bitcoin_etf.id,
     snapshot_date: date,
-    quantity: Decimal.new(qty),
-    market_price_per_unit: Decimal.new(price),
-    value: Decimal.mult(Decimal.new(qty), Decimal.new(price))
+    quantity: Decimal.new("50.0"),
+    price_per_unit: Decimal.new(price),
+    total_value: Decimal.new(value),
+    currency: "EUR"
   })
 end)
 
-# Haftpflicht Snapshots (Rückkaufswert = 0, keine Quantity)
-Enum.each([
-  {~D[2025-10-31], "0"},
-  {~D[2025-11-30], "0"},
-  {~D[2025-12-30], "0"}
-], fn {date, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
-    asset_id: liability_insurance.id,
-    snapshot_date: date,
-    value: Decimal.new(value),
-    note: "Keine Rückkaufswert bei Haftpflicht"
-  })
-end)
-
-# Lebensversicherung Snapshots (steigender Rückkaufswert)
-Enum.each([
-  {~D[2025-10-31], "18500.00"},
-  {~D[2025-11-30], "18750.00"},
-  {~D[2025-12-30], "19000.00"}
-], fn {date, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
-    asset_id: life_insurance.id,
-    snapshot_date: date,
-    value: Decimal.new(value),
-    note: "Rückkaufswert"
-  })
-end)
-
-# Immobilie Snapshots (steigende Bewertung)
-Enum.each([
-  {~D[2025-10-31], "480000.00"},
-  {~D[2025-11-30], "482000.00"},
-  {~D[2025-12-30], "485000.00"}
-], fn {date, value} ->
+# Immobilie Snapshots (gleicher Wert, aber für Tracking)
+Enum.each(dates, fn date ->
   {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: apartment.id,
     snapshot_date: date,
-    value: Decimal.new(value),
-    note: "Marktwertschätzung"
+    quantity: Decimal.new("1.0"),
+    price_per_unit: Decimal.new("480000.00"),
+    total_value: Decimal.new("480000.00"),
+    currency: "EUR"
   })
 end)
 
 # Bargeld Snapshots
 Enum.each([
-  {~D[2025-10-31], "800.00"},
-  {~D[2025-11-30], "750.00"},
-  {~D[2025-12-30], "900.00"}
+  {~D[2025-10-31], "500.00"},
+  {~D[2025-11-30], "450.00"},
+  {~D[2025-12-30], "600.00"}
 ], fn {date, value} ->
   {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: cash_home.id,
     snapshot_date: date,
-    value: Decimal.new(value)
+    quantity: Decimal.new("1.0"),
+    price_per_unit: Decimal.new(value),
+    total_value: Decimal.new(value),
+    currency: "EUR"
   })
 end)
 
-# ============================================================================
-# Summary
-# ============================================================================
-IO.puts("\n✅ Seed process completed!\n")
+IO.puts("\n✅ Seeding completed successfully!\n")
 IO.puts("📊 Summary:")
-IO.puts("   - User: #{user.email} (ID: #{user.id})")
-IO.puts("   - Institutions: 3")
+IO.puts("   - Asset Types: #{length(asset_types)}")
+IO.puts("   - Institutions: #{map_size(institutions_map)}")
 IO.puts("   - Accounts: 4")
 IO.puts("   - Assets: 8")
-IO.puts("   - Account Snapshots: #{3 * 3} (3 months × 3 accounts)")
-IO.puts("   - Asset Snapshots: #{7 * 3} (3 months × 7 assets)")
-
-net_worth = Analytics.calculate_net_worth(user.id)
-IO.puts("\n💰 Current Net Worth (#{Date.utc_today()}):")
-IO.puts("   - Total: €#{net_worth.total}")
-IO.puts("   - Accounts: €#{net_worth.accounts}")
-IO.puts("   - Assets: €#{net_worth.assets}")
-
-IO.puts("\n🚀 Test the API:")
-IO.puts("   curl http://localhost:4000/api/users")
-IO.puts("   curl http://localhost:4000/api/dashboard/net_worth?user_id=#{user.id}")
-IO.puts("")
+IO.puts("   - Account Snapshots: 9")
+IO.puts("   - Asset Snapshots: 15")
+IO.puts("\n🎉 You can now log in with:")
+IO.puts("   Email: demo@yappma.dev")
+IO.puts("   Password: password1234\n")
