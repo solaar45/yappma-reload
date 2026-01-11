@@ -5,10 +5,13 @@ defmodule Yappma.Services.FMPClient do
   
   Get your API key at: https://site.financialmodelingprep.com/
   Free tier: 250 API calls total
+  
+  API Documentation: https://site.financialmodelingprep.com/developer/docs/quickstart
   """
 
   require Logger
 
+  # Updated base URLs according to FMP documentation
   @base_url "https://financialmodelingprep.com/stable"
   @api_v3 "https://financialmodelingprep.com/api/v3"
   @timeout 10_000
@@ -20,11 +23,12 @@ defmodule Yappma.Services.FMPClient do
 
   @doc """
   Validates a ticker symbol against FMP API.
+  Uses /stable/search-name endpoint.
   Returns {:ok, security_data} if found, {:error, :not_found} otherwise.
   """
   def validate_ticker(ticker) when is_binary(ticker) do
     ticker = String.trim(ticker) |> String.upcase()
-    url = "#{@base_url}/search-symbol?query=#{URI.encode(ticker)}&apikey=#{api_key()}"
+    url = "#{@base_url}/search-name?query=#{URI.encode(ticker)}&apikey=#{api_key()}"
 
     Logger.debug("FMP API: Validating ticker #{ticker}")
 
@@ -56,26 +60,24 @@ defmodule Yappma.Services.FMPClient do
 
   @doc """
   Validates an ISIN against FMP API.
+  Note: ISIN endpoint might not be available on free tier.
   Returns {:ok, security_data} if found, {:error, :not_found} otherwise.
   """
   def validate_isin(isin) when is_binary(isin) do
     isin = String.trim(isin) |> String.upcase()
-    url = "#{@base_url}/search-isin?isin=#{URI.encode(isin)}&apikey=#{api_key()}"
+    # Try search by ISIN in the general search first
+    url = "#{@base_url}/search-name?query=#{URI.encode(isin)}&apikey=#{api_key()}"
 
     Logger.debug("FMP API: Validating ISIN #{isin}")
 
     case HTTPoison.get(url, [], timeout: @timeout, recv_timeout: @recv_timeout) do
       {:ok, %{status_code: 200, body: body}} ->
         case Jason.decode(body) do
-          {:ok, result} when is_map(result) and map_size(result) > 0 ->
+          {:ok, [result | _]} when is_map(result) ->
             Logger.info("FMP API: ISIN #{isin} found")
             {:ok, format_isin_result(result)}
 
-          {:ok, result} when is_map(result) ->
-            Logger.info("FMP API: ISIN #{isin} not found (empty result)")
-            {:error, :not_found}
-
-          {:ok, _} ->
+          {:ok, []} ->
             Logger.info("FMP API: ISIN #{isin} not found")
             {:error, :not_found}
 
@@ -122,6 +124,7 @@ defmodule Yappma.Services.FMPClient do
 
   @doc """
   Enriches security metadata by ticker symbol.
+  Uses /api/v3/profile endpoint for detailed company data.
   Returns {:ok, enriched_data} with comprehensive metadata or error tuple.
   """
   def enrich_by_ticker(ticker) when is_binary(ticker) do
@@ -185,14 +188,14 @@ defmodule Yappma.Services.FMPClient do
   """
   def convert_isin_to_ticker(isin) when is_binary(isin) do
     isin = String.trim(isin) |> String.upcase()
-    url = "#{@base_url}/search-isin?isin=#{URI.encode(isin)}&apikey=#{api_key()}"
+    url = "#{@base_url}/search-name?query=#{URI.encode(isin)}&apikey=#{api_key()}"
 
     Logger.debug("FMP API: Converting ISIN #{isin} to ticker")
 
     case HTTPoison.get(url, [], timeout: @timeout, recv_timeout: @recv_timeout) do
       {:ok, %{status_code: 200, body: body}} ->
         case Jason.decode(body) do
-          {:ok, result} when is_map(result) and map_size(result) > 0 ->
+          {:ok, [result | _]} when is_map(result) ->
             case Map.get(result, "symbol") do
               nil ->
                 Logger.warning("FMP API: No ticker found for ISIN #{isin}")
@@ -203,7 +206,7 @@ defmodule Yappma.Services.FMPClient do
                 {:ok, ticker}
             end
 
-          {:ok, _} ->
+          {:ok, []} ->
             Logger.info("FMP API: ISIN #{isin} not found")
             {:error, :not_found}
 
@@ -331,7 +334,7 @@ defmodule Yappma.Services.FMPClient do
   defp format_isin_result(result) do
     %{
       symbol: Map.get(result, "symbol"),
-      name: Map.get(result, "companyName"),
+      name: Map.get(result, "name"),
       isin: Map.get(result, "isin"),
       type: "isin"
     }
