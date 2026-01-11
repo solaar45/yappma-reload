@@ -98,7 +98,8 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
           ticker: asset.security_asset.ticker,
           name: asset.name,
           currency: asset.currency,
-          type: asset.security_asset.security_type,
+          // Convert null to undefined for SecurityResult type
+          type: asset.security_asset.security_type ?? undefined,
         });
       } else {
         setSelectedSecurity(undefined);
@@ -204,7 +205,8 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
                       security_asset: {
                         ...prev.security_asset,
                         ticker: security.ticker,
-                        security_type: security.type,  // Auto-populated from API
+                        // Cast security.type to the expected union type
+                        security_type: security.type as SecurityAsset['security_type'],
                         isin: undefined,
                       }
                     }));
