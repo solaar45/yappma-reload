@@ -25,7 +25,7 @@ config :wealth_backend, WealthBackendWeb.Endpoint,
 
 # Financial Modeling Prep API Configuration
 # Used for security validation (ticker/ISIN lookup)
-config :yappma, :fmp_api,
+config :wealth_backend, :fmp_api,
   api_key: System.get_env("FMP_API_KEY"),
   base_url: "https://financialmodelingprep.com/stable"
 
