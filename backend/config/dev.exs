@@ -1,9 +1,28 @@
 import Config
 
-# Load .env file in development (only if dotenvy is available)
-if Code.ensure_loaded?(Dotenvy) and File.exists?(".env") do
-  Dotenvy.source!(".env")
-  |> Enum.each(fn {k, v} -> System.put_env(k, v) end)
+# Load .env file in development manually to ensure System env vars are set
+# This avoids issues where Dotenvy might not be loaded yet during config evaluation
+if File.exists?(".env") do
+  File.stream!(".env")
+  |> Stream.map(&String.trim/1)
+  |> Stream.reject(&(&1 == "" or String.starts_with?(&1, "#")))
+  |> Enum.each(fn line ->
+    # Handle "export KEY=VAL" and "KEY=VAL"
+    line = String.replace_prefix(line, "export ", "")
+    
+    case String.split(line, "=", parts: 2) do
+      [key, val] ->
+        key = String.trim(key)
+        # Remove surrounding quotes from value if present
+        value = val 
+                |> String.trim()
+                |> String.replace(~r/^["']|["']$/, "")
+        
+        System.put_env(key, value)
+      _ -> 
+        :ok
+    end
+  end)
 end
 
 # Configure your database
