@@ -312,13 +312,17 @@
     "other": "Sonstige"
   },
   "accountTypes": {
-  "checking": "Girokonto",
-  "savings": "Sparkonto",
-  "credit_card": "Kreditkarte",
-  "brokerage": "Depot",
-  "insurance": "Versicherung",
-  "cash": "Bargeld",
-  "other": "Sonstige"
+    "checking": "Girokonto",
+    "savings": "Tagesgeld",
+    "savings_account": "Sparkonto",
+    "fixed_deposit": "Festgeld",
+    "brokerage": "Depot",
+    "wallet": "Wallet",
+    "credit_card": "Kreditkarte",
+    "loan": "Kredit",
+    "insurance": "Versicherung",
+    "cash": "Bargeld",
+    "other": "Sonstiges"
   },
   "institutions": {
     "title": "Institutionen",
