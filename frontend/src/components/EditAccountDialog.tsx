@@ -134,7 +134,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
               </div>
               {institutionsLoading ? (
                 <div className="flex items-center justify-center h-10 border rounded-md bg-muted">
-                  <span className="text-sm text-muted-foreground">{t('accounts.loadingInstitutions')}</span>
+                  <span className="text-sm text-muted-foreground">{t('accounts.loadingInstitutions') || 'Loading...'}</span>
                 </div>
               ) : institutions && institutions.length > 0 ? (
                 <Select value={institutionId} onValueChange={setInstitutionId}>
@@ -178,7 +178,11 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                 <SelectContent>
                   {ACCOUNT_TYPES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                      {/* Using the new translation keys for account types */}
+                      {/* Inside component usage of t function needs to be accessed from hook */}
+                      {/* But we can't use t inside the map if it's defined outside component */}
+                      {/* So we'll use t from the hook inside the component */}
+                      <AccountTypeLabel type={t.value} label={t.label} />
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -230,4 +234,10 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
       </DialogContent>
     </Dialog>
   );
+}
+
+// Helper component to translate account types inside the SelectItem
+function AccountTypeLabel({ type, label }: { type: string, label: string }) {
+  const { t } = useTranslation();
+  return <>{t(`accountTypes.${type}`, { defaultValue: label })}</>;
 }
