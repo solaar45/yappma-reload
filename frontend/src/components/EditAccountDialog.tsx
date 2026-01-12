@@ -56,7 +56,10 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
   const { institutions, loading: institutionsLoading } = useInstitutions({ userId: userId! });
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [name, setName] = useState(account.name);
+  
+  // If the account name is "-", treat it as empty for the input field
+  const [name, setName] = useState(account.name === '-' ? '' : account.name);
+  
   const [type, setType] = useState(account.type);
   const [currency, setCurrency] = useState(account.currency);
   const [institutionId, setInstitutionId] = useState(account.institution_id?.toString() || '');
@@ -65,7 +68,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
   // Reset form when dialog opens or account changes
   useEffect(() => {
     if (open) {
-      setName(account.name);
+      setName(account.name === '-' ? '' : account.name);
       setType(account.type);
       setCurrency(account.currency);
       setInstitutionId(account.institution_id?.toString() || '');
@@ -80,16 +83,15 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
       return;
     }
     
-    // We send name as-is, even if empty (as per request).
-    // If backend fails due to NOT NULL constraint, we might have an issue.
-    // Assuming user wants to allow empty names.
-    
+    // Send "-" if empty to pass validation
+    const nameToSend = name.trim() || "-";
+
     setLoading(true);
 
     try {
       await apiClient.put(`/accounts/${account.id}`, {
         account: {
-          name: name.trim(),
+          name: nameToSend,
           type,
           currency,
           institution_id: parseInt(institutionId),
