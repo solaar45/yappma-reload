@@ -319,13 +319,17 @@
     "other": "Diğer"
   },
   "accountTypes": {
-  "checking": "Vadesiz Hesap",
-  "savings": "Vadeli Hesap",
-  "credit_card": "Kredi Kartı",
-  "brokerage": "Yatırım Hesabı",
-  "insurance": "Sigorta",
-  "cash": "Nakit",
-  "other": "Diğer"
+    "checking": "Vadesiz Hesap",
+    "savings": "Günlük Faizli Hesap",
+    "savings_account": "Tasarruf Hesabı",
+    "fixed_deposit": "Vadeli Hesap",
+    "brokerage": "Yatırım Hesabı",
+    "wallet": "Cüzdan",
+    "credit_card": "Kredi Kartı",
+    "loan": "Kredi",
+    "insurance": "Sigorta",
+    "cash": "Nakit",
+    "other": "Diğer"
   },
   "institutions": {
     "title": "Kurumlar",
