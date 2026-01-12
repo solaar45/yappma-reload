@@ -81,17 +81,12 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
     if (!showCustomInstitution && !formData.institution_id) return;
     if (showCustomInstitution && !formData.custom_institution_name) return;
 
-    // We do NOT auto-generate name anymore. If empty, it stays empty.
-    // The backend might require a name though (NOT NULL constraint).
-    // If backend requires it, this might fail or we need to send a placeholder like "-" or just space if allowed.
-    // However, the user specifically requested: "wenn der user nichts einträgt, dann soll auch "-" in der tabelle eingetragen werden".
-    // This implies we can save empty string or null.
-    // If the database enforces NOT NULL on name, we might have an issue.
-    // Assuming for now we send empty string. If it fails, we might need to adjust backend schema or send a placeholder space.
-    
+    // Use "-" as fallback for empty name to satisfy backend NOT NULL constraint
+    const nameToSend = formData.name.trim() || "-";
+
     const result = await createAccount({
       user_id: userId,
-      name: formData.name.trim(), // Send exactly what user typed (trimmed)
+      name: nameToSend,
       type: formData.type,
       currency: formData.currency,
       institution_id: !showCustomInstitution ? parseInt(formData.institution_id) : undefined,
