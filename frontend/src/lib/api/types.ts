@@ -87,6 +87,7 @@ export interface SecurityAsset {
   isin?: string;
   wkn?: string;
   ticker?: string;
+  security_type?: 'stock' | 'etf' | 'bond' | 'fund' | 'derivative' | 'commodity' | null;
   exchange?: string;
   sector?: string;
   risk_class?: number;
