@@ -81,9 +81,34 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
     if (!showCustomInstitution && !formData.institution_id) return;
     if (showCustomInstitution && !formData.custom_institution_name) return;
 
+    // If name is empty, use a combination of Institution + Type or just Type as fallback
+    // But backend likely requires a name, so we should generate one if empty
+    // The requirement says "Name optional", but DB schema usually requires name.
+    // We will send the type or a generated string if empty, or let backend handle it if possible.
+    // For now, assuming backend requires a name, we'll provide a default if empty.
+    
+    // Actually, looking at previous code, name was required. 
+    // If backend allows empty name, we send empty string. 
+    // If not, we might need to auto-generate it here before sending.
+    // Let's assume for this task we send whatever is in the field, even if empty string
+    // and let the backend/types handle it (or assuming backend schema was updated/relaxed).
+    // HOWEVER, typical schema is NOT NULL. 
+    // To be safe without backend changes: if name is empty, we construct one: "{Institution} {Type}"
+    
+    let finalName = formData.name.trim();
+    if (!finalName) {
+        const instName = showCustomInstitution 
+            ? formData.custom_institution_name 
+            : institutions?.find(i => i.id.toString() === formData.institution_id)?.name || '';
+        
+        // Retrieve translated type label or fallback
+        const typeLabel = t(`accountTypes.${formData.type}`, { defaultValue: formData.type });
+        finalName = `${instName} ${typeLabel}`.trim();
+    }
+
     const result = await createAccount({
       user_id: userId,
-      name: formData.name,
+      name: finalName,
       type: formData.type,
       currency: formData.currency,
       institution_id: !showCustomInstitution ? parseInt(formData.institution_id) : undefined,
@@ -123,15 +148,8 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name" required>{t('accounts.name') || 'Account Name'}</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
+            
+            {/* Institution Selection */}
             <div className="grid gap-2">
               <Label htmlFor="institution" required>{t('accounts.institution') || 'Institution'}</Label>
               <Popover open={institutionOpen} onOpenChange={setInstitutionOpen}>
@@ -187,6 +205,8 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                 </PopoverContent>
               </Popover>
             </div>
+
+            {/* Type Selection */}
             <div className="grid gap-2">
               <Label htmlFor="type" required>{t('accounts.type') || 'Account Type'}</Label>
               <Select
@@ -205,6 +225,8 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Currency Selection */}
             <div className="grid gap-2">
               <Label htmlFor="currency" required>{t('common.currency') || 'Currency'}</Label>
               <Select
@@ -223,6 +245,8 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Status Switch */}
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="is-active" className="text-base">
@@ -238,6 +262,21 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                 onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
               />
             </div>
+
+            {/* Name Input (Optional, moved to bottom) */}
+            <div className="grid gap-2">
+              <Label htmlFor="name">
+                {t('accounts.name') || 'Account Name'} 
+                <span className="text-muted-foreground font-normal ml-1">({t('common.optional') || 'optional'})</span>
+              </Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder=""
+              />
+            </div>
+
             {error && (
               <div className="text-sm text-destructive">{error.message}</div>
             )}
@@ -248,7 +287,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             </Button>
             <Button
               type="submit"
-              disabled={loading || !formData.name || (!showCustomInstitution && !formData.institution_id) || (showCustomInstitution && !formData.custom_institution_name)}
+              disabled={loading || (!showCustomInstitution && !formData.institution_id) || (showCustomInstitution && !formData.custom_institution_name)}
             >
               {loading ? (t('common.loading') || 'Creating...') : (t('common.create') || 'Create Account')}
             </Button>
