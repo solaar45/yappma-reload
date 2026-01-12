@@ -1,225 +1,174 @@
-// API Response Types based on backend REST_API.md
-
+// User types
 export interface User {
   id: number;
-  name: string;
   email: string;
+  name?: string;
   currency_default: string;
-  tax_allowance_limit: number;
   tax_status: 'single' | 'married';
-  inserted_at: string;
-  updated_at: string;
+  tax_allowance_limit: number;
 }
 
-export interface TaxExemption {
-  id: number;
-  amount: string;
-  year: number;
-  user_id: number;
-  institution_id: number;
-  institution?: Institution;
-  inserted_at: string;
-  updated_at: string;
-}
-
+// Institution types
 export interface Institution {
   id: number;
   name: string;
-  type: 'bank' | 'broker' | 'insurance' | 'other';
-  category?: 'bank' | 'neobank' | 'broker' | 'insurance' | 'crypto' | 'other';
-  country: string;
-  is_system_provided: boolean;
-  user_id: number | null;
-  bic?: string;
-  logo_url?: string;
+  type?: 'bank' | 'broker' | 'insurance' | 'crypto' | 'other';
+  category: 'bank' | 'neobank' | 'broker' | 'crypto' | 'insurance' | 'other';
+  country?: string;
   website?: string;
-  assets?: Asset[];
-  inserted_at: string;
-  updated_at: string;
+  logo_url?: string;
+  bic?: string;
+  is_system_provided: boolean;
 }
+
+// Account types
+export type AccountType = 
+  | 'checking' 
+  | 'savings' 
+  | 'savings_account'
+  | 'fixed_deposit'
+  | 'brokerage' 
+  | 'wallet'
+  | 'credit_card'
+  | 'loan'
+  | 'insurance' 
+  | 'cash' 
+  | 'other';
 
 export interface AccountSnapshot {
   id: number;
   snapshot_date: string;
   balance: string;
   currency: string;
-  note: string | null;
-  account_id: number;
-  inserted_at?: string;
-  updated_at?: string;
-}
-
-export interface AssetSnapshot {
-  id: number;
-  snapshot_date: string;
-  quantity: string | null;
-  market_price_per_unit: string | null;
-  value: string;
-  note: string | null;
-  asset_id: number;
-  inserted_at?: string;
-  updated_at?: string;
+  note?: string;
 }
 
 export interface Account {
   id: number;
   name: string;
-  type: 'checking' | 'savings' | 'credit_card' | 'brokerage' | 'insurance' | 'cash' | 'other';
+  type: AccountType;
   currency: string;
   is_active: boolean;
-  opened_at: string | null;
-  closed_at: string | null;
-  user_id: number;
-  institution_id: number;
+  opened_at?: string;
+  closed_at?: string;
+  institution_id?: number;
   institution?: Institution;
   snapshots?: AccountSnapshot[];
-  inserted_at: string;
-  updated_at: string;
 }
+
+export interface CreateAccountParams {
+  name: string;
+  type: AccountType;
+  currency: string;
+  institution_id?: number;
+  custom_institution_name?: string;
+  user_id: number;
+  is_active?: boolean;
+}
+
+export interface UpdateAccountParams {
+  name?: string;
+  type?: AccountType;
+  currency?: string;
+  institution_id?: number;
+  is_active?: boolean;
+}
+
+// Asset types
+export type AssetTypeCode = 'security' | 'crypto' | 'real_estate' | 'vehicle' | 'collectible' | 'cash' | 'insurance' | 'loan' | 'other';
 
 export interface AssetType {
   id: number;
-  code: 'cash' | 'security' | 'insurance' | 'loan' | 'real_estate' | 'crypto' | 'commodity' | 'collectible' | 'other';
+  code: AssetTypeCode;
   description: string;
 }
 
 export interface SecurityAsset {
-  isin: string | null;
-  wkn: string | null;
-  ticker: string | null;
-  exchange: string | null;
-  sector: string | null;
-  // Extended fields
-  security_type: 'stock' | 'etf' | 'bond' | 'mutual_fund' | 'index_fund' | null;
-  distribution_type: 'accumulating' | 'distributing' | null;
-  expense_ratio: string | null;
-  issuer: string | null;
-  coupon_rate: string | null;
-  maturity_date: string | null;
-  country_of_domicile: string | null;
-  benchmark_index: string | null;
+  isin?: string;
+  wkn?: string;
+  ticker?: string;
+  exchange?: string;
+  sector?: string;
+  risk_class?: number;
 }
 
 export interface InsuranceAsset {
-  insurer_name: string;
-  policy_number: string;
-  insurance_type: string;
-  coverage_amount: string;
-  deductible: string;
-  payment_frequency: string;
-  // Extended fields
-  policy_start_date: string | null;
-  policy_end_date: string | null;
-  premium_amount: string | null;
+  insurer_name?: string;
+  policy_number?: string;
+  insurance_type?: 'life' | 'pension' | 'liability' | 'health' | 'other';
+  start_date?: string;
+  end_date?: string;
+  premium_amount?: string;
+  premium_frequency?: 'monthly' | 'quarterly' | 'yearly' | 'one_time';
+  coverage_amount?: string;
 }
 
 export interface RealEstateAsset {
-  address: string;
-  size_m2: string;
-  purchase_price: string;
-  purchase_date: string;
-  // Extended fields
-  property_type: 'residential' | 'commercial' | 'land' | 'mixed_use' | null;
-  usage: 'owner_occupied' | 'rented_out' | 'vacant' | 'development' | null;
-  rental_income: string | null;
-  operating_expenses: string | null;
-  property_tax: string | null;
-  mortgage_outstanding: string | null;
-  mortgage_rate: string | null;
-  construction_year: number | null;
-  renovation_year: number | null;
-  cadastral_number: string | null;
+  address?: string;
+  type?: 'apartment' | 'house' | 'land' | 'commercial' | 'garage' | 'other';
+  size_m2?: string;
+  construction_year?: number;
+  purchase_date?: string;
+  purchase_price?: string;
+}
+
+export interface LoanAsset {
+  lender_name?: string;
+  loan_type?: 'mortgage' | 'personal' | 'vehicle' | 'student' | 'other';
+  start_date?: string;
+  end_date?: string;
+  interest_rate?: string;
+  initial_amount?: string;
 }
 
 export interface Asset {
   id: number;
   name: string;
-  symbol: string | null;
-  isin?: string | null;
-  ticker?: string | null;
+  symbol?: string; // For compatibility
+  description?: string;
   currency: string;
   is_active: boolean;
-  created_at_date: string | null;
-  closed_at: string | null;
-  risk_class?: number | null;
-  risk_class_source?: 'auto_api' | 'auto_type' | 'manual' | null;
-  user_id: number;
-  account_id: number | null;
+  account_id?: number;
   asset_type_id: number;
   asset_type?: AssetType;
-  account?: Account;
-  security_asset?: SecurityAsset | null;
-  insurance_asset?: InsuranceAsset | null;
-  real_estate_asset?: RealEstateAsset | null;
+  
+  // Specific asset details (one of these will be populated based on type)
+  security_asset?: SecurityAsset;
+  insurance_asset?: InsuranceAsset;
+  real_estate_asset?: RealEstateAsset;
+  loan_asset?: LoanAsset;
+  
   snapshots?: AssetSnapshot[];
-  inserted_at: string;
-  updated_at: string;
 }
 
-// Security enrichment types
-export interface SecurityEnrichmentRequest {
-  identifier: string;
-  type?: 'ticker' | 'isin' | 'wkn' | 'auto';
+export interface AssetSnapshot {
+  id: number;
+  snapshot_date: string;
+  quantity: string;
+  market_price_per_unit: string;
+  value: string;
+  cost_basis?: string;
+  exchange_rate?: string;
 }
 
-export interface SecurityEnrichmentResponse {
-  ticker?: string;
-  name?: string;
-  security_type?: 'stock' | 'etf' | 'bond' | 'mutual_fund' | 'index_fund';
-  exchange?: string;
-  currency?: string;
-  sector?: string;
-  country_of_domicile?: string;
-  expense_ratio?: number;
-  distribution_type?: 'accumulating' | 'distributing';
-  benchmark_index?: string;
+export interface CreateAssetParams {
+  name: string;
+  currency: string;
+  account_id?: number;
+  asset_type_id: number;
+  is_active?: boolean;
+  created_at_date?: string; // Optional: date when asset was added/bought
+  
+  // Specific fields based on type
+  security_asset?: SecurityAsset;
+  insurance_asset?: InsuranceAsset;
+  real_estate_asset?: RealEstateAsset;
+  loan_asset?: LoanAsset;
 }
 
-export interface NetWorthResponse {
-  total: string;
-  accounts: string;
-  assets: string;
+// Analytics types
+export interface WealthHistoryPoint {
   date: string;
+  total_wealth: number;
+  by_type: Record<string, number>;
 }
-
-// Dashboard-specific snapshot types with nested relations
-export interface DashboardAccountSnapshot extends AccountSnapshot {
-  account?: {
-    name: string;
-    institution?: {
-      name: string;
-    };
-  };
-}
-
-export interface DashboardAssetSnapshot extends AssetSnapshot {
-  asset?: {
-    name: string;
-    currency?: string;
-    asset_type?: {
-      description: string;
-    };
-  };
-}
-
-export interface DashboardAccountSnapshotsResponse {
-  snapshots: DashboardAccountSnapshot[];
-  date: string;
-}
-
-export interface DashboardAssetSnapshotsResponse {
-  snapshots: DashboardAssetSnapshot[];
-  date: string;
-}
-
-// API Response Wrapper
-export interface ApiResponse<T> {
-  data: T;
-}
-
-export interface ApiError {
-  errors: Record<string, string[]> | { detail: string };
-}
-
-export type NetWorth = NetWorthResponse;
-export type SnapshotCollection = DashboardAccountSnapshotsResponse | DashboardAssetSnapshotsResponse;
