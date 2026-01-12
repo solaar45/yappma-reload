@@ -313,9 +313,9 @@
   },
   "accountTypes": {
     "checking": "Girokonto",
-    "savings": "Tagesgeld",
+    "savings": "Tagesgeldkonto",
     "savings_account": "Sparkonto",
-    "fixed_deposit": "Festgeld",
+    "fixed_deposit": "Festgeldkonto",
     "brokerage": "Depot",
     "wallet": "Wallet",
     "credit_card": "Kreditkarte",
