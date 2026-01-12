@@ -76,8 +76,21 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim() || !institutionId) {
+    if (!institutionId) {
       return;
+    }
+    
+    // Construct default name if empty
+    let finalName = name.trim();
+    if (!finalName) {
+        const instName = institutions?.find(i => i.id.toString() === institutionId)?.name || '';
+        // Need to handle type translation or fallback
+        // We can't use hook inside helper easily here, but we can do basic fallback
+        // Ideally we would reuse the logic, but for now simple fallback is fine as the user sees the end result
+        const typeObj = ACCOUNT_TYPES.find(t => t.value === type);
+        // We use the raw type value as key for translation on backend or just use English label as fallback
+        const typeLabel = t(`accountTypes.${type}`, { defaultValue: typeObj?.label || type });
+        finalName = `${instName} ${typeLabel}`.trim();
     }
 
     setLoading(true);
@@ -85,7 +98,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
     try {
       await apiClient.put(`/accounts/${account.id}`, {
         account: {
-          name: name.trim(),
+          name: finalName,
           type,
           currency,
           institution_id: parseInt(institutionId),
@@ -119,22 +132,14 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name" required>{t('accounts.accountName')}</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
+            {/* Institution Selection */}
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="institution" required>{t('accounts.institution')}</Label>
               </div>
               {institutionsLoading ? (
                 <div className="flex items-center justify-center h-10 border rounded-md bg-muted">
-                  <span className="text-sm text-muted-foreground">{t('accounts.loadingInstitutions') || 'Loading...'}</span>
+                  <span className="text-sm text-muted-foreground">{t('accounts.loadingInstitutions')}</span>
                 </div>
               ) : institutions && institutions.length > 0 ? (
                 <Select value={institutionId} onValueChange={setInstitutionId}>
@@ -166,6 +171,8 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                 </div>
               )}
             </div>
+
+            {/* Type Selection */}
             <div className="grid gap-2">
               <Label htmlFor="type" required>{t('accounts.accountType')}</Label>
               <Select
@@ -178,16 +185,14 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                 <SelectContent>
                   {ACCOUNT_TYPES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
-                      {/* Using the new translation keys for account types */}
-                      {/* Inside component usage of t function needs to be accessed from hook */}
-                      {/* But we can't use t inside the map if it's defined outside component */}
-                      {/* So we'll use t from the hook inside the component */}
                       <AccountTypeLabel type={t.value} label={t.label} />
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Currency Selection */}
             <div className="grid gap-2">
               <Label htmlFor="currency" required>{t('common.currency')}</Label>
               <Select value={currency} onValueChange={setCurrency}>
@@ -203,6 +208,8 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Status Switch */}
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="is-active" className="text-base">
@@ -218,6 +225,21 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                 onCheckedChange={setIsActive}
               />
             </div>
+
+            {/* Name Input (Optional, moved to bottom) */}
+            <div className="grid gap-2">
+              <Label htmlFor="name">
+                {t('accounts.accountName')}
+                <span className="text-muted-foreground font-normal ml-1">({t('common.optional') || 'optional'})</span>
+              </Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder=""
+              />
+            </div>
+
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -225,7 +247,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
             </Button>
             <Button
               type="submit"
-              disabled={loading || !name.trim() || !institutionId || institutions?.length === 0}
+              disabled={loading || !institutionId || institutions?.length === 0}
             >
               {loading ? t('common.saving') : t('common.saveChanges')}
             </Button>
