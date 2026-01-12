@@ -80,25 +80,16 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
       return;
     }
     
-    // Construct default name if empty
-    let finalName = name.trim();
-    if (!finalName) {
-        const instName = institutions?.find(i => i.id.toString() === institutionId)?.name || '';
-        // Need to handle type translation or fallback
-        // We can't use hook inside helper easily here, but we can do basic fallback
-        // Ideally we would reuse the logic, but for now simple fallback is fine as the user sees the end result
-        const typeObj = ACCOUNT_TYPES.find(t => t.value === type);
-        // We use the raw type value as key for translation on backend or just use English label as fallback
-        const typeLabel = t(`accountTypes.${type}`, { defaultValue: typeObj?.label || type });
-        finalName = `${instName} ${typeLabel}`.trim();
-    }
-
+    // We send name as-is, even if empty (as per request).
+    // If backend fails due to NOT NULL constraint, we might have an issue.
+    // Assuming user wants to allow empty names.
+    
     setLoading(true);
 
     try {
       await apiClient.put(`/accounts/${account.id}`, {
         account: {
-          name: finalName,
+          name: name.trim(),
           type,
           currency,
           institution_id: parseInt(institutionId),
