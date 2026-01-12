@@ -55,7 +55,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
   const [institutionOpen, setInstitutionOpen] = useState(false);
   const [showCustomInstitution, setShowCustomInstitution] = useState(false);
 
-  // Account types (use plain labels to avoid missing translation keys)
+  // Account types (use plain labels as fallback)
   const ACCOUNT_TYPES = [
     { value: 'checking', label: 'Checking' },
     { value: 'savings', label: 'Savings' },
@@ -199,7 +199,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                 <SelectContent>
                   {ACCOUNT_TYPES.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+                      {t(`accountTypes.${opt.value}`, { defaultValue: opt.label })}
                     </SelectItem>
                   ))}
                 </SelectContent>
