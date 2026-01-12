@@ -319,14 +319,18 @@
     "other": "Other"
   },
   "accountTypes": {
-  "checking": "Checking",
-  "savings": "Savings",
-  "credit_card": "Credit Card",
-  "brokerage": "Brokerage",
-  "insurance": "Insurance",
-  "cash": "Cash",
-  "other": "Other"
-},
+    "checking": "Checking Account",
+    "savings": "Call Money",
+    "savings_account": "Savings Account",
+    "fixed_deposit": "Term Deposit",
+    "brokerage": "Brokerage",
+    "wallet": "Wallet",
+    "credit_card": "Credit Card",
+    "loan": "Loan",
+    "insurance": "Insurance",
+    "cash": "Cash",
+    "other": "Other"
+  },
   "institutions": {
     "title": "Institutions",
     "name": "Name",
