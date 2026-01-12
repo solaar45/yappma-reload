@@ -34,10 +34,14 @@ interface EditAccountDialogProps {
 }
 
 const ACCOUNT_TYPES = [
-  { value: 'checking', label: 'Checking' },
-  { value: 'savings', label: 'Savings' },
-  { value: 'credit_card', label: 'Credit Card' },
+  { value: 'checking', label: 'Checking Account' },
+  { value: 'savings', label: 'Call Money' }, // Tagesgeld
+  { value: 'savings_account', label: 'Savings Account' }, // Sparkonto
+  { value: 'fixed_deposit', label: 'Term Deposit' }, // Festgeld
   { value: 'brokerage', label: 'Brokerage' },
+  { value: 'wallet', label: 'Wallet' },
+  { value: 'credit_card', label: 'Credit Card' },
+  { value: 'loan', label: 'Loan' },
   { value: 'insurance', label: 'Insurance' },
   { value: 'cash', label: 'Cash' },
   { value: 'other', label: 'Other' },
