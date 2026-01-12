@@ -81,34 +81,17 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
     if (!showCustomInstitution && !formData.institution_id) return;
     if (showCustomInstitution && !formData.custom_institution_name) return;
 
-    // If name is empty, use a combination of Institution + Type or just Type as fallback
-    // But backend likely requires a name, so we should generate one if empty
-    // The requirement says "Name optional", but DB schema usually requires name.
-    // We will send the type or a generated string if empty, or let backend handle it if possible.
-    // For now, assuming backend requires a name, we'll provide a default if empty.
+    // We do NOT auto-generate name anymore. If empty, it stays empty.
+    // The backend might require a name though (NOT NULL constraint).
+    // If backend requires it, this might fail or we need to send a placeholder like "-" or just space if allowed.
+    // However, the user specifically requested: "wenn der user nichts einträgt, dann soll auch "-" in der tabelle eingetragen werden".
+    // This implies we can save empty string or null.
+    // If the database enforces NOT NULL on name, we might have an issue.
+    // Assuming for now we send empty string. If it fails, we might need to adjust backend schema or send a placeholder space.
     
-    // Actually, looking at previous code, name was required. 
-    // If backend allows empty name, we send empty string. 
-    // If not, we might need to auto-generate it here before sending.
-    // Let's assume for this task we send whatever is in the field, even if empty string
-    // and let the backend/types handle it (or assuming backend schema was updated/relaxed).
-    // HOWEVER, typical schema is NOT NULL. 
-    // To be safe without backend changes: if name is empty, we construct one: "{Institution} {Type}"
-    
-    let finalName = formData.name.trim();
-    if (!finalName) {
-        const instName = showCustomInstitution 
-            ? formData.custom_institution_name 
-            : institutions?.find(i => i.id.toString() === formData.institution_id)?.name || '';
-        
-        // Retrieve translated type label or fallback
-        const typeLabel = t(`accountTypes.${formData.type}`, { defaultValue: formData.type });
-        finalName = `${instName} ${typeLabel}`.trim();
-    }
-
     const result = await createAccount({
       user_id: userId,
-      name: finalName,
+      name: formData.name.trim(), // Send exactly what user typed (trimmed)
       type: formData.type,
       currency: formData.currency,
       institution_id: !showCustomInstitution ? parseInt(formData.institution_id) : undefined,
