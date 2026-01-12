@@ -132,6 +132,7 @@
     "title": "Konten",
     "name": "Name",
     "type": "Typ",
+    "accountType": "Kontotyp",
     "balance": "Saldo",
     "currency": "Währung",
     "institution": "Institution",
