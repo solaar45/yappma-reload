@@ -318,6 +318,15 @@
     "insurance": "Sigorta",
     "other": "Diğer"
   },
+  "accountTypes": {
+  "checking": "Vadesiz Hesap",
+  "savings": "Vadeli Hesap",
+  "credit_card": "Kredi Kartı",
+  "brokerage": "Yatırım Hesabı",
+  "insurance": "Sigorta",
+  "cash": "Nakit",
+  "other": "Diğer"
+  },
   "institutions": {
     "title": "Kurumlar",
     "name": "İsim",

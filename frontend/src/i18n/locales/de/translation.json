@@ -310,6 +310,15 @@
     "insurance": "Versicherung",
     "other": "Sonstige"
   },
+  "accountTypes": {
+  "checking": "Girokonto",
+  "savings": "Sparkonto",
+  "credit_card": "Kreditkarte",
+  "brokerage": "Depot",
+  "insurance": "Versicherung",
+  "cash": "Bargeld",
+  "other": "Sonstige"
+  },
   "institutions": {
     "title": "Institutionen",
     "name": "Name",

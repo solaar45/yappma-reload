@@ -318,6 +318,15 @@
     "insurance": "Insurance",
     "other": "Other"
   },
+  "accountTypes": {
+  "checking": "Checking",
+  "savings": "Savings",
+  "credit_card": "Credit Card",
+  "brokerage": "Brokerage",
+  "insurance": "Insurance",
+  "cash": "Cash",
+  "other": "Other"
+},
   "institutions": {
     "title": "Institutions",
     "name": "Name",
