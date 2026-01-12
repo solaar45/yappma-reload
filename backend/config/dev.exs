@@ -3,6 +3,7 @@ import Config
 # Load .env file in development (only if dotenvy is available)
 if Code.ensure_loaded?(Dotenvy) and File.exists?(".env") do
   Dotenvy.source!(".env")
+  |> Enum.each(fn {k, v} -> System.put_env(k, v) end)
 end
 
 # Configure your database
