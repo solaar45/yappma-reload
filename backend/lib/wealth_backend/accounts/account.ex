@@ -5,7 +5,19 @@ defmodule WealthBackend.Accounts.Account do
   schema "accounts" do
     field :name, :string
     field :type, Ecto.Enum,
-      values: [:checking, :savings, :credit_card, :brokerage, :insurance, :cash, :other]
+      values: [
+        :checking, 
+        :savings,            # Tagesgeld
+        :savings_account,    # Klassisches Sparkonto
+        :fixed_deposit,      # Festgeld
+        :brokerage, 
+        :wallet,             # Digital Wallet
+        :credit_card, 
+        :loan,               # Kredit
+        :insurance, 
+        :cash, 
+        :other
+      ]
     field :currency, :string
     field :is_active, :boolean, default: true
     field :opened_at, :date
