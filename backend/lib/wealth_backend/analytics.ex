@@ -236,6 +236,17 @@ defmodule WealthBackend.Analytics do
     asset_id = attrs["asset_id"]
     quantity = attrs["quantity"]
 
+    # Try to parse date from attrs or default to today
+    date = case attrs["snapshot_date"] do
+      d when is_binary(d) -> 
+        case Date.from_iso8601(d) do
+          {:ok, parsed} -> parsed
+          _ -> Date.utc_today()
+        end
+      %Date{} = d -> d
+      _ -> Date.utc_today()
+    end
+
     # Only proceed if we have asset_id and quantity
     if asset_id && quantity do
       # Load asset to check type
@@ -245,7 +256,7 @@ defmodule WealthBackend.Analytics do
         ticker = asset.security_asset.ticker || asset.symbol
         
         if ticker do
-          case AlphaVantageClient.get_quote(ticker) do
+          case AlphaVantageClient.get_historical_close(ticker, date) do
             {:ok, price} ->
               # Parse quantity and price to calculate value
               qty_dec = parse_decimal(quantity)
@@ -287,11 +298,23 @@ defmodule WealthBackend.Analytics do
       asset = Repo.preload(snapshot, :asset).asset
       asset = Repo.preload(asset, [:asset_type, :security_asset])
       
+      # Determine the date for the price lookup
+      # Use the new date if provided in attrs, otherwise fallback to existing snapshot date
+      date = case attrs["snapshot_date"] do
+        d when is_binary(d) -> 
+          case Date.from_iso8601(d) do
+            {:ok, parsed} -> parsed
+            _ -> snapshot.snapshot_date
+          end
+        %Date{} = d -> d
+        _ -> snapshot.snapshot_date
+      end
+      
       if asset.asset_type.code == "security" do
         ticker = asset.security_asset.ticker || asset.symbol
         
         if ticker do
-          case AlphaVantageClient.get_quote(ticker) do
+          case AlphaVantageClient.get_historical_close(ticker, date) do
             {:ok, price} ->
               qty_dec = parse_decimal(attrs["quantity"])
               price_dec = parse_decimal(price)
