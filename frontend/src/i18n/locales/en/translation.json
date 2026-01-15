@@ -241,7 +241,10 @@
         "etf": "ETF",
         "bond": "Bond",
         "mutualFund": "Mutual Fund",
-        "indexFund": "Index Fund"
+        "indexFund": "Index Fund",
+        "fund": "Fund",
+        "derivative": "Derivative",
+        "commodity": "Commodity"
       },
       "distributionType": "Distribution Type",
       "selectDistribution": "Select Distribution",
@@ -316,6 +319,9 @@
     "commodity": "Commodity",
     "crypto": "Cryptocurrency",
     "insurance": "Insurance",
+    "collectible": "Valuables",
+    "vehicle": "Vehicle",
+    "loan": "Loan",
     "other": "Other"
   },
   "accountTypes": {

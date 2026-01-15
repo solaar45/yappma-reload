@@ -240,16 +240,17 @@ export default function AssetsPage() {
       cell: ({ row }) => {
         const assetTypeCode = row.original.asset_type?.code || 'other';
         const securityType = row.original.security_asset?.security_type;
-        
+
         // If asset type is 'security' and we have a security_type, show that instead
         if (assetTypeCode === 'security' && securityType) {
+          const translatedType = t(`assets.security.types.${securityType}`, { defaultValue: securityType.replace('_', ' ') });
           return (
             <Badge variant="outline" className="capitalize">
-              {securityType.replace('_', ' ')}
+              {translatedType}
             </Badge>
           );
         }
-        
+
         // Otherwise show the asset type
         const description = row.original.asset_type?.description || 'Other';
         const translatedType = t(`assetTypes.${assetTypeCode}`, { defaultValue: description });

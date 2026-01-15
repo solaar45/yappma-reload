@@ -241,7 +241,10 @@
         "etf": "ETF",
         "bond": "Tahvil",
         "mutualFund": "Yatırım Fonu",
-        "indexFund": "Endeks Fonu"
+        "indexFund": "Endeks Fonu",
+        "fund": "Fon",
+        "derivative": "Türev",
+        "commodity": "Emtia"
       },
       "distributionType": "Dağıtım Türü",
       "selectDistribution": "Dağıtım Seçin",
@@ -316,6 +319,9 @@
     "commodity": "Emtia",
     "crypto": "Kripto Para",
     "insurance": "Sigorta",
+    "collectible": "Değerli Eşyalar",
+    "vehicle": "Araç",
+    "loan": "Alacak",
     "other": "Diğer"
   },
   "accountTypes": {

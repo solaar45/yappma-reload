@@ -234,7 +234,10 @@
         "etf": "ETF",
         "bond": "Anleihe",
         "mutualFund": "Investmentfonds",
-        "indexFund": "Indexfonds"
+        "indexFund": "Indexfonds",
+        "fund": "Fonds",
+        "derivative": "Derivat",
+        "commodity": "Rohstoff"
       },
       "distributionType": "Ausschüttungsart",
       "selectDistribution": "Ausschüttung wählen",
@@ -309,6 +312,9 @@
     "commodity": "Rohstoff",
     "crypto": "Kryptowährung",
     "insurance": "Versicherung",
+    "collectible": "Wertsachen",
+    "vehicle": "Fahrzeug",
+    "loan": "Darlehen",
     "other": "Sonstige"
   },
   "accountTypes": {

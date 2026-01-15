@@ -50,10 +50,10 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
-  
+
   // Security search state
   const [selectedSecurity, setSelectedSecurity] = useState<SecurityResult | undefined>();
-  
+
   const [formData, setFormData] = useState<{
     name: string;
     asset_type_id: string;
@@ -91,7 +91,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
         insurance_asset: asset.insurance_asset ?? undefined,
         real_estate_asset: asset.real_estate_asset ?? undefined,
       });
-      
+
       // Initialize selectedSecurity from existing asset data
       if (asset.security_asset?.ticker) {
         setSelectedSecurity({
@@ -270,17 +270,23 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
                   {accounts
                     ?.filter((a) => a.is_active)
                     .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-                    .map((a) => (
-                      <SelectItem key={a.id} value={a.id.toString()}>
-                        <div className="flex items-center gap-2">
-                          <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
-                          <div className="flex flex-col">
-                            <span>{a.name}</span>
-                            <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
+                    .map((a) => {
+                      const accountName = (a.name && a.name !== '-')
+                        ? a.name
+                        : t(`accountTypes.${a.type}`, { defaultValue: t('common.account') });
+
+                      return (
+                        <SelectItem key={a.id} value={a.id.toString()}>
+                          <div className="flex items-center gap-2">
+                            <InstitutionLogo name={a.institution?.name || accountName} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                            <div className="flex flex-col">
+                              <span>{accountName}</span>
+                              <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
+                            </div>
                           </div>
-                        </div>
-                      </SelectItem>
-                    ))}
+                        </SelectItem>
+                      );
+                    })}
                 </SelectContent>
               </Select>
             </div>

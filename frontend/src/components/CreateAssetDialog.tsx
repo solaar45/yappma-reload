@@ -54,10 +54,10 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
-  
+
   // Security search state
   const [selectedSecurity, setSelectedSecurity] = useState<SecurityResult | undefined>();
-  
+
   const [formData, setFormData] = useState<{
     name: string;
     asset_type_id: string;
@@ -81,8 +81,8 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
   );
 
   // Check if we should show remaining fields
-  const shouldShowRemainingFields = 
-    selectedAssetType?.code === 'security' 
+  const shouldShowRemainingFields =
+    selectedAssetType?.code === 'security'
       ? selectedSecurity !== undefined
       : formData.asset_type_id !== '';
 
@@ -171,12 +171,12 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       }
     } catch (err: any) {
       console.error('Asset creation error:', err);
-      
+
       // Extract error details from ApiError structure
       const errorData = err?.data || {};
       const errorDetail = errorData?.errors?.detail || '';
       const errorMessage = errorData?.errors?.message || err?.message || '';
-      
+
       // Handle specific security validation errors
       if (errorDetail === 'security_not_found') {
         const identifier = sanitizedSecurity?.ticker || sanitizedSecurity?.isin || 'unbekannt';
@@ -319,17 +319,23 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                       {accounts
                         ?.filter((a) => a.is_active)
                         .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-                        .map((a) => (
-                          <SelectItem key={a.id} value={a.id.toString()}>
-                            <div className="flex items-center gap-2">
-                              <InstitutionLogo name={a.institution?.name || a.name} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
-                              <div className="flex flex-col">
-                                <span>{a.name}</span>
-                                <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
+                        .map((a) => {
+                          const accountName = (a.name && a.name !== '-')
+                            ? a.name
+                            : t(`accountTypes.${a.type}`, { defaultValue: t('common.account') });
+
+                          return (
+                            <SelectItem key={a.id} value={a.id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <InstitutionLogo name={a.institution?.name || accountName} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                                <div className="flex flex-col">
+                                  <span>{accountName}</span>
+                                  <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
+                                </div>
                               </div>
-                            </div>
-                          </SelectItem>
-                        ))}
+                            </SelectItem>
+                          );
+                        })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -351,14 +357,14 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
                 </div>
               </>
             )}
-            
+
             {/* Error Display */}
             {validationError && (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 {validationError}
               </div>
             )}
-            
+
             {error && !validationError && (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
