@@ -32,10 +32,10 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const isAccount = snapshot.snapshot_type === 'account';
-  const initialValue = isAccount 
-    ? (snapshot as any).balance 
+  const initialValue = isAccount
+    ? (snapshot as any).balance
     : (snapshot as any).value;
   const initialCurrency = isAccount ? (snapshot as any).currency : 'EUR';
   const initialQuantity = !isAccount ? (snapshot as any).quantity || '' : '';
@@ -50,9 +50,10 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.value) {
-      return;
-    }
+    const isSecurity = !isAccount && (snapshot as any).entity_subtype === 'security';
+
+    if (!isSecurity && !formData.value) return;
+    if (isSecurity && !formData.quantity) return;
 
     setLoading(true);
 
@@ -63,15 +64,15 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
 
       const payload = isAccount
         ? {
-            balance: formData.value,
-            currency: formData.currency,
-            snapshot_date: formData.snapshot_date,
-          }
+          balance: formData.value,
+          currency: formData.currency,
+          snapshot_date: formData.snapshot_date,
+        }
         : {
-            value: formData.value,
-            quantity: formData.quantity || undefined,
-            snapshot_date: formData.snapshot_date,
-          };
+          value: formData.value,
+          quantity: formData.quantity || undefined,
+          snapshot_date: formData.snapshot_date,
+        };
 
       await apiClient.put(endpoint, payload);
 
@@ -84,6 +85,8 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
     }
   };
 
+  const isSecurity = !isAccount && (snapshot as any).entity_subtype === 'security';
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -93,10 +96,26 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
+          {/* Header section... */}
           <DialogHeader>
             <DialogTitle>{t('snapshots.editSnapshot')}</DialogTitle>
             <DialogDescription>
-              {t('snapshots.editSnapshotDescription', { entityName: snapshot.entity_name })}
+              {(() => {
+                let displayName = snapshot.entity_name;
+                if (!displayName || displayName === '-') {
+                  const subtype = (snapshot as any).entity_subtype;
+                  if (snapshot.snapshot_type === 'account') {
+                    displayName = subtype
+                      ? t(`accountTypes.${subtype}`, { defaultValue: t('common.account') })
+                      : t('common.account');
+                  } else {
+                    displayName = subtype
+                      ? t(`assetTypes.${subtype}`, { defaultValue: t('common.asset') })
+                      : t('common.asset');
+                  }
+                }
+                return t('snapshots.editSnapshotDescription', { entityName: displayName });
+              })()}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -111,26 +130,28 @@ export function EditSnapshotDialog({ snapshot, onSuccess }: EditSnapshotDialogPr
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="value" required>
-                {isAccount ? t('common.balance') : t('common.value')}
-              </Label>
-              <Input
-                id="value"
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.value}
-                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                required
-              />
-            </div>
+            {(isAccount || !isSecurity) && (
+              <div className="grid gap-2">
+                <Label htmlFor="value" required>
+                  {isAccount ? t('common.balance') : t('common.value')}
+                </Label>
+                <Input
+                  id="value"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={formData.value}
+                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                  required={isAccount || !isSecurity}
+                />
+              </div>
+            )}
 
             {isAccount && (
               <div className="grid gap-2">
                 <Label htmlFor="currency" required>{t('common.currency')}</Label>
-                <Select 
-                  value={formData.currency} 
+                <Select
+                  value={formData.currency}
                   onValueChange={(value) => setFormData({ ...formData, currency: value })}
                 >
                   <SelectTrigger id="currency">

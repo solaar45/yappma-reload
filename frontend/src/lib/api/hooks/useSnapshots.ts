@@ -9,8 +9,8 @@ interface UseSnapshotsParams {
 }
 
 export type CombinedSnapshot =
-  | (AccountSnapshot & { snapshot_type: 'account'; entity_name: string })
-  | (AssetSnapshot & { snapshot_type: 'asset'; entity_name: string });
+  | (AccountSnapshot & { snapshot_type: 'account'; entity_name: string; entity_subtype?: string })
+  | (AssetSnapshot & { snapshot_type: 'asset'; entity_name: string; entity_subtype?: string });
 
 interface UseSnapshotsResult {
   snapshots: CombinedSnapshot[];
@@ -56,6 +56,7 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
               ...snapshot,
               snapshot_type: 'account' as const,
               entity_name: account.name,
+              entity_subtype: account.type,
             }))
         );
 
@@ -65,6 +66,7 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
               ...snapshot,
               snapshot_type: 'asset' as const,
               entity_name: asset.name,
+              entity_subtype: asset.asset_type?.code,
             }))
         );
 

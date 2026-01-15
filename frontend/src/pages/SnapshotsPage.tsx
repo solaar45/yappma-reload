@@ -143,7 +143,29 @@ export default function SnapshotsPage() {
           <DataTableColumnHeader column={column} title={t('snapshots.entity') || 'Entity'} />
         ),
         cell: ({ row }) => {
-          return <div className="font-medium">{row.original.entity_name}</div>;
+          let displayName = row.original.entity_name;
+          // Fallback if name is missing or '-'
+          if (!displayName || displayName === '-') {
+            const subtype = (row.original as any).entity_subtype;
+
+            // DEBUG: Show subtype to identify if it's missing or case mismatch
+            if (!subtype) console.log('Missing subtype for row:', row.original);
+
+            if (row.original.snapshot_type === 'account') {
+              // Try to translate, fallback to account
+              const translated = subtype
+                ? t(`accountTypes.${subtype}`, { defaultValue: t('common.account') })
+                : t('common.account');
+              // For debugging, if translation falls back to "Account" (and we expect "Girokonto"), we might need to see subtype
+              displayName = translated;
+            } else {
+              const translated = subtype
+                ? t(`assetTypes.${subtype}`, { defaultValue: t('common.asset') })
+                : t('common.asset');
+              displayName = translated;
+            }
+          }
+          return <div className="font-medium">{displayName}</div>;
         },
       },
       {
@@ -157,6 +179,34 @@ export default function SnapshotsPage() {
             <Badge variant={isAccount ? 'default' : 'secondary'}>
               {t(`snapshots.types.${isAccount ? 'account' : 'asset'}`)}
             </Badge>
+          );
+        },
+      },
+      {
+        id: 'price',
+        header: ({ column }) => (
+          <div className="text-right">
+            <DataTableColumnHeader column={column} title={t('common.price') || 'Price'} />
+          </div>
+        ),
+        cell: ({ row }) => {
+          const isAccount = row.original.snapshot_type === 'account';
+          if (isAccount) return <div className="text-right font-medium">-</div>;
+
+          const price = (row.original as any).market_price_per_unit;
+          if (!price || parseFloat(price) === 0) {
+            return <div className="text-right font-medium">-</div>;
+          }
+
+          // We use the currency of the asset (or default EUR if missing) - combined snapshot doesn't have it directly on root always?
+          // Actually CombinedSnapshot doesn't have currency on root for Asset, but formatted currency usually takes 2 params.
+          // Let's use EUR as default for now or check if we can get it.
+          // In Create/Edit dialogs we see we rely on getting it from somewhere.
+          // For display purposes, just formatting the number happens in formatCurrency.
+          return (
+            <div className="text-right font-medium">
+              {formatCurrency(price, (row.original as any).currency || 'EUR')}
+            </div>
           );
         },
       },

@@ -85,10 +85,35 @@ defmodule WealthBackend.Analytics do
   def create_asset_snapshot(user_id, attrs \\ %{}) do
     attrs = normalize_keys_to_strings(attrs)
     |> Map.put("user_id", user_id)
+    |> enrich_snapshot_with_price(user_id)
 
-    %AssetSnapshot{}
-    |> AssetSnapshot.changeset(attrs)
-    |> Repo.insert()
+    # Try to find an existing snapshot for the same asset/date/user and update it instead
+    asset_id = to_int(Map.get(attrs, "asset_id"))
+
+    existing_snapshot =
+      case Map.get(attrs, "snapshot_date") do
+        nil -> nil
+        date_str ->
+          case Date.from_iso8601(to_string(date_str)) do
+            {:ok, date} when is_integer(asset_id) ->
+              Repo.get_by(AssetSnapshot,
+                asset_id: asset_id,
+                snapshot_date: date,
+                user_id: user_id
+              )
+
+            _ ->
+              nil
+          end
+      end
+
+    if existing_snapshot do
+      update_asset_snapshot(existing_snapshot, attrs)
+    else
+      %AssetSnapshot{}
+      |> AssetSnapshot.changeset(attrs)
+      |> Repo.insert()
+    end
   end
 
   defp normalize_keys_to_strings(attrs) when is_map(attrs) do
@@ -112,6 +137,13 @@ defmodule WealthBackend.Analytics do
   defp to_int(_), do: nil
 
   def update_asset_snapshot(%AssetSnapshot{} = snapshot, attrs) do
+    # When updating, we might need to re-fetch price if quantity changes or if it's explicitly requested.
+    # For now, let's assume we re-calculate if quantity is provided but value/price is missing?
+    # Or simply: if it's a security snapshot update, and quantity is there, we try to update price.
+    # We need user_id which is on the snapshot.
+    attrs = normalize_keys_to_strings(attrs)
+    |> enrich_snapshot_update_with_price(snapshot)
+
     snapshot
     |> AssetSnapshot.changeset(attrs)
     |> Repo.update()
@@ -192,4 +224,105 @@ defmodule WealthBackend.Analytics do
       assets: assets_total
     }
   end
+
+
+  # ============================================================================
+  # Private Helper Functions - Price Enrichment
+  # ============================================================================
+
+  alias Yappma.Services.AlphaVantageClient
+
+  defp enrich_snapshot_with_price(attrs, user_id) do
+    asset_id = attrs["asset_id"]
+    quantity = attrs["quantity"]
+
+    # Only proceed if we have asset_id and quantity
+    if asset_id && quantity do
+      # Load asset to check type
+      asset = WealthBackend.Portfolio.get_asset!(asset_id, user_id)
+      
+      if asset.asset_type.code == "security" do
+        ticker = asset.security_asset.ticker || asset.symbol
+        
+        if ticker do
+          case AlphaVantageClient.get_quote(ticker) do
+            {:ok, price} ->
+              # Parse quantity and price to calculate value
+              qty_dec = parse_decimal(quantity)
+              price_dec = parse_decimal(price)
+              
+              value = Decimal.mult(qty_dec, price_dec)
+              
+              attrs
+              |> Map.put("market_price_per_unit", price)
+              |> Map.put("value", Decimal.to_string(value))
+              
+            {:error, _} ->
+              # Failed to fetch price.
+              # To avoid 422 (missing value), we default to 0 if value is missing.
+              # Frontend hides the value input, so we must provide something.
+              if is_nil(attrs["value"]) do
+                Map.put(attrs, "value", "0.0")
+              else
+                attrs
+              end
+          end
+        else
+          attrs
+        end
+      else
+        attrs
+      end
+    else
+      attrs
+    end
+  rescue
+    _ -> attrs
+  end
+
+  defp enrich_snapshot_update_with_price(attrs, snapshot) do
+    # Only if quantity is being updated
+    if attrs["quantity"] do
+      # Load asset to check type
+      asset = Repo.preload(snapshot, :asset).asset
+      asset = Repo.preload(asset, [:asset_type, :security_asset])
+      
+      if asset.asset_type.code == "security" do
+        ticker = asset.security_asset.ticker || asset.symbol
+        
+        if ticker do
+          case AlphaVantageClient.get_quote(ticker) do
+            {:ok, price} ->
+              qty_dec = parse_decimal(attrs["quantity"])
+              price_dec = parse_decimal(price)
+              
+              value = Decimal.mult(qty_dec, price_dec)
+              
+              attrs
+              |> Map.put("market_price_per_unit", price)
+              |> Map.put("value", Decimal.to_string(value))
+              
+            {:error, _} -> attrs
+          end
+        else
+          attrs
+        end
+      else
+        attrs
+      end
+    else
+      attrs
+    end
+  rescue
+    _ -> attrs
+  end
+
+  defp parse_decimal(val) when is_binary(val) do
+    case Decimal.parse(val) do
+      {d, _} -> d
+      :error -> Decimal.new(0)
+    end
+  end
+  defp parse_decimal(val) when is_number(val), do: Decimal.from_float(val / 1)
+  defp parse_decimal(_), do: Decimal.new(0)
 end

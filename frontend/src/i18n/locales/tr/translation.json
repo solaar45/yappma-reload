@@ -23,6 +23,7 @@
     "type": "Tür",
     "value": "Değer",
     "date": "Tarih",
+    "price": "Fiyat",
     "status": "Durum",
     "loading": "Yüklüyor...",
     "error": "Hata",
@@ -384,7 +385,8 @@
     "filterByDate": "Tarihe Göre Filtrele",
     "clearDateFilter": "Tarih Filtresini Temizle",
     "quantityOptional": "Miktar (isteğe bağlı)",
-    "quantityPlaceholder": "orn. hisse sayısı",
+    "quantityPlaceholder": "örn. 10.5",
+    "autoCalculateNotice": "Değer, güncel piyasa fiyatına göre otomatik olarak hesaplanacaktır.",
     "types": {
       "account": "Hesap",
       "asset": "Varlık"

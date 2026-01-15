@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDashboard } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
@@ -10,88 +11,6 @@ import { TaxUsageWidget } from '@/components/dashboard/TaxUsageWidget';
 import type { PortfolioHolding } from '@/components/portfolio/PortfolioHoldingsTable';
 import type { PortfolioPosition } from '@/components/portfolio/PortfolioPositionsTable';
 import InstitutionLogo from '@/components/InstitutionLogo';
-
-// Mock data for holdings demo
-const mockPortfolioHoldings: PortfolioHolding[] = [
-  {
-    id: '1',
-    ticker: 'AAPL',
-    name: 'Apple Inc.',
-    shares: 50,
-    avgCost: 150.25,
-    currentPrice: 178.50,
-    marketValue: 8925.00,
-    totalGainLoss: 1412.50,
-    totalGainLossPercent: 18.80,
-    dayChange: 125.00,
-    dayChangePercent: 1.42,
-  },
-  {
-    id: '2',
-    ticker: 'MSFT',
-    name: 'Microsoft Corporation',
-    shares: 30,
-    avgCost: 320.00,
-    currentPrice: 385.75,
-    marketValue: 11572.50,
-    totalGainLoss: 1972.50,
-    totalGainLossPercent: 20.55,
-    dayChange: -89.25,
-    dayChangePercent: -0.77,
-  },
-  {
-    id: '3',
-    ticker: 'GOOGL',
-    name: 'Alphabet Inc.',
-    shares: 25,
-    avgCost: 135.50,
-    currentPrice: 142.80,
-    marketValue: 3570.00,
-    totalGainLoss: 182.50,
-    totalGainLossPercent: 5.39,
-    dayChange: 35.75,
-    dayChangePercent: 1.01,
-  },
-  {
-    id: '4',
-    ticker: 'TSLA',
-    name: 'Tesla, Inc.',
-    shares: 15,
-    avgCost: 245.00,
-    currentPrice: 198.50,
-    marketValue: 2977.50,
-    totalGainLoss: -697.50,
-    totalGainLossPercent: -18.98,
-    dayChange: -44.85,
-    dayChangePercent: -1.48,
-  },
-  {
-    id: '5',
-    ticker: 'AMZN',
-    name: 'Amazon.com Inc.',
-    shares: 40,
-    avgCost: 155.75,
-    currentPrice: 172.25,
-    marketValue: 6890.00,
-    totalGainLoss: 660.00,
-    totalGainLossPercent: 10.59,
-    dayChange: 68.80,
-    dayChangePercent: 1.01,
-  },
-  {
-    id: '6',
-    ticker: 'NVDA',
-    name: 'NVIDIA Corporation',
-    shares: 20,
-    avgCost: 475.00,
-    currentPrice: 495.50,
-    marketValue: 9910.00,
-    totalGainLoss: 410.00,
-    totalGainLossPercent: 4.32,
-    dayChange: 198.20,
-    dayChangePercent: 2.04,
-  },
-];
 
 // Mock data for positions demo
 const mockPortfolioPositions: PortfolioPosition[] = [
@@ -196,6 +115,64 @@ export default function DashboardPage() {
   const { userId } = useUser();
   const { data, loading, error } = useDashboard({ userId: userId! });
 
+  // Calculate portfolio holdings from real data
+  const portfolioHoldings: PortfolioHolding[] = useMemo(() => {
+    if (!data?.assets) return [];
+
+    return data.assets
+      .filter((asset) => asset.asset_type?.code === 'security')
+      .map((asset) => {
+        const snapshots = asset.snapshots || [];
+        // Sort snapshots by date descending just to be safe, though usually they come sorted
+        const sortedSnapshots = [...snapshots].sort(
+          (a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime()
+        );
+
+        const latestSnapshot = sortedSnapshots[0];
+        const previousSnapshot = sortedSnapshots[1];
+
+        const quantity = latestSnapshot?.quantity ? parseFloat(latestSnapshot.quantity) : 0;
+        const marketPrice = latestSnapshot?.market_price_per_unit ? parseFloat(latestSnapshot.market_price_per_unit) : 0;
+
+        // Calculate market value from price * quantity to ensure consistency
+        // For securities, Value should always be Price * Quantity.
+        // If Price is 0 (missing), Value should be 0.
+        // This fixes the issue where Price is 0 but Value is 20, leading to a confusing gain.
+        const marketValue = quantity > 0 ? quantity * marketPrice : (latestSnapshot?.value ? parseFloat(latestSnapshot.value) : 0);
+
+        const costBasis = latestSnapshot?.cost_basis ? parseFloat(latestSnapshot.cost_basis) : 0;
+
+        // Calculations
+        const avgCost = quantity > 0 ? costBasis / quantity : 0;
+        const totalGainLoss = marketValue - costBasis;
+        const totalGainLossPercent = costBasis > 0 ? (totalGainLoss / costBasis) * 100 : 0;
+
+        // Day Change calculation
+        let dayChange = 0;
+        let dayChangePercent = 0;
+
+        if (latestSnapshot && previousSnapshot) {
+          const prevValue = parseFloat(previousSnapshot.value || '0');
+          dayChange = marketValue - prevValue;
+          dayChangePercent = prevValue > 0 ? (dayChange / prevValue) * 100 : 0;
+        }
+
+        return {
+          id: asset.id.toString(),
+          ticker: asset.security_asset?.ticker || asset.symbol || '-',
+          name: asset.name,
+          shares: quantity,
+          avgCost: avgCost,
+          currentPrice: marketPrice,
+          marketValue: marketValue,
+          totalGainLoss: totalGainLoss,
+          totalGainLossPercent: totalGainLossPercent,
+          dayChange: dayChange,
+          dayChangePercent: dayChangePercent,
+        };
+      });
+  }, [data?.assets]);
+
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -284,7 +261,7 @@ export default function DashboardPage() {
           <CardTitle>Portfolio Holdings</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <PortfolioHoldingsTable holdings={mockPortfolioHoldings} />
+          <PortfolioHoldingsTable holdings={portfolioHoldings} />
         </CardContent>
       </Card>
 
@@ -366,7 +343,7 @@ export default function DashboardPage() {
                   return (
                     <div key={asset.id} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <InstitutionLogo name={asset.name} ticker={asset.ticker ?? asset.security_asset?.ticker ?? undefined} size="medium" className="flex-shrink-0 rounded-full" />
+                        <InstitutionLogo name={asset.name} ticker={asset.security_asset?.ticker || asset.symbol || undefined} size="medium" className="flex-shrink-0 rounded-full" />
                         <div className="space-y-1">
                           <p className="text-sm font-medium leading-none">{asset.name}</p>
                           <p className="text-xs text-muted-foreground">
@@ -402,3 +379,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+

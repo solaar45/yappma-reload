@@ -23,6 +23,7 @@
     "type": "Type",
     "value": "Value",
     "date": "Date",
+    "price": "Price",
     "status": "Status",
     "loading": "Loading...",
     "error": "Error",
@@ -384,7 +385,8 @@
     "filterByDate": "Filter by Date",
     "clearDateFilter": "Clear Date Filter",
     "quantityOptional": "Quantity (optional)",
-    "quantityPlaceholder": "e.g., number of shares",
+    "quantityPlaceholder": "e.g. 10.5",
+    "autoCalculateNotice": "Value will be calculated automatically based on current market price.",
     "types": {
       "account": "Account",
       "asset": "Asset"

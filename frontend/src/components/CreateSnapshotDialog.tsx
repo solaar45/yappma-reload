@@ -47,30 +47,37 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.entity_id || !formData.value) {
-      return;
-    }
+    // For securities, only quantity is required (value calculated by backend)
+    // For others, value is required
+    const selectedAsset = snapshotType === 'asset' && formData.entity_id
+      ? assets?.find(a => a.id.toString() === formData.entity_id)
+      : null;
+    const isSecurity = selectedAsset?.asset_type?.code === 'security';
+
+    if (!formData.entity_id) return;
+    if (!isSecurity && !formData.value) return;
+    if (isSecurity && !formData.quantity) return;
 
     setLoading(true);
 
     try {
-      const endpoint = snapshotType === 'account' 
-        ? '/snapshots/accounts' 
+      const endpoint = snapshotType === 'account'
+        ? '/snapshots/accounts'
         : '/snapshots/assets';
 
       const payload = snapshotType === 'account'
         ? {
-            account_id: parseInt(formData.entity_id),
-            balance: formData.value,
-            currency: formData.currency,
-            snapshot_date: formData.snapshot_date,
-          }
+          account_id: parseInt(formData.entity_id),
+          balance: formData.value,
+          currency: formData.currency,
+          snapshot_date: formData.snapshot_date,
+        }
         : {
-            asset_id: parseInt(formData.entity_id),
-            value: formData.value,
-            quantity: formData.quantity || undefined,
-            snapshot_date: formData.snapshot_date,
-          };
+          asset_id: parseInt(formData.entity_id),
+          value: formData.value,
+          quantity: formData.quantity || undefined,
+          snapshot_date: formData.snapshot_date,
+        };
 
       await apiClient.post(endpoint, payload);
 
@@ -92,6 +99,12 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
 
   const entities = snapshotType === 'account' ? accounts : assets;
 
+  const selectedAsset = snapshotType === 'asset' && formData.entity_id
+    ? assets?.find(a => a.id.toString() === formData.entity_id)
+    : null;
+
+  const isSecurity = selectedAsset?.asset_type?.code === 'security';
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -111,8 +124,8 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="type" required>{t('common.type') || 'Snapshot Type'}</Label>
-              <Select 
-                value={snapshotType} 
+              <Select
+                value={snapshotType}
                 onValueChange={(value: 'account' | 'asset') => {
                   setSnapshotType(value);
                   setFormData({ ...formData, entity_id: '' });
@@ -132,19 +145,35 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
               <Label htmlFor="entity" required>
                 {snapshotType === 'account' ? t('common.account') : t('common.asset')}
               </Label>
-              <Select 
-                value={formData.entity_id} 
+              <Select
+                value={formData.entity_id}
                 onValueChange={(value) => setFormData({ ...formData, entity_id: value })}
               >
                 <SelectTrigger id="entity">
                   <SelectValue placeholder={`${t('common.search')}...`} />
                 </SelectTrigger>
                 <SelectContent>
-                  {entities?.map((entity) => (
-                    <SelectItem key={entity.id} value={entity.id.toString()}>
-                      {entity.name}
-                    </SelectItem>
-                  ))}
+                  {entities?.map((entity) => {
+                    let displayName = entity.name;
+                    if (!displayName || displayName === '-') {
+                      if (snapshotType === 'account') {
+                        // We know this is an Account
+                        const acc = entity as any;
+                        displayName = t(`accountTypes.${acc.type}`, { defaultValue: t('common.account') });
+                      } else {
+                        // We know this is an Asset
+                        const asset = entity as any;
+                        const typeCode = asset.asset_type?.code || 'other';
+                        displayName = t(`assetTypes.${typeCode}`, { defaultValue: t('common.asset') });
+                      }
+                    }
+
+                    return (
+                      <SelectItem key={entity.id} value={entity.id.toString()}>
+                        {displayName}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -160,26 +189,28 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="value" required>
-                {snapshotType === 'account' ? t('accounts.balance') : t('common.value')}
-              </Label>
-              <Input
-                id="value"
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.value}
-                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                required
-              />
-            </div>
+            {(snapshotType === 'account' || !isSecurity) && (
+              <div className="grid gap-2">
+                <Label htmlFor="value" required>
+                  {snapshotType === 'account' ? t('accounts.balance') : t('common.value')}
+                </Label>
+                <Input
+                  id="value"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={formData.value}
+                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                  required={snapshotType === 'account' || !isSecurity}
+                />
+              </div>
+            )}
 
             {snapshotType === 'account' && (
               <div className="grid gap-2">
                 <Label htmlFor="currency" required>{t('common.currency') || 'Currency'}</Label>
-                <Select 
-                  value={formData.currency} 
+                <Select
+                  value={formData.currency}
                   onValueChange={(value) => setFormData({ ...formData, currency: value })}
                 >
                   <SelectTrigger id="currency">
@@ -197,7 +228,9 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
 
             {snapshotType === 'asset' && (
               <div className="grid gap-2">
-                <Label htmlFor="quantity">Quantity ({t('common.optional')})</Label>
+                <Label htmlFor="quantity" required={isSecurity}>
+                  Quantity {isSecurity ? '' : `(${t('common.optional')})`}
+                </Label>
                 <Input
                   id="quantity"
                   type="number"
@@ -205,7 +238,13 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
                   placeholder="e.g., number of shares"
                   value={formData.quantity}
                   onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                  required={isSecurity}
                 />
+                {isSecurity && (
+                  <p className="text-xs text-muted-foreground">
+                    {t('snapshots.autoCalculateNotice') || 'Value will be calculated automatically based on current market price.'}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -213,7 +252,7 @@ export function CreateSnapshotDialog({ onSuccess }: CreateSnapshotDialogProps) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={loading || !formData.entity_id || !formData.value}>
+            <Button type="submit" disabled={loading || !formData.entity_id || (!isSecurity && !formData.value) || (isSecurity && !formData.quantity)}>
               {loading ? t('common.loading') : t('snapshots.createSnapshot')}
             </Button>
           </DialogFooter>

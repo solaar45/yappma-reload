@@ -21,6 +21,7 @@
     "actions": "Aktionen",
     "name": "Name",
     "type": "Typ",
+    "price": "Kurs",
     "value": "Wert",
     "date": "Datum",
     "status": "Status",
@@ -376,6 +377,7 @@
     "clearDateFilter": "Datumsfilter zurücksetzen",
     "quantityOptional": "Menge (optional)",
     "quantityPlaceholder": "z.B. Anzahl Anteile",
+    "autoCalculateNotice": "Der Wert wird automatisch basierend auf dem aktuellen Marktpreis berechnet.",
     "types": {
       "account": "Konto",
       "asset": "Vermögenswert"
