@@ -207,8 +207,11 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           // Use row depth to detect if we are inside a group
           const isGroupedChild = row.depth > 0;
 
+          // For indentation visualization
+          const indentClass = isGroupedChild ? 'pl-8' : 'pl-0';
+
           return (
-            <div className={`flex items-center gap-2 ${isGroupedChild ? 'pl-8' : ''}`}>
+            <div className={`flex items-center gap-2 ${indentClass}`}>
                {isGroupedChild && (
                    <div className="w-4 border-l-2 border-b-2 h-4 border-muted-foreground/20 rounded-bl-sm -mt-4 mr-2"></div>
                )}
@@ -367,7 +370,6 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           return null; 
         },
       }),
-      // Actions column removed entirely
     ],
     [t]
   );
