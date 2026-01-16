@@ -11,6 +11,7 @@ import { logger } from '@/lib/logger';
 import { apiClient } from '@/lib/api/client';
 import { CheckCircle2, XCircle, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/logo.jpg';
 
 export default function RegisterPage() {
     const { t } = useTranslation();
@@ -104,11 +105,20 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-background p-4">
-            <Card className="w-full max-w-md">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold">{t('auth.register', { defaultValue: 'Register' })}</CardTitle>
-                    <CardDescription>{t('auth.registerDescription', { defaultValue: 'Create an account to start tracking your wealth' })}</CardDescription>
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+            <Card className="w-full max-w-md shadow-lg border-t-4 border-t-primary">
+                <CardHeader className="space-y-4 flex flex-col items-center text-center">
+                    <div className="w-64 h-64 mb-2 p-1 bg-white rounded-2xl shadow-sm border overflow-hidden">
+                        <img src={logo} alt="YAPPMA Logo" className="w-full h-full object-contain hover:scale-105 transition-transform duration-300" />
+                    </div>
+                    <div className="space-y-1">
+                        <CardTitle className="text-3xl font-extrabold tracking-tight text-primary">
+                            {t('auth.register', { defaultValue: 'Register' })}
+                        </CardTitle>
+                        <CardDescription className="text-base">
+                            {t('auth.registerDescription', { defaultValue: 'Create an account to start tracking your wealth' })}
+                        </CardDescription>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
