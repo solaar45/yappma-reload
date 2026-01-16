@@ -28,6 +28,24 @@ defmodule WealthBackendWeb.DashboardJSON do
     }
   end
 
+  def asset_allocation(%{allocation: allocation, date: date}) do
+    %{
+      data: %{
+        allocation: Enum.map(allocation, &asset_allocation_data/1),
+        date: date
+      }
+    }
+  end
+
+  defp asset_allocation_data(item) do
+    %{
+      asset_type: item.asset_type,
+      value: to_string(item.value),
+      percentage: item.percentage,
+      count: item.count
+    }
+  end
+
   defp account_snapshot_data(snapshot) do
     %{
       id: snapshot.id,
@@ -66,23 +84,9 @@ defmodule WealthBackendWeb.DashboardJSON do
     %{
       id: institution.id,
       name: institution.name,
-      type: institution.type,
-      tax_exemptions: tax_exemptions_data(Map.get(institution, :tax_exemptions))
+      type: institution.type
     }
   end
-
-  defp tax_exemptions_data(%Ecto.Association.NotLoaded{}), do: []
-  defp tax_exemptions_data(nil), do: []
-  defp tax_exemptions_data(exemptions) when is_list(exemptions) do
-    Enum.map(exemptions, fn ex ->
-      %{
-        id: ex.id,
-        amount: decimal_to_string(ex.amount),
-        year: ex.year
-      }
-    end)
-  end
-  defp tax_exemptions_data(_), do: []
 
   defp asset_type_data(nil), do: nil
   defp asset_type_data(type) do
