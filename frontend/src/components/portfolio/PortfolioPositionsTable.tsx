@@ -240,8 +240,15 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
 
       columnHelper.accessor('currentValue', {
         header: ({ column }) => (
-          <div className="text-right">
-             {t('portfolio.marketValue')}
+          <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.marketValue')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
           </div>
         ),
         cell: ({ row, getValue }) => {
@@ -250,7 +257,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
              : getValue();
           
           return (
-            <div className={`text-right font-mono ${row.getIsGrouped() ? 'font-bold' : ''}`}>
+            <div className={`text-right font-mono pr-4 ${row.getIsGrouped() ? 'font-bold' : ''}`}>
                {formatValue(value)}
             </div>
           );
@@ -259,14 +266,25 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
       }),
 
       columnHelper.accessor('portfolioShare', {
-        header: t('portfolio.share'),
+        header: ({ column }) => (
+          <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.share')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        ),
         cell: ({ row, getValue }) => {
            const value = row.getIsGrouped()
              ? row.subRows.reduce((sum, r) => sum + r.original.portfolioShare, 0)
              : getValue();
              
            return (
-            <div className="space-y-1 w-24 ml-auto">
+            <div className="space-y-1 w-24 ml-auto pr-4">
               <div className="flex items-center justify-end">
                 <span className={`text-xs ${row.getIsGrouped() ? 'font-bold' : ''}`}>{value.toFixed(1)}%</span>
               </div>
@@ -278,14 +296,25 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
       }),
 
       columnHelper.accessor('performance', {
-        header: t('portfolio.performance'),
+        header: ({ column }) => (
+          <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.performance')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        ),
         cell: ({ row }) => {
           if (row.getIsGrouped()) return null;
 
           const value = row.original.performance;
           const isPositive = value >= 0;
           return (
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end pr-4">
               <span
                 className={`text-sm font-medium ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                   }`}
@@ -300,19 +329,30 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
 
       columnHelper.accessor('fsaAllocated', {
         id: 'fsa',
-        header: t('portfolio.fsa'),
+        header: ({ column }) => (
+          <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.fsa')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        ),
         cell: ({ row }) => {
           if (row.getIsGrouped()) {
               const representativeItem = row.leafRows.find(r => r.original.fsaAllocated > 0)?.original;
               
-              if (!representativeItem) return <span className="text-muted-foreground text-xs block text-center">-</span>;
+              if (!representativeItem) return <div className="pr-4"><span className="text-muted-foreground text-xs block text-right">-</span></div>;
               
               const allocated = representativeItem.fsaAllocated;
               const globalLimit = representativeItem.fsaGlobalLimit || 1000;
               const percentage = globalLimit > 0 ? (allocated / globalLimit) * 100 : 0;
               
               return (
-                <div className="space-y-1 w-32">
+                <div className="space-y-1 w-32 ml-auto pr-4">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-medium">{formatCurrency(allocated)}</span>
                     <span className="text-muted-foreground text-[10px]">{percentage.toFixed(0)}%</span>
@@ -321,10 +361,8 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
                 </div>
               );
           }
-          // For flat items (those where we decided the institution is invalid), 
-          // we check the same validation helper to be consistent.
           if (!isValidInstitution(row.original.institution)) {
-             return <span className="text-muted-foreground/30 text-xs block text-center">—</span>;
+             return <div className="pr-4"><span className="text-muted-foreground/30 text-xs block text-right">—</span></div>;
           }
           return null; 
         },
@@ -336,32 +374,34 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           if (row.getIsGrouped()) return null;
           
           return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Edit className="mr-2 h-4 w-4" />
-                <span>{t('portfolio.edit')}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <FileText className="mr-2 h-4 w-4" />
-                <span>{t('portfolio.details')}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Camera className="mr-2 h-4 w-4" />
-                <span>{t('portfolio.snapshot')}</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>{t('portfolio.delete')}</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="text-right pr-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <Edit className="mr-2 h-4 w-4" />
+                  <span>{t('portfolio.edit')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>{t('portfolio.details')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Camera className="mr-2 h-4 w-4" />
+                  <span>{t('portfolio.snapshot')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span>{t('portfolio.delete')}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )},
       }),
     ],
