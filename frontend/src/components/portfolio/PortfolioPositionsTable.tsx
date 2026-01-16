@@ -190,8 +190,8 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
            // If so, render the tree connector in this column (aligned right)
            if (row.depth > 0) {
               return (
-                <div className="flex justify-end w-full pr-4 h-full items-center">
-                    <div className="w-4 border-l-2 border-b-2 h-4 border-muted-foreground/20 rounded-bl-sm -mt-4"></div>
+                <div className="flex justify-end w-full pr-1 h-full items-center">
+                    <div className="w-4 border-l-2 border-b-2 h-4 border-muted-foreground/20 rounded-bl-sm -mt-4 translate-x-1"></div>
                 </div>
               );
            }
