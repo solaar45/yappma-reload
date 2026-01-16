@@ -126,6 +126,13 @@ function Sparkline({ data, isPositive }: { data: number[]; isPositive: boolean }
   );
 }
 
+// Helper to determine if an institution string is "valid" (not a placeholder)
+function isValidInstitution(inst: string | undefined | null): boolean {
+  if (!inst) return false;
+  const clean = inst.trim();
+  return clean.length > 0 && clean !== '-' && clean.toLowerCase() !== 'null';
+}
+
 export function PortfolioPositionsTable({ positions }: PortfolioPositionsTableProps) {
   const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -134,9 +141,10 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
   const [expanded, setExpanded] = useState<ExpandedState>(true); // Default all expanded
 
   // Filter out positions without institution for separate display
+  // We treat "-", empty strings, or null as "no institution"
   const { groupedPositions, flatPositions } = useMemo(() => {
-    const withInstitution = positions.filter(p => !!p.institution);
-    const withoutInstitution = positions.filter(p => !p.institution);
+    const withInstitution = positions.filter(p => isValidInstitution(p.institution));
+    const withoutInstitution = positions.filter(p => !isValidInstitution(p.institution));
     return { groupedPositions: withInstitution, flatPositions: withoutInstitution };
   }, [positions]);
 
@@ -196,8 +204,8 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             ? t(`accountTypes.${subtype}`, { defaultValue: subtype })
             : name;
           
-          // Add indentation if inside a group
-          const isGroupedChild = !!row.original.institution; 
+          // Use row depth to detect if we are inside a group
+          const isGroupedChild = row.depth > 0;
 
           return (
             <div className={`flex items-center gap-2 ${isGroupedChild ? 'pl-8' : ''}`}>
@@ -313,8 +321,9 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
                 </div>
               );
           }
-          // For flat items (no institution), show specific placeholder
-          if (!row.original.institution) {
+          // For flat items (those where we decided the institution is invalid), 
+          // we check the same validation helper to be consistent.
+          if (!isValidInstitution(row.original.institution)) {
              return <span className="text-muted-foreground/30 text-xs block text-center">—</span>;
           }
           return null; 
