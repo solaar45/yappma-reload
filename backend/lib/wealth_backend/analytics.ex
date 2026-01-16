@@ -229,57 +229,6 @@ defmodule WealthBackend.Analytics do
     }
   end
 
-  @doc """
-  Get asset allocation by asset type for a user at a specific date.
-  Returns a list of %{asset_type: string, value: decimal, percentage: float, count: integer}
-  """
-  def get_asset_allocation(user_id, date \\ Date.utc_today()) do
-    asset_snapshots = get_latest_asset_snapshots(user_id, date)
-    
-    # Define all 6 asset types
-    all_types = ["cash", "security", "insurance", "loan", "real_estate", "other"]
-    
-    # Group by asset_type.code
-    grouped = 
-      asset_snapshots
-      |> Enum.group_by(fn s -> s.asset.asset_type.code end)
-      
-    total_value = 
-      asset_snapshots
-      |> Enum.map(& &1.value)
-      |> Enum.reduce(Decimal.new(0), &Decimal.add/2)
-      
-    # Map all types, filling with 0 if not present
-    all_types
-    |> Enum.map(fn type_code ->
-      snapshots = Map.get(grouped, type_code, [])
-      
-      type_value = 
-        snapshots
-        |> Enum.map(& &1.value)
-        |> Enum.reduce(Decimal.new(0), &Decimal.add/2)
-        
-      count = length(snapshots)
-      
-      percentage = 
-        if Decimal.compare(total_value, Decimal.new(0)) == :gt do
-          Decimal.div(type_value, total_value)
-          |> Decimal.mult(Decimal.new(100))
-          |> Decimal.to_float()
-        else
-          0.0
-        end
-        
-      %{
-        asset_type: type_code,
-        value: type_value,
-        count: count,
-        percentage: percentage
-      }
-    end)
-    |> Enum.sort_by(& &1.value, {:desc, Decimal})
-  end
-
 
   # ============================================================================
   # Private Helper Functions - Price Enrichment
