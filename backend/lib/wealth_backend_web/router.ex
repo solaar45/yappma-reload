@@ -81,7 +81,6 @@ defmodule WealthBackendWeb.Router do
       get "/dashboard/net_worth", DashboardController, :net_worth
       get "/dashboard/account_snapshots", DashboardController, :account_snapshots
       get "/dashboard/asset_snapshots", DashboardController, :asset_snapshots
-      get "/dashboard/asset_allocation", DashboardController, :asset_allocation
     end
   end
 
