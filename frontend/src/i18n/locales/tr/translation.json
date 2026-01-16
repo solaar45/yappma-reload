@@ -101,6 +101,23 @@
     "errorLoading": "Panel yüklenirken hata oluştu",
     "asOf": "itibariyle"
   },
+  "import": {
+    "buttonLabel": "CSV İçe Aktar",
+    "dialogTitle": "Anlık Görüntüleri İçe Aktar (CSV)",
+    "dialogDescription": "Bankanızdan veya aracı kurumunuzdan bir CSV dosyası yükleyin. Desteklenen formatlar: Scalable Capital (Baader Bank), Trade Republic, DKB, Comdirect.",
+    "fileLabel": "CSV Dosyası",
+    "uploadButton": "İçe Aktarmayı Başlat",
+    "successTitle": "İçe Aktarma Başarılı",
+    "successDescription": "{{count}} anlık görüntü başarıyla içe aktarıldı.",
+    "warningTitle": "İçe Aktarma Uyarıları",
+    "warningDescription": "Bazı satırlar içe aktarılamadı: {{count}} uyarı.",
+    "errorTitle": "İçe Aktarma Başarısız",
+    "errorDescription": "Yükleme sırasında bir hata oluştu. Lütfen tekrar deneyin.",
+    "targetAccount": "Hedef Hesap (Banka İçe Aktarımı için)",
+    "selectAccount": "Bir hesap seçin...",
+    "noAccount": "Hiçbiri (Varlık İçe Aktarımı / Scalable)",
+    "accountHelp": "Banka ekstresi içe aktarımları için gereklidir (örn. DKB). Portföy içe aktarımları için gerekli değildir (Scalable)."
+  },
   "taxes": {
     "title": "Vergiler",
     "yearToDate": "Yılbaşından Bugüne",
