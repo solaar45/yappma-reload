@@ -7,6 +7,7 @@ defmodule WealthBackend.Accounts do
   alias WealthBackend.Repo
   alias WealthBackend.Accounts.{User, Institution, Account, UserToken, UserNotifier}
   alias WealthBackend.Analytics.AccountSnapshot
+  alias WealthBackend.Taxes.TaxExemption
 
   ## Users
 
@@ -35,6 +36,8 @@ defmodule WealthBackend.Accounts do
   ## Institutions
 
   def list_institutions(user_id) do
+    # Note: This likely uses WealthBackend.Accounts.Institution which might be deprecated
+    # Check WealthBackend.Institutions context instead
     Institution
     |> where([i], i.user_id == ^user_id)
     |> Repo.all()
@@ -66,19 +69,25 @@ defmodule WealthBackend.Accounts do
 
   def list_accounts(user_id) do
     snapshots_query = from s in AccountSnapshot, order_by: [desc: s.snapshot_date]
+    
+    current_year = Date.utc_today().year
+    tax_query = from te in TaxExemption, where: te.year == ^current_year and te.user_id == ^user_id
 
     Account
     |> where([a], a.user_id == ^user_id)
-    |> preload([:institution, snapshots: ^snapshots_query])
+    |> preload([institution: [tax_exemptions: ^tax_query], snapshots: ^snapshots_query])
     |> Repo.all()
   end
 
   def get_account!(id, %User{id: user_id}) do
     snapshots_query = from s in AccountSnapshot, order_by: [desc: s.snapshot_date]
+    
+    current_year = Date.utc_today().year
+    tax_query = from te in TaxExemption, where: te.year == ^current_year and te.user_id == ^user_id
 
     Account
     |> where([a], a.id == ^id and a.user_id == ^user_id)
-    |> preload([:institution, snapshots: ^snapshots_query])
+    |> preload([institution: [tax_exemptions: ^tax_query], snapshots: ^snapshots_query])
     |> Repo.one!()
   end
 
