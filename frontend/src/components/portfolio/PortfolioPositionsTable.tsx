@@ -279,16 +279,18 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
         header: t('portfolio.fsa'),
         cell: ({ row }) => {
           // Only show FSA in the group row (Institution)
-          // Because FSA is per institution, we can take it from the first leaf row
           if (row.getIsGrouped()) {
-              const firstItem = row.leafRows[0]?.original;
-              if (!firstItem) return null;
+              // Get the first item in the group that has an FSA allocated
+              // This is necessary because some items in the group might not have FSA data mapped correctly if they come from different sources, 
+              // although our logic tries to be consistent. 
+              // More importantly, we just need *one* representative value for the institution.
+              const representativeItem = row.leafRows.find(r => r.original.fsaAllocated > 0)?.original;
               
-              const allocated = firstItem.fsaAllocated;
-              const used = firstItem.fsaUsedYTD; // Assuming we map this correctly
+              if (!representativeItem) return <span className="text-muted-foreground text-xs block text-center">-</span>;
               
-              if (allocated === 0 && used === 0) return <span className="text-muted-foreground text-xs text-center block">-</span>;
-
+              const allocated = representativeItem.fsaAllocated;
+              const used = representativeItem.fsaUsedYTD;
+              
               const percentage = allocated > 0 ? (used / allocated) * 100 : 0;
               
               return (
