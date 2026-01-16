@@ -9,11 +9,7 @@ defmodule WealthBackend.Import.Parser do
 
   # Define supported adapters
   @adapters [
-    WealthBackend.Import.Adapters.ScalableCapital,
-    WealthBackend.Import.Adapters.TradeRepublic,
-    WealthBackend.Import.Adapters.DKB,
-    WealthBackend.Import.Adapters.Comdirect,
-    WealthBackend.Import.Adapters.DeutscheBank
+    WealthBackend.Import.Adapters.ScalableCapital
   ]
 
   @doc """
