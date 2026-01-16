@@ -60,7 +60,10 @@ defmodule WealthBackend.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:cors_plug, "~> 3.0"},
-      {:nimble_csv, "~> 1.2"}
+      {:nimble_csv, "~> 1.2"},
+      {:bcrypt_elixir, "~> 3.0"},
+      {:cachex, "~> 4.0"},
+      {:httpoison, "~> 2.0"}
     ]
   end
 
