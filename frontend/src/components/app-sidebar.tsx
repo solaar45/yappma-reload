@@ -1,40 +1,26 @@
-import { ChevronUp, User2, Settings, LogOut, Wallet, Landmark, PiggyBank, Camera, Receipt } from 'lucide-react';
+import { Wallet, Landmark, PiggyBank, Camera, Receipt } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { NavLink } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from '@/components/ui/sidebar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import { useUser } from '@/contexts/UserContext';
-import { useAuth } from '@/hooks/useAuth';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { NavUser } from '@/components/nav-user';
 import { cn } from '@/lib/utils';
 
 export function AppSidebar() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { user } = useUser();
-  const { logout } = useAuth();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   const items = [
     {
@@ -57,7 +43,6 @@ export function AppSidebar() {
       url: '/snapshots',
       icon: Camera,
     },
-
     {
       title: t('taxes.title'),
       url: '/taxes',
@@ -65,34 +50,38 @@ export function AppSidebar() {
     },
   ];
 
-  const userInitials = user?.name
-    ? user.name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-    : 'U';
+  // Prepare user object for NavUser component
+  const userData = {
+    name: user?.name || 'User',
+    email: user?.email || '',
+    avatar: '', // NavUser handles fallback
+  };
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
+      {/* 1. User Menu prominent in Header */}
+      <SidebarHeader>
+        <NavUser user={userData} />
+      </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>YAPPMA</SidebarGroupLabel>
+          <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink
                       to={item.url}
                       className={({ isActive }) =>
                         cn(
                           'flex items-center gap-3',
-                          isActive && 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          isActive && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
                         )
                       }
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -102,53 +91,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarFallback className="rounded-lg">{userInitials}</AvatarFallback>
-                  </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{user?.name || 'User'}</span>
-                    <span className="truncate text-xs">{user?.email}</span>
-                  </div>
-                  <ChevronUp className="ml-auto size-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side="top"
-                align="end"
-                sideOffset={4}
-              >
-                <DropdownMenuItem>
-                  <User2 className="mr-2 h-4 w-4" />
-                  <span>{t('common.account')}</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>{t('settings.title')}</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <div className="px-2 py-1.5">
-                  <LanguageSwitcher />
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>{t('common.logout')}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      
+      <SidebarFooter />
+      <SidebarRail />
     </Sidebar>
   );
 }
