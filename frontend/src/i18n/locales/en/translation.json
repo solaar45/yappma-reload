@@ -101,6 +101,19 @@
     "errorLoading": "Error loading dashboard",
     "asOf": "as of"
   },
+  "import": {
+    "buttonLabel": "Import CSV",
+    "dialogTitle": "Import Snapshots from CSV",
+    "dialogDescription": "Upload a CSV file from your bank or broker. Supported formats: Scalable Capital (Baader Bank), Trade Republic, DKB, Comdirect.",
+    "fileLabel": "CSV File",
+    "uploadButton": "Start Import",
+    "successTitle": "Import Successful",
+    "successDescription": "Successfully imported {{count}} snapshots.",
+    "warningTitle": "Import Warnings",
+    "warningDescription": "Some rows could not be imported: {{count}} warnings.",
+    "errorTitle": "Import Failed",
+    "errorDescription": "An error occurred while uploading the file. Please try again."
+  },
   "taxes": {
     "title": "Taxes",
     "yearToDate": "Year to Date",
