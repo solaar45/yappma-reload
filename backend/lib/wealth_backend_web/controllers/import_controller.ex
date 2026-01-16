@@ -4,13 +4,16 @@ defmodule WealthBackendWeb.ImportController do
   alias WealthBackend.Import
   action_fallback WealthBackendWeb.FallbackController
 
-  def create(conn, %{"file" => upload}) do
+  def create(conn, %{"file" => upload} = params) do
     user = conn.assigns.current_user
     
     # Read file content
     csv_content = File.read!(upload.path)
+    
+    # Get optional target account ID
+    target_account_id = params["account_id"]
 
-    case Import.import_csv(user.id, csv_content) do
+    case Import.import_csv(user.id, csv_content, target_account_id: target_account_id) do
       {:ok, result} ->
         conn
         |> put_status(:created)
