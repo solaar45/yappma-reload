@@ -111,6 +111,13 @@ export default function DashboardPage() {
       if (performanceHistory.length === 1) performanceHistory.unshift(performanceHistory[0]);
       if (performanceHistory.length === 0) performanceHistory.push(0, 0);
 
+      // Extract FSA data from account institution
+      const exemption = account.institution?.tax_exemptions?.[0];
+      const fsaAllocated = exemption?.amount ? parseFloat(exemption.amount) : 0;
+      // Note: used_ytd is currently not provided by backend, default to 0 for now
+      // If backend provides used_ytd in the future, we can map it here: exemption?.used_ytd ? parseFloat(exemption.used_ytd) : 0
+      const fsaUsedYTD = 0; 
+
       return {
         id: `account-${account.id}`,
         type: 'Account',
@@ -125,9 +132,9 @@ export default function DashboardPage() {
         performance: performance,
         performanceHistory: performanceHistory,
         savingsPlan: accountSavingsPlan > 0 ? accountSavingsPlan : undefined,
-        fsaAllocated: 0,
-        fsaTotal: 1000,
-        fsaUsedYTD: 0,
+        fsaAllocated: fsaAllocated,
+        fsaTotal: fsaAllocated,
+        fsaUsedYTD: fsaUsedYTD,
       };
     });
 
@@ -154,6 +161,11 @@ export default function DashboardPage() {
         if (performanceHistory.length === 1) performanceHistory.unshift(performanceHistory[0]);
         if (performanceHistory.length === 0) performanceHistory.push(0, 0);
 
+        // Extract FSA data from asset account institution
+        const exemption = asset.account?.institution?.tax_exemptions?.[0];
+        const fsaAllocated = exemption?.amount ? parseFloat(exemption.amount) : 0;
+        const fsaUsedYTD = 0;
+
         return {
           id: `asset-${asset.id}`,
           type: 'Asset',
@@ -168,9 +180,9 @@ export default function DashboardPage() {
           performance: performance,
           performanceHistory: performanceHistory,
           savingsPlan: asset.savings_plan_amount ? parseFloat(asset.savings_plan_amount) : undefined,
-          fsaAllocated: 0,
-          fsaTotal: 0,
-          fsaUsedYTD: 0,
+          fsaAllocated: fsaAllocated,
+          fsaTotal: fsaAllocated,
+          fsaUsedYTD: fsaUsedYTD,
         };
       });
 
@@ -386,5 +398,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-
