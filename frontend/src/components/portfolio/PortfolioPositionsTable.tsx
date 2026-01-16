@@ -186,6 +186,15 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
                </div>
              );
            }
+           // Use depth to detect if this is a child row within a group (depth > 0)
+           // If so, render the tree connector in this column (aligned right)
+           if (row.depth > 0) {
+              return (
+                <div className="flex justify-end w-full pr-4 h-full items-center">
+                    <div className="w-4 border-l-2 border-b-2 h-4 border-muted-foreground/20 rounded-bl-sm -mt-4"></div>
+                </div>
+              );
+           }
            return null;
         },
       }),
@@ -204,18 +213,9 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             ? t(`accountTypes.${subtype}`, { defaultValue: subtype })
             : name;
           
-          // Use row depth to detect if we are inside a group
-          const isGroupedChild = row.depth > 0;
-
-          // For indentation visualization
-          const indentClass = isGroupedChild ? 'pl-8' : 'pl-0';
-
           return (
-            <div className={`flex items-center gap-2 ${indentClass}`}>
-               {isGroupedChild && (
-                   <div className="w-4 border-l-2 border-b-2 h-4 border-muted-foreground/20 rounded-bl-sm -mt-4 mr-2"></div>
-               )}
-               
+            <div className="flex items-center gap-2">
+               {/* Indentation logic removed to ensure flush alignment with header */}
                <div className="flex flex-col">
                  <span className="font-medium">{displayName}</span>
                  <span className="text-xs text-muted-foreground">{t(`portfolio.${type.toLowerCase()}`, {defaultValue: type})}</span>
