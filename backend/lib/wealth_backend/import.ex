@@ -11,47 +11,53 @@ defmodule WealthBackend.Import do
   @doc """
   Imports snapshots from a CSV string.
   
+  Options:
+  - :target_account_id - ID of the account to import into (for banking exports)
+  
   Returns `{:ok, %{success_count: int, failures: list}}` or `{:error, reason}`.
   """
-  def import_csv(user_id, csv_content) do
-    with {:ok, rows} <- Parser.parse(csv_content) do
-      results = 
-        rows
-        |> Enum.map(fn row -> process_imported_row(user_id, row) end)
-      
-      success_count = Enum.count(results, &match?({:ok, _}, &1))
-      failures = 
-        results 
-        |> Enum.filter(&match?({:error, _}, &1))
-        |> Enum.map(fn {:error, reason} -> reason end)
+  def import_csv(user_id, csv_content, opts \\ []) do
+    target_account_id = Keyword.get(opts, :target_account_id)
 
-      {:ok, %{success_count: success_count, failures: failures}}
+    with {:ok, rows} <- Parser.parse(csv_content) do
+      # Validate target_account_id if the import contains account data
+      # Check first row type
+      first_row = List.first(rows)
+      
+      if first_row && first_row.type == :account && is_nil(target_account_id) do
+        {:error, "Please select a target account for this import."}
+      else
+        results = 
+          rows
+          |> Enum.map(fn row -> process_imported_row(user_id, row, target_account_id) end)
+        
+        success_count = Enum.count(results, &match?({:ok, _}, &1))
+        failures = 
+          results 
+          |> Enum.filter(&match?({:error, _}, &1))
+          |> Enum.map(fn {:error, reason} -> reason end)
+
+        {:ok, %{success_count: success_count, failures: failures}}
+      end
     end
   end
 
   # Process Account Snapshots (DKB, Comdirect Giro, etc.)
-  defp process_imported_row(user_id, %{type: :account, balance: balance, date: date, currency: currency}) do
-    # 1. Find or create default account
-    # Ideally, we should match the IBAN from the CSV if available.
-    # For now, we look for a "Girokonto" or just the first account.
-    
-    account = find_or_create_default_account(user_id)
-    
-    case account do
-      {:ok, acc} ->
-        Analytics.create_account_snapshot(user_id, %{
-          "account_id" => acc.id,
+  defp process_imported_row(user_id, %{type: :account, balance: balance, date: date, currency: currency}, target_account_id) do
+    if target_account_id do
+       Analytics.create_account_snapshot(user_id, %{
+          "account_id" => target_account_id,
           "snapshot_date" => date,
           "balance" => balance,
           "currency" => currency
         })
-        
-      {:error, reason} -> {:error, reason}
+    else
+       {:error, "Missing target account ID"}
     end
   end
 
-  # Process Asset Snapshots (Scalable, etc.)
-  defp process_imported_row(user_id, %{isin: isin, quantity: quantity, date: date}) do
+  # Process Asset Snapshots (Scalable, etc.) - target_account_id is ignored/optional
+  defp process_imported_row(user_id, %{isin: isin, quantity: quantity, date: date}, _target_account_id) do
     case find_asset_by_isin(user_id, isin) do
       {:ok, asset} ->
         Analytics.create_asset_snapshot(user_id, %{
@@ -77,27 +83,6 @@ defmodule WealthBackend.Import do
     case WealthBackend.Repo.one(query) do
       nil -> {:error, :not_found}
       asset -> {:ok, asset}
-    end
-  end
-
-  defp find_or_create_default_account(user_id) do
-    import Ecto.Query
-    alias WealthBackend.Portfolio.Account
-
-    # Try to find an account named "Girokonto" or just the first one
-    query = from a in Account,
-      where: a.user_id == ^user_id,
-      order_by: [asc: a.inserted_at],
-      limit: 1
-
-    case WealthBackend.Repo.one(query) do
-      nil -> 
-        # Create a default account if none exists
-        # We need an Institution first? Assuming one exists or we create a placeholder.
-        # This is tricky without more context.
-        {:error, "No account found. Please create a bank account first."}
-      
-      account -> {:ok, account}
     end
   end
 end
