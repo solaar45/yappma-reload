@@ -29,22 +29,36 @@ defmodule WealthBackend.Import do
     end
   end
 
-  defp process_imported_row(user_id, %{isin: isin, quantity: quantity, date: date}) do
-    # 1. Find asset by ISIN
-    # We might need to look up via Ticker if ISIN not stored, or store ISINs
-    # For now, let's assume we can search by ISIN using the enrichment service logic or database
-    # But wait, our Asset model might not have ISIN directly? 
-    # Let's check Asset schema. It has security_asset -> isin.
+  # Process Account Snapshots (DKB, Comdirect Giro, etc.)
+  defp process_imported_row(user_id, %{type: :account, balance: balance, date: date, currency: currency}) do
+    # 1. Find or create default account
+    # Ideally, we should match the IBAN from the CSV if available.
+    # For now, we look for a "Girokonto" or just the first account.
     
+    account = find_or_create_default_account(user_id)
+    
+    case account do
+      {:ok, acc} ->
+        Analytics.create_account_snapshot(user_id, %{
+          "account_id" => acc.id,
+          "snapshot_date" => date,
+          "balance" => balance,
+          "currency" => currency
+        })
+        
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  # Process Asset Snapshots (Scalable, etc.)
+  defp process_imported_row(user_id, %{isin: isin, quantity: quantity, date: date}) do
     case find_asset_by_isin(user_id, isin) do
       {:ok, asset} ->
-        # 2. Create snapshot
-        # Using Analytics.create_asset_snapshot/2 which triggers price enrichment
         Analytics.create_asset_snapshot(user_id, %{
           "asset_id" => asset.id,
           "snapshot_date" => date,
           "quantity" => quantity
-          # value and market_price will be fetched automatically by Analytics context
+          # value/price fetched automatically
         })
 
       {:error, :not_found} ->
@@ -53,8 +67,6 @@ defmodule WealthBackend.Import do
   end
 
   defp find_asset_by_isin(user_id, isin) do
-    # This is a naive implementation. Ideally we have a helper in Portfolio context.
-    # We need to join assets -> security_assets
     import Ecto.Query
     
     query = from a in WealthBackend.Portfolio.Asset,
@@ -65,6 +77,27 @@ defmodule WealthBackend.Import do
     case WealthBackend.Repo.one(query) do
       nil -> {:error, :not_found}
       asset -> {:ok, asset}
+    end
+  end
+
+  defp find_or_create_default_account(user_id) do
+    import Ecto.Query
+    alias WealthBackend.Portfolio.Account
+
+    # Try to find an account named "Girokonto" or just the first one
+    query = from a in Account,
+      where: a.user_id == ^user_id,
+      order_by: [asc: a.inserted_at],
+      limit: 1
+
+    case WealthBackend.Repo.one(query) do
+      nil -> 
+        # Create a default account if none exists
+        # We need an Institution first? Assuming one exists or we create a placeholder.
+        # This is tricky without more context.
+        {:error, "No account found. Please create a bank account first."}
+      
+      account -> {:ok, account}
     end
   end
 end
