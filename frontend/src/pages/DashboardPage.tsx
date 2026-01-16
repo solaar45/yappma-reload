@@ -1,16 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDashboard } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Wallet, PiggyBank } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, Wallet, PiggyBank, LayoutDashboard, PieChart } from 'lucide-react';
 import { PortfolioHoldingsTable } from '@/components/portfolio/PortfolioHoldingsTable';
 import { PortfolioPositionsTable } from '@/components/portfolio/PortfolioPositionsTable';
 import { TaxUsageWidget } from '@/components/dashboard/TaxUsageWidget';
+import { DashboardAnalytics } from '@/components/dashboard/DashboardAnalytics';
 import type { PortfolioHolding } from '@/components/portfolio/PortfolioHoldingsTable';
 import type { PortfolioPosition } from '@/components/portfolio/PortfolioPositionsTable';
-import InstitutionLogo from '@/components/InstitutionLogo';
 
 // PortfolioPosition formatting logic is handled within DashboardPage via useMemo
 
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const { t } = useTranslation();
   const { userId } = useUser();
   const { data, loading, error } = useDashboard({ userId: userId! });
+  const [view, setView] = useState<'overview' | 'analytics'>('overview');
 
   // Calculate portfolio holdings from real data
   const portfolioHoldings: PortfolioHolding[] = useMemo(() => {
@@ -196,201 +198,123 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-      {/* Metric Cards Grid */}
-      <div className="grid gap-4 md:gap-6 xl:grid-cols-4">
-        {/* Tax Usage Card (New) */}
-        <TaxUsageWidget />
-
-        {/* Net Worth Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.totalNetWorth')}</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="h-8 w-32 animate-pulse bg-muted rounded" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {data ? formatCurrency(data.totalValue) : '€0.00'}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('dashboard.asOf')} {formatDate(new Date().toISOString())}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Accounts Total Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.totalInAccounts')}</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="h-8 w-32 animate-pulse bg-muted rounded" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {data ? formatCurrency(data.accountsValue) : '€0.00'}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {data?.accounts.length || 0} {t('dashboard.accounts')}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Assets Total Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('dashboard.totalInAssets')}</CardTitle>
-            <PiggyBank className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="h-8 w-32 animate-pulse bg-muted rounded" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {data ? formatCurrency(data.assetsValue) : '€0.00'}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {data?.assets.length || 0} {t('dashboard.assets')}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+      {/* Dashboard Toggle Navigation */}
+      <div className="flex items-center space-x-2 border-b pb-2">
+        <Button
+          variant={view === 'overview' ? 'secondary' : 'ghost'}
+          onClick={() => setView('overview')}
+          className="gap-2"
+        >
+          <LayoutDashboard className="h-4 w-4" />
+          {t('dashboard.overview', { defaultValue: 'Overview' })}
+        </Button>
+        <Button
+          variant={view === 'analytics' ? 'secondary' : 'ghost'}
+          onClick={() => setView('analytics')}
+          className="gap-2"
+        >
+          <PieChart className="h-4 w-4" />
+          {t('dashboard.analytics', { defaultValue: 'Analytics' })}
+        </Button>
       </div>
 
-      {/* Portfolio Holdings Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('portfolio.holdingsTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <PortfolioHoldingsTable holdings={portfolioHoldings} />
-        </CardContent>
-      </Card>
+      {view === 'overview' ? (
+        <>
+          {/* Metric Cards Grid */}
+          <div className="grid gap-4 md:gap-6 xl:grid-cols-4">
+            {/* Tax Usage Card (New) */}
+            <TaxUsageWidget />
 
-      {/* Portfolio Positions Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('portfolio.positionsTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <PortfolioPositionsTable positions={portfolioPositions} />
-        </CardContent>
-      </Card>
-
-      {/* Main Content Area - Existing Cards */}
-      <div className="grid gap-4 md:gap-6 lg:grid-cols-2 xl:grid-cols-2">
-        {/* Recent Accounts */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>{t('dashboard.recentAccounts')}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            {loading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 animate-pulse bg-muted rounded" />
-                ))}
-              </div>
-            ) : data?.accounts.length ? (
-              <div className="space-y-4">
-                {data.accounts.slice(0, 5).map((account) => {
-                  const latestSnapshot = account.snapshots?.[0];
-                  return (
-                    <div key={account.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <InstitutionLogo name={account.institution?.name || account.name} domain={account.institution?.website ? account.institution.website.replace(/^https?:\/\//, '') : undefined} size="medium" className="flex-shrink-0 rounded-full" />
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium leading-none">
-                            {account.type ? t(`accountTypes.${account.type}`, { defaultValue: account.name }) : account.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{account.institution?.name || 'No institution'}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {latestSnapshot
-                            ? formatCurrency(latestSnapshot.balance, latestSnapshot.currency)
-                            : formatCurrency('0', account.currency)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}
-                        </p>
-                      </div>
+            {/* Net Worth Card */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('dashboard.totalNetWorth')}</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="h-8 w-32 animate-pulse bg-muted rounded" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {data ? formatCurrency(data.totalValue) : '€0.00'}
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                {t('dashboard.noAccountSnapshots')}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t('dashboard.asOf')} {formatDate(new Date().toISOString())}
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Recent Assets */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>{t('dashboard.recentAssets')}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            {loading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 animate-pulse bg-muted rounded" />
-                ))}
-              </div>
-            ) : data?.assets.length ? (
-              <div className="space-y-4">
-                {data.assets.slice(0, 5).map((asset) => {
-                  const latestSnapshot = asset.snapshots?.[0];
-                  return (
-                    <div key={asset.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <InstitutionLogo name={asset.name} ticker={asset.security_asset?.ticker || asset.symbol || undefined} size="medium" className="flex-shrink-0 rounded-full" />
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium leading-none">{asset.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {asset.asset_type?.description || 'No type'}
-                            {latestSnapshot?.quantity && (
-                              <> · {parseFloat(latestSnapshot.quantity).toFixed(2)} {t('assets.units')}</>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {latestSnapshot
-                            ? formatCurrency(latestSnapshot.value, asset.currency || 'EUR')
-                            : formatCurrency('0', asset.currency || 'EUR')}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}
-                        </p>
-                      </div>
+            {/* Accounts Total Card */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('dashboard.totalInAccounts')}</CardTitle>
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="h-8 w-32 animate-pulse bg-muted rounded" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {data ? formatCurrency(data.accountsValue) : '€0.00'}
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                {t('dashboard.noAssetSnapshots')}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {data?.accounts.length || 0} {t('dashboard.accounts')}
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Assets Total Card */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('dashboard.totalInAssets')}</CardTitle>
+                <PiggyBank className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="h-8 w-32 animate-pulse bg-muted rounded" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {data ? formatCurrency(data.assetsValue) : '€0.00'}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {data?.assets.length || 0} {t('dashboard.assets')}
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Portfolio Holdings Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('portfolio.holdingsTitle')}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <PortfolioHoldingsTable holdings={portfolioHoldings} />
+            </CardContent>
+          </Card>
+
+          {/* Portfolio Positions Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('portfolio.positionsTitle')}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <PortfolioPositionsTable positions={portfolioPositions} />
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <DashboardAnalytics positions={portfolioPositions} />
+      )}
     </div>
   );
 }
