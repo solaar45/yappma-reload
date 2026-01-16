@@ -45,7 +45,9 @@
     "tickerOrName": "Ticker oder Firmenname",
     "saving": "Wird gespeichert...",
     "saveChanges": "Änderungen speichern",
-    "balance": "Saldo"
+    "balance": "Saldo",
+    "item": "Element",
+    "items": "Elemente"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -449,6 +451,10 @@
     "delete": "Löschen",
     "asset": "Asset",
     "account": "Konto",
+    "position": "Position",
+    "share": "Anteil",
+    "fsa": "FSA (Freistellungsauftrag)",
+    "used": "Verwendet",
     "assetClasses": {
       "equity": "Aktien",
       "bond": "Anleihen",
