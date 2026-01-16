@@ -21,6 +21,7 @@ defmodule WealthBackendWeb.AccountJSON do
       user_id: account.user_id,
       institution_id: account.institution_id,
       institution: institution_data(account.institution),
+      savings_plan_amount: decimal_to_string(account.savings_plan_amount),
       snapshots: snapshots_data(account.snapshots),
       inserted_at: account.inserted_at,
       updated_at: account.updated_at

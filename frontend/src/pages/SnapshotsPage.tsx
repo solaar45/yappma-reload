@@ -1,13 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useSnapshots } from '@/lib/api/hooks';
+import { useSnapshots, type CombinedSnapshot } from '@/lib/api/hooks/useSnapshots';
 import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,20 +26,12 @@ import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
 import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
 import { CsvImportButton } from '@/components/csv-import-button';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Trash2, Plus } from 'lucide-react';
+import { Search, Filter, Trash2 } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 
-interface Snapshot {
-  id: number;
-  snapshot_type: 'account' | 'asset';
-  snapshot_date: string;
-  entity_name: string;
-  balance?: string;
-  value?: string;
-  currency?: string;
-}
+// Local interface removed in favor of CombinedSnapshot from hook
 
 export default function SnapshotsPage() {
   const { t } = useTranslation();
@@ -52,8 +45,6 @@ export default function SnapshotsPage() {
   const [rowSelection, setRowSelection] = useState({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  // Add state for Create Dialog to control it via Button
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const handleSnapshotChanged = () => {
     setRefreshKey((prev) => prev + 1);
@@ -65,9 +56,33 @@ export default function SnapshotsPage() {
 
     return snapshots.filter((snapshot) => {
       // Search filter
+      const searchLower = searchTerm.toLowerCase();
+
+      // Get display name and type for searching
+      const isAccount = snapshot.snapshot_type === 'account';
+      const subtype = snapshot.entity_subtype;
+      const typeTranslated = t(`snapshots.types.${snapshot.snapshot_type}`).toLowerCase();
+      const subtypeTranslated = subtype
+        ? (isAccount
+          ? t(`accountTypes.${subtype}`, { defaultValue: subtype })
+          : t(`assetTypes.${subtype}`, { defaultValue: subtype })
+        ).toLowerCase()
+        : '';
+
+      const formattedDate = formatDate(snapshot.snapshot_date).toLowerCase();
+      const institutionName = snapshot.institution?.name?.toLowerCase() || '';
+      const ticker = (snapshot as any).ticker?.toLowerCase() || '';
+      const isin = (snapshot as any).isin?.toLowerCase() || '';
+
       const matchesSearch =
         searchTerm === '' ||
-        snapshot.entity_name.toLowerCase().includes(searchTerm.toLowerCase());
+        snapshot.entity_name.toLowerCase().includes(searchLower) ||
+        formattedDate.includes(searchLower) ||
+        typeTranslated.includes(searchLower) ||
+        subtypeTranslated.includes(searchLower) ||
+        institutionName.includes(searchLower) ||
+        ticker.includes(searchLower) ||
+        isin.includes(searchLower);
 
       // Type filter
       const matchesType = typeFilter === 'all' || snapshot.snapshot_type === typeFilter;
@@ -106,7 +121,7 @@ export default function SnapshotsPage() {
   };
 
   // Define table columns
-  const columns: ColumnDef<Snapshot>[] = useMemo(
+  const columns: ColumnDef<CombinedSnapshot>[] = useMemo(
     () => [
       {
         id: 'select',
@@ -168,7 +183,23 @@ export default function SnapshotsPage() {
               displayName = translated;
             }
           }
-          return <div className="font-medium">{displayName}</div>;
+
+          const inst = row.original.institution;
+          const domain = inst?.website ? inst.website.replace(/^https?:\/\//, '') : undefined;
+
+          return (
+            <div className="flex items-center gap-3">
+              <InstitutionLogo
+                name={inst?.name || row.original.entity_name}
+                domain={domain}
+                ticker={(row.original as any).ticker}
+                isin={(row.original as any).isin}
+                size="medium"
+                className="flex-shrink-0 rounded-full"
+              />
+              <div className="font-medium">{displayName}</div>
+            </div>
+          );
         },
       },
       {
@@ -226,9 +257,10 @@ export default function SnapshotsPage() {
           </div>
         ),
         cell: ({ row }) => {
-          const isAccount = row.original.snapshot_type === 'account';
-          const value = isAccount ? row.original.balance : row.original.value;
-          const currency = isAccount ? row.original.currency : 'EUR';
+          const snapshot = row.original;
+          const isAccount = snapshot.snapshot_type === 'account';
+          const value = isAccount ? (snapshot as any).balance : (snapshot as any).value;
+          const currency = isAccount ? (snapshot as any).currency : 'EUR';
           return (
             <div className="text-right font-medium">
               {formatCurrency(value || '0', currency || 'EUR')}
@@ -333,16 +365,26 @@ export default function SnapshotsPage() {
           return (
             <Card key={`${snapshot.snapshot_type}-${snapshot.id}`}>
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-end">
+                  <Badge variant={isAccount ? 'default' : 'secondary'}>
+                    {t(`snapshots.types.${isAccount ? 'account' : 'asset'}`)}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-3 mt-2">
+                  <InstitutionLogo
+                    name={snapshot.institution?.name || snapshot.entity_name}
+                    domain={snapshot.institution?.website?.replace(/^https?:\/\//, '')}
+                    ticker={(snapshot as any).ticker}
+                    isin={(snapshot as any).isin}
+                    size="small"
+                    className="flex-shrink-0 rounded-full"
+                  />
                   <div>
                     <CardTitle className="text-base">{snapshot.entity_name}</CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
                       {formatDate(snapshot.snapshot_date)}
                     </p>
                   </div>
-                  <Badge variant={isAccount ? 'default' : 'secondary'}>
-                    {t(`snapshots.types.${isAccount ? 'account' : 'asset'}`)}
-                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>

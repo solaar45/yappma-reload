@@ -68,25 +68,42 @@ export default function DashboardPage() {
       });
   }, [data?.assets]);
 
-  // Calculate account positions from real data
-  const accountPositions: PortfolioPosition[] = useMemo(() => {
-    if (!data?.accounts) return [];
+  // Calculate portfolio positions (Accounts + Assets) from real data
+  const portfolioPositions: PortfolioPosition[] = useMemo(() => {
+    if (!data?.accounts && !data?.assets) return [];
 
     const totalNetWorth = parseFloat(data.totalValue || '0');
 
-    return data.accounts.map((account) => {
+    // 2. Process Assets
+    const assets = data?.assets || [];
+
+    // 1. Process Accounts
+    const accountPositions: PortfolioPosition[] = (data?.accounts || []).map((account) => {
       const snapshots = account.snapshots || [];
       const latestSnapshot = snapshots[0];
       const previousSnapshot = snapshots[1];
 
-      const currentValue = latestSnapshot ? parseFloat(latestSnapshot.balance) : 0;
-      const portfolioShare = totalNetWorth > 0 ? (currentValue / totalNetWorth) * 100 : 0;
+      let accountValue = latestSnapshot ? parseFloat(latestSnapshot.balance) : 0;
+      let accountSavingsPlan = account.savings_plan_amount ? parseFloat(account.savings_plan_amount) : 0;
+
+      // Find and add security assets linked to this account
+      const linkedSecurityAssets = assets.filter(
+        asset => asset.account_id === account.id && asset.asset_type?.code === 'security'
+      );
+
+      linkedSecurityAssets.forEach(asset => {
+        const assetLatestSnapshot = asset.snapshots?.[0];
+        accountValue += assetLatestSnapshot ? parseFloat(assetLatestSnapshot.value) : 0;
+        accountSavingsPlan += asset.savings_plan_amount ? parseFloat(asset.savings_plan_amount) : 0;
+      });
+
+      const portfolioShare = totalNetWorth > 0 ? (accountValue / totalNetWorth) * 100 : 0;
 
       let performance = 0;
       if (latestSnapshot && previousSnapshot) {
         const prevValue = parseFloat(previousSnapshot.balance);
         if (prevValue > 0) {
-          performance = ((currentValue - prevValue) / prevValue) * 100;
+          performance = ((latestSnapshot ? parseFloat(latestSnapshot.balance) : 0) - prevValue) / prevValue * 100;
         }
       }
 
@@ -95,24 +112,70 @@ export default function DashboardPage() {
       if (performanceHistory.length === 0) performanceHistory.push(0, 0);
 
       return {
-        id: account.id.toString(),
-        type: 'Account' as const,
+        id: `account-${account.id}`,
+        type: 'Account',
         name: account.name,
         subtype: account.type,
         institution: account.institution?.name || '-',
         institutionDomain: account.institution?.website ? account.institution.website.replace(/^https?:\/\//, '') : undefined,
         assetClass: 'Cash',
-        riskScore: 1 as const,
-        currentValue: currentValue,
+        riskScore: 1,
+        currentValue: accountValue,
         portfolioShare: portfolioShare,
         performance: performance,
         performanceHistory: performanceHistory,
+        savingsPlan: accountSavingsPlan > 0 ? accountSavingsPlan : undefined,
         fsaAllocated: 0,
         fsaTotal: 1000,
         fsaUsedYTD: 0,
       };
-    }).sort((a, b) => a.institution.localeCompare(b.institution));
-  }, [data?.accounts, data?.totalValue]);
+    });
+
+    // 3. Process non-security Assets individual positions
+    const otherAssetPositions: PortfolioPosition[] = assets
+      .filter(asset => asset.asset_type?.code !== 'security')
+      .map((asset) => {
+        const snapshots = asset.snapshots || [];
+        const latestSnapshot = snapshots[0];
+        const previousSnapshot = snapshots[1];
+
+        const currentValue = latestSnapshot ? parseFloat(latestSnapshot.value) : 0;
+        const portfolioShare = totalNetWorth > 0 ? (currentValue / totalNetWorth) * 100 : 0;
+
+        let performance = 0;
+        if (latestSnapshot && previousSnapshot) {
+          const prevValue = parseFloat(previousSnapshot.value);
+          if (prevValue > 0) {
+            performance = ((currentValue - prevValue) / prevValue) * 100;
+          }
+        }
+
+        const performanceHistory = snapshots.slice(0, 7).reverse().map(s => parseFloat(s.value));
+        if (performanceHistory.length === 1) performanceHistory.unshift(performanceHistory[0]);
+        if (performanceHistory.length === 0) performanceHistory.push(0, 0);
+
+        return {
+          id: `asset-${asset.id}`,
+          type: 'Asset',
+          name: asset.name,
+          subtype: asset.asset_type?.code,
+          institution: asset.account?.institution?.name || asset.account?.name || '-',
+          institutionDomain: asset.account?.institution?.website ? asset.account.institution.website.replace(/^https?:\/\//, '') : undefined,
+          assetClass: asset.asset_type?.description || 'Other',
+          riskScore: (asset.risk_class as any) || 3,
+          currentValue: currentValue,
+          portfolioShare: portfolioShare,
+          performance: performance,
+          performanceHistory: performanceHistory,
+          savingsPlan: asset.savings_plan_amount ? parseFloat(asset.savings_plan_amount) : undefined,
+          fsaAllocated: 0,
+          fsaTotal: 0,
+          fsaUsedYTD: 0,
+        };
+      });
+
+    return [...accountPositions, ...otherAssetPositions].sort((a, b) => b.currentValue - a.currentValue);
+  }, [data?.accounts, data?.assets, data?.totalValue, t]);
 
 
   if (error) {
@@ -213,7 +276,7 @@ export default function DashboardPage() {
           <CardTitle>{t('portfolio.positionsTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <PortfolioPositionsTable positions={accountPositions} />
+          <PortfolioPositionsTable positions={portfolioPositions} />
         </CardContent>
       </Card>
 

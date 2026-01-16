@@ -68,6 +68,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
   const [currency, setCurrency] = useState(account.currency);
   const [institutionId, setInstitutionId] = useState(account.institution_id?.toString() || '');
   const [isActive, setIsActive] = useState(account.is_active ?? true);
+  const [savingsPlanAmount, setSavingsPlanAmount] = useState(account.savings_plan_amount || '');
 
   // Reset form when dialog opens or account changes
   useEffect(() => {
@@ -77,6 +78,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
       setCurrency(account.currency);
       setInstitutionId(account.institution_id?.toString() || '');
       setIsActive(account.is_active ?? true);
+      setSavingsPlanAmount(account.savings_plan_amount || '');
     }
   }, [open, account]);
 
@@ -101,6 +103,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
           institution_id: parseInt(institutionId),
           is_active: isActive,
           user_id: userId,
+          savings_plan_amount: savingsPlanAmount || undefined,
         },
       });
 
@@ -243,6 +246,29 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                 checked={isActive}
                 onCheckedChange={setIsActive}
               />
+            </div>
+
+            {/* Savings Plan Amount */}
+            <div className="grid gap-2">
+              <Label htmlFor="savingsPlanAmount">
+                {t('portfolio.savingsPlan') || 'Savings Plan'}
+                <span className="text-muted-foreground font-normal ml-1">({t('common.optional') || 'optional'})</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="savingsPlanAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={savingsPlanAmount}
+                  onChange={(e) => setSavingsPlanAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="pr-12"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
+                  {currency}
+                </div>
+              </div>
             </div>
 
             {/* Name Input (Optional, moved to bottom) */}

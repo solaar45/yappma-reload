@@ -12,6 +12,7 @@ interface CreateAccountInput {
   custom_institution_name?: string;
   is_active?: boolean;
   opened_at?: string;
+  savings_plan_amount?: string;
 }
 
 interface UseCreateAccountResult {

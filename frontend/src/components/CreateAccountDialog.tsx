@@ -77,6 +77,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
     institution_id: '',
     custom_institution_name: '',
     is_active: true,
+    savings_plan_amount: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,6 +97,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
       institution_id: !showCustomInstitution ? parseInt(formData.institution_id) : undefined,
       custom_institution_name: showCustomInstitution ? formData.custom_institution_name : undefined,
       is_active: formData.is_active,
+      savings_plan_amount: formData.savings_plan_amount || undefined,
     });
 
     if (result) {
@@ -107,6 +109,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
         institution_id: '',
         custom_institution_name: '',
         is_active: true,
+        savings_plan_amount: '',
       });
       setShowCustomInstitution(false);
       onSuccess?.();
@@ -261,6 +264,29 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                 checked={formData.is_active}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
               />
+            </div>
+
+            {/* Savings Plan Amount */}
+            <div className="grid gap-2">
+              <Label htmlFor="savings_plan_amount">
+                {t('portfolio.savingsPlan') || 'Savings Plan'}
+                <span className="text-muted-foreground font-normal ml-1">({t('common.optional') || 'optional'})</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="savings_plan_amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.savings_plan_amount}
+                  onChange={(e) => setFormData({ ...formData, savings_plan_amount: e.target.value })}
+                  placeholder="0.00"
+                  className="pr-12"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
+                  {formData.currency}
+                </div>
+              </div>
             </div>
 
             {/* Name Input (Optional, moved to bottom) */}

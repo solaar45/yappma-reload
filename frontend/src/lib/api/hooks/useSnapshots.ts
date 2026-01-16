@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiClient, ApiError, DeduplicationError } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
-import type { AccountSnapshot, AssetSnapshot, Account, Asset } from '../types';
+import type { AccountSnapshot, AssetSnapshot, Account, Asset, Institution } from '../types';
 
 interface UseSnapshotsParams {
   userId: number;
@@ -9,8 +9,8 @@ interface UseSnapshotsParams {
 }
 
 export type CombinedSnapshot =
-  | (AccountSnapshot & { snapshot_type: 'account'; entity_name: string; entity_subtype?: string })
-  | (AssetSnapshot & { snapshot_type: 'asset'; entity_name: string; entity_subtype?: string });
+  | (AccountSnapshot & { snapshot_type: 'account'; entity_name: string; entity_subtype?: string; institution?: Institution })
+  | (AssetSnapshot & { snapshot_type: 'asset'; entity_name: string; entity_subtype?: string; institution?: Institution; ticker?: string; isin?: string });
 
 interface UseSnapshotsResult {
   snapshots: CombinedSnapshot[];
@@ -57,6 +57,7 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
               snapshot_type: 'account' as const,
               entity_name: account.name,
               entity_subtype: account.type,
+              institution: account.institution,
             }))
         );
 
@@ -67,6 +68,9 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
               snapshot_type: 'asset' as const,
               entity_name: asset.name,
               entity_subtype: asset.asset_type?.code,
+              institution: asset.account?.institution,
+              ticker: asset.security_asset?.ticker || asset.ticker,
+              isin: asset.security_asset?.isin || asset.isin,
             }))
         );
 

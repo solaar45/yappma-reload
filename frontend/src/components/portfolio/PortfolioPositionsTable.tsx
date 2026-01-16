@@ -33,7 +33,7 @@ import {
 
 export interface PortfolioPosition {
   id: string;
-  type: 'Account';
+  type: string;
   subtype?: string;
   name: string;
   institution: string;
@@ -132,10 +132,11 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        cell: () => {
+        cell: ({ getValue }) => {
+          const type = getValue();
           return (
             <Badge variant="secondary" className="font-medium">
-              {t('portfolio.account')}
+              {type === 'Account' ? t('portfolio.account') : t('portfolio.asset')}
             </Badge>
           );
         },

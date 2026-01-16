@@ -62,6 +62,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
     security_asset?: Partial<SecurityAsset>;
     insurance_asset?: Partial<InsuranceAsset>;
     real_estate_asset?: Partial<RealEstateAsset>;
+    savings_plan_amount: string;
   }>({
     name: asset.name,
     asset_type_id: asset.asset_type_id.toString(),
@@ -70,6 +71,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
     security_asset: asset.security_asset ?? undefined,
     insurance_asset: asset.insurance_asset ?? undefined,
     real_estate_asset: asset.real_estate_asset ?? undefined,
+    savings_plan_amount: asset.savings_plan_amount || '',
   });
   const { accounts } = useAccounts({ userId: userId! });
   const [accountId, setAccountId] = useState(asset.account_id?.toString() || '');
@@ -90,6 +92,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
         security_asset: asset.security_asset ?? undefined,
         insurance_asset: asset.insurance_asset ?? undefined,
         real_estate_asset: asset.real_estate_asset ?? undefined,
+        savings_plan_amount: asset.savings_plan_amount || '',
       });
 
       // Initialize selectedSecurity from existing asset data
@@ -139,6 +142,7 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
         security_asset: formData.security_asset,
         insurance_asset: formData.insurance_asset,
         real_estate_asset: formData.real_estate_asset,
+        savings_plan_amount: formData.savings_plan_amount || undefined,
       };
 
       // account_id handling: include field (can be null to remove)
@@ -305,6 +309,29 @@ export function EditAssetDialog({ asset, onSuccess }: EditAssetDialogProps) {
                 checked={formData.is_active}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
               />
+            </div>
+
+            {/* Savings Plan Amount */}
+            <div className="grid gap-2">
+              <Label htmlFor="edit-savings-plan-amount">
+                {t('portfolio.savingsPlan') || 'Savings Plan'}
+                <span className="text-muted-foreground font-normal ml-1">({t('common.optional') || 'optional'})</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="edit-savings-plan-amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.savings_plan_amount}
+                  onChange={(e) => setFormData({ ...formData, savings_plan_amount: e.target.value })}
+                  placeholder="0.00"
+                  className="pr-12"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
+                  {formData.currency}
+                </div>
+              </div>
             </div>
             {error && <div className="text-sm text-destructive">{error}</div>}
           </div>

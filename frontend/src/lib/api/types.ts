@@ -52,6 +52,7 @@ export interface Account {
   opened_at?: string;
   closed_at?: string;
   institution_id?: number;
+  savings_plan_amount?: string;
   institution?: Institution;
   snapshots?: AccountSnapshot[];
 }
@@ -62,6 +63,7 @@ export interface CreateAccountParams {
   currency: string;
   institution_id?: number;
   custom_institution_name?: string;
+  savings_plan_amount?: string;
   user_id: number;
   is_active?: boolean;
 }
@@ -72,6 +74,7 @@ export interface UpdateAccountParams {
   currency?: string;
   institution_id?: number;
   is_active?: boolean;
+  savings_plan_amount?: string;
 }
 
 // Asset types
@@ -139,6 +142,7 @@ export interface Asset {
   ticker?: string;
   risk_class?: number;
   risk_class_source?: string;
+  savings_plan_amount?: string;
 
   // Specific asset details (one of these will be populated based on type)
   security_asset?: SecurityAsset;
@@ -165,6 +169,7 @@ export interface CreateAssetParams {
   account_id?: number;
   asset_type_id: number;
   is_active?: boolean;
+  savings_plan_amount?: string;
   created_at_date?: string; // Optional: date when asset was added/bought
 
   // Specific fields based on type

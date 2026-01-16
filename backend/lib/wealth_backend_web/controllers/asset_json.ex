@@ -38,6 +38,7 @@ defmodule WealthBackendWeb.AssetJSON do
       insurance_asset: insurance_data(asset.insurance_asset),
       loan_asset: loan_data(asset.loan_asset),
       real_estate_asset: real_estate_data(asset.real_estate_asset),
+      savings_plan_amount: decimal_to_string(asset.savings_plan_amount),
       snapshots: snapshots_data(asset.snapshots),
       inserted_at: asset.inserted_at,
       updated_at: asset.updated_at

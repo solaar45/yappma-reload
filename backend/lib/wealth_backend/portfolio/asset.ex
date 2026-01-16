@@ -11,6 +11,7 @@ defmodule WealthBackend.Portfolio.Asset do
     field :closed_at, :date
     field :risk_class, :integer, default: 3
     field :risk_class_source, :string, default: "auto_type"
+    field :savings_plan_amount, :decimal, default: 0
 
     belongs_to :user, WealthBackend.Accounts.User
     belongs_to :account, WealthBackend.Accounts.Account
@@ -29,7 +30,7 @@ defmodule WealthBackend.Portfolio.Asset do
   @doc false
   def changeset(asset, attrs) do
     asset
-    |> cast(attrs, [:name, :symbol, :currency, :is_active, :created_at_date, :closed_at, :user_id, :account_id, :asset_type_id, :risk_class, :risk_class_source])
+    |> cast(attrs, [:name, :symbol, :currency, :is_active, :created_at_date, :closed_at, :user_id, :account_id, :asset_type_id, :risk_class, :risk_class_source, :savings_plan_amount])
     |> validate_required([:name, :currency, :user_id, :asset_type_id])
     |> validate_number(:risk_class, greater_than_or_equal_to: 1, less_than_or_equal_to: 5)
     |> validate_inclusion(:risk_class_source, ["auto_type", "auto_api", "manual"])

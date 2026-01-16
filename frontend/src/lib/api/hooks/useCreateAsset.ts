@@ -10,6 +10,7 @@ interface CreateAssetData {
   currency?: string;
   is_active?: boolean;
   account_id?: number;
+  savings_plan_amount?: string;
   security_asset?: {
     isin?: string;
     ticker?: string;
