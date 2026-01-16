@@ -77,14 +77,16 @@
     "registerHere": "Hier registrieren",
     "demoHint": "Demo-Version: Alle Daten sind lokal und werden nicht gespeichert",
     "invalidCredentials": "Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Passwort.",
-    "loginError": "Anmeldefehler. Bitte versuchen Sie es erneut.",
-    "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Internetverbindung.",
     "loginDescription": "Melden Sie sich mit Ihren Zugangsdaten an",
     "loggingIn": "Anmeldung läuft...",
-    "loginButton": "Anmelden"
+    "loginButton": "Anmelden",
+    "loginError": "Anmeldefehler. Bitte versuchen Sie es erneut.",
+    "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Internetverbindung."
   },
   "dashboard": {
     "title": "Dashboard",
+    "overview": "Übersicht",
+    "analytics": "Analyse",
     "totalValue": "Gesamtwert",
     "totalNetWorth": "Nettovermögen",
     "totalInAccounts": "Gesamt auf Konten",
@@ -98,6 +100,12 @@
     "noAssetSnapshots": "Keine Vermögenswert-Momentaufnahmen vorhanden",
     "errorLoading": "Fehler beim Laden des Dashboards",
     "asOf": "Stand"
+  },
+  "analytics": {
+    "assetAllocation": "Vermögensaufteilung",
+    "netWorthTrend": "Nettovermögensentwicklung",
+    "topPerformers": "Top-Performer",
+    "liquidity": "Liquidität"
   },
   "import": {
     "buttonLabel": "CSV Import",
