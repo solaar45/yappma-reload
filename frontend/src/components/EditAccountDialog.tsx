@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUser } from '@/contexts/UserContext';
 import { useInstitutions } from '@/lib/api/hooks';
 import { apiClient } from '@/lib/api/client';
@@ -24,7 +25,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Pencil, AlertCircle } from 'lucide-react';
-import { CreateInstitutionDialog } from './CreateInstitutionDialog';
+
+import InstitutionLogo from '@/components/InstitutionLogo';
 
 interface EditAccountDialogProps {
   account: Account;
@@ -32,10 +34,14 @@ interface EditAccountDialogProps {
 }
 
 const ACCOUNT_TYPES = [
-  { value: 'checking', label: 'Checking' },
-  { value: 'savings', label: 'Savings' },
-  { value: 'credit_card', label: 'Credit Card' },
+  { value: 'checking', label: 'Checking Account' },
+  { value: 'savings', label: 'Call Money' }, // Tagesgeld
+  { value: 'savings_account', label: 'Savings Account' }, // Sparkonto
+  { value: 'fixed_deposit', label: 'Term Deposit' }, // Festgeld
   { value: 'brokerage', label: 'Brokerage' },
+  { value: 'wallet', label: 'Wallet' },
+  { value: 'credit_card', label: 'Credit Card' },
+  { value: 'loan', label: 'Loan' },
   { value: 'insurance', label: 'Insurance' },
   { value: 'cash', label: 'Cash' },
   { value: 'other', label: 'Other' },
@@ -49,45 +55,55 @@ const CURRENCIES = [
 ] as const;
 
 export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps) {
+  const { t } = useTranslation();
   const { userId } = useUser();
-  const { institutions, loading: institutionsLoading, refetch: refetchInstitutions } = useInstitutions({ userId: userId! });
+  const { institutions, loading: institutionsLoading } = useInstitutions({ userId: userId! });
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [name, setName] = useState(account.name);
+
+  // If the account name is "-", treat it as empty for the input field
+  const [name, setName] = useState(account.name === '-' ? '' : account.name);
+
   const [type, setType] = useState(account.type);
   const [currency, setCurrency] = useState(account.currency);
   const [institutionId, setInstitutionId] = useState(account.institution_id?.toString() || '');
   const [isActive, setIsActive] = useState(account.is_active ?? true);
+  const [savingsPlanAmount, setSavingsPlanAmount] = useState(account.savings_plan_amount || '');
 
   // Reset form when dialog opens or account changes
   useEffect(() => {
     if (open) {
-      setName(account.name);
+      setName(account.name === '-' ? '' : account.name);
       setType(account.type);
       setCurrency(account.currency);
       setInstitutionId(account.institution_id?.toString() || '');
       setIsActive(account.is_active ?? true);
+      setSavingsPlanAmount(account.savings_plan_amount || '');
     }
   }, [open, account]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim() || !institutionId) {
+    if (!institutionId) {
       return;
     }
+
+    // Send "-" if empty to pass validation
+    const nameToSend = name.trim() || "-";
 
     setLoading(true);
 
     try {
       await apiClient.put(`/accounts/${account.id}`, {
         account: {
-          name: name.trim(),
+          name: nameToSend,
           type,
           currency,
           institution_id: parseInt(institutionId),
           is_active: isActive,
           user_id: userId,
+          savings_plan_amount: savingsPlanAmount || undefined,
         },
       });
 
@@ -100,11 +116,6 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
     }
   };
 
-  const handleInstitutionCreated = () => {
-    // Only refetch when a new institution is created
-    refetchInstitutions();
-  };
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -115,40 +126,60 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit Account</DialogTitle>
+            <DialogTitle>{t('accounts.editAccount')}</DialogTitle>
             <DialogDescription>
-              Update the account details.
+              {t('accounts.editAccountDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Account Name *</Label>
-              <Input
-                id="name"
-                placeholder="e.g., Main Checking, Savings Account"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
+            {/* Institution Selection */}
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="institution">Institution *</Label>
-                <CreateInstitutionDialog compact onSuccess={handleInstitutionCreated} />
+                <Label htmlFor="institution" required>{t('accounts.institution')}</Label>
               </div>
               {institutionsLoading ? (
                 <div className="flex items-center justify-center h-10 border rounded-md bg-muted">
-                  <span className="text-sm text-muted-foreground">Loading institutions...</span>
+                  <span className="text-sm text-muted-foreground">{t('accounts.loadingInstitutions')}</span>
                 </div>
               ) : institutions && institutions.length > 0 ? (
                 <Select value={institutionId} onValueChange={setInstitutionId}>
                   <SelectTrigger id="institution">
-                    <SelectValue placeholder="Select institution" />
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      {institutionId ? (
+                        (() => {
+                          const inst = institutions?.find((i) => i.id.toString() === institutionId);
+                          if (inst) {
+                            return (
+                              <>
+                                <InstitutionLogo
+                                  name={inst.name}
+                                  domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined}
+                                  size="small"
+                                  className="flex-shrink-0 rounded-full"
+                                />
+                                <span className="truncate">{inst.name}</span>
+                              </>
+                            );
+                          }
+                          return <SelectValue placeholder={t('accounts.selectInstitution')} />;
+                        })()
+                      ) : (
+                        <SelectValue placeholder={t('accounts.selectInstitution')} />
+                      )}
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     {institutions.map((inst) => (
                       <SelectItem key={inst.id} value={inst.id.toString()}>
-                        {inst.name}
+                        <div className="flex items-center gap-2">
+                          <InstitutionLogo name={inst.name} domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                          <div className="flex flex-col">
+                            <span>{inst.name}</span>
+                            <span className="text-[10px] text-muted-foreground capitalize">
+                              {inst.type ? t(`institutions.types.${inst.type}` as any, { defaultValue: inst.type }) : inst.category}
+                            </span>
+                          </div>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -157,28 +188,35 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                 <div className="flex items-center gap-2 p-3 border rounded-md bg-muted">
                   <AlertCircle className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    No institutions found. Please create one first.
+                    {t('accounts.noInstitutionsFound')}
                   </span>
                 </div>
               )}
             </div>
+
+            {/* Type Selection */}
             <div className="grid gap-2">
-              <Label htmlFor="type">Account Type *</Label>
-              <Select value={type} onValueChange={setType}>
+              <Label htmlFor="type" required>{t('accounts.accountType')}</Label>
+              <Select
+                value={type}
+                onValueChange={(value) => setType(value as any)}
+              >
                 <SelectTrigger id="type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {ACCOUNT_TYPES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                      <AccountTypeLabel type={t.value} label={t.label} />
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Currency Selection */}
             <div className="grid gap-2">
-              <Label htmlFor="currency">Currency *</Label>
+              <Label htmlFor="currency" required>{t('common.currency')}</Label>
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger id="currency">
                   <SelectValue />
@@ -192,13 +230,15 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Status Switch */}
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="is-active" className="text-base">
-                  Account Status
+                  {t('accounts.status')}
                 </Label>
                 <div className="text-sm text-muted-foreground">
-                  {isActive ? 'Active' : 'Inactive'}
+                  {isActive ? t('accounts.active') : t('accounts.inactive')}
                 </div>
               </div>
               <Switch
@@ -207,20 +247,64 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                 onCheckedChange={setIsActive}
               />
             </div>
+
+            {/* Savings Plan Amount */}
+            <div className="grid gap-2">
+              <Label htmlFor="savingsPlanAmount">
+                {t('portfolio.savingsPlan') || 'Savings Plan'}
+                <span className="text-muted-foreground font-normal ml-1">({t('common.optional') || 'optional'})</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="savingsPlanAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={savingsPlanAmount}
+                  onChange={(e) => setSavingsPlanAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="pr-12"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
+                  {currency}
+                </div>
+              </div>
+            </div>
+
+            {/* Name Input (Optional, moved to bottom) */}
+            <div className="grid gap-2">
+              <Label htmlFor="name">
+                {t('accounts.accountName' as any)}
+                <span className="text-muted-foreground font-normal ml-1">({t('common.optional') || 'optional'})</span>
+              </Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder=""
+              />
+            </div>
+
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || !name.trim() || !institutionId || institutions?.length === 0}
+            <Button
+              type="submit"
+              disabled={loading || !institutionId || institutions?.length === 0}
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? t('common.saving') : t('common.saveChanges')}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
+}
+
+// Helper component to translate account types inside the SelectItem
+function AccountTypeLabel({ type, label }: { type: string, label: string }) {
+  const { t } = useTranslation();
+  return <>{t(`accountTypes.${type}`, { defaultValue: label })}</>;
 }

@@ -66,9 +66,23 @@ defmodule WealthBackendWeb.DashboardJSON do
     %{
       id: institution.id,
       name: institution.name,
-      type: institution.type
+      type: institution.type,
+      tax_exemptions: tax_exemptions_data(Map.get(institution, :tax_exemptions))
     }
   end
+
+  defp tax_exemptions_data(%Ecto.Association.NotLoaded{}), do: []
+  defp tax_exemptions_data(nil), do: []
+  defp tax_exemptions_data(exemptions) when is_list(exemptions) do
+    Enum.map(exemptions, fn ex ->
+      %{
+        id: ex.id,
+        amount: decimal_to_string(ex.amount),
+        year: ex.year
+      }
+    end)
+  end
+  defp tax_exemptions_data(_), do: []
 
   defp asset_type_data(nil), do: nil
   defp asset_type_data(type) do

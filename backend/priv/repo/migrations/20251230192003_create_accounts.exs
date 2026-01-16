@@ -4,6 +4,7 @@ defmodule WealthBackend.Repo.Migrations.CreateAccounts do
   def change do
     create table(:accounts) do
       add :name, :string, null: false
+      # Type stores the string representation of the atom (e.g., "checking", "savings", "wallet", "loan")
       add :type, :string, null: false
       add :currency, :string, null: false
       add :is_active, :boolean, default: true, null: false

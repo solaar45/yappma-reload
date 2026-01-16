@@ -2,11 +2,13 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useAccounts } from '@/lib/api/hooks';
+import { useUser } from '@/contexts/UserContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -23,31 +25,17 @@ import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateAccountDialog } from '@/components/CreateAccountDialog';
 import { EditAccountDialog } from '@/components/EditAccountDialog';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
-import { Wallet, Search, Filter, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { Trash2, Search, Filter, CheckCircle2, XCircle, Wallet } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
+import { cn } from '@/lib/utils';
 
-interface Account {
-  id: number;
-  name: string;
-  type: string;
-  currency: string;
-  is_active: boolean;
-  institution?: {
-    id: number;
-    name: string;
-  };
-  snapshots?: Array<{
-    id: number;
-    balance: string;
-    currency: string;
-    snapshot_date: string;
-  }>;
-}
+import type { Account } from '@/lib/api/types';
 
 export default function AccountsPage() {
   const { t } = useTranslation();
-  const { accounts, isLoading: loading, error, refetch } = useAccounts();
+  const { userId } = useUser();
+  const { accounts, isLoading: loading, error, refetch } = useAccounts({ userId: userId ?? undefined });
   const [searchTerm, setSearchTerm] = useState('');
   const [institutionFilter, setInstitutionFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -71,20 +59,20 @@ export default function AccountsPage() {
   // Filter and search logic
   const filteredAccounts = useMemo(() => {
     if (!accounts) return [];
-    
+
     return accounts.filter((account) => {
       // Search filter
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
         account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         account.institution?.name.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       // Institution filter
-      const matchesInstitution = institutionFilter === 'all' || 
+      const matchesInstitution = institutionFilter === 'all' ||
         (account.institution?.name || 'Other') === institutionFilter;
-      
+
       // Type filter
       const matchesType = typeFilter === 'all' || account.type === typeFilter;
-      
+
       return matchesSearch && matchesInstitution && matchesType;
     });
   }, [accounts, searchTerm, institutionFilter, typeFilter]);
@@ -101,11 +89,11 @@ export default function AccountsPage() {
     setIsDeleting(true);
     try {
       logger.info('Batch deleting accounts', { count: selectedAccountIds.length, ids: selectedAccountIds });
-      
+
       await Promise.all(
         selectedAccountIds.map(id => apiClient.delete(`accounts/${id}`))
       );
-      
+
       logger.info('Batch delete successful');
       await refetch();
       setRowSelection({});
@@ -141,19 +129,32 @@ export default function AccountsPage() {
       enableSorting: false,
       enableHiding: false,
     },
+    // 1. Type column (now first, with logo)
     {
-      accessorKey: 'name',
+      accessorKey: 'type',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('accounts.name') || 'Name'} />
+        <DataTableColumnHeader column={column} title={t('accounts.type') || 'Type'} />
       ),
       cell: ({ row }) => {
+        const code = row.original.type;
+        const translatedType = t(`accountTypes.${code}`, { defaultValue: code.replace('_', ' ') });
+        const inst = row.original.institution;
+        const domain = inst?.website ? inst.website.replace(/^https?:\/\//, '') : undefined;
+        
         return (
-          <div className="font-medium">
-            {row.original.name}
+          <div className="flex items-center gap-3">
+             <InstitutionLogo
+              name={inst?.name || row.original.name}
+              domain={domain}
+              size="medium"
+              className="flex-shrink-0 rounded-full"
+            />
+            <div className="font-medium capitalize">{translatedType}</div>
           </div>
         );
       },
     },
+    // 2. Institution column
     {
       accessorKey: 'institution.name',
       header: ({ column }) => (
@@ -167,17 +168,23 @@ export default function AccountsPage() {
         );
       },
     },
+    // 3. Name column (now third, without logo, shows "-" if empty or same as type)
     {
-      accessorKey: 'type',
+      accessorKey: 'name',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('accounts.type') || 'Type'} />
+        <DataTableColumnHeader column={column} title={t('accounts.name') || 'Name'} />
       ),
       cell: ({ row }) => {
-        const type = row.original.type.replace('_', ' ');
+        // If name is empty OR explicitly "-", show "-"
+        const name = row.original.name;
+        if (!name || name.trim() === '' || name === '-') {
+             return <div className="text-muted-foreground">-</div>;
+        }
+        
         return (
-          <Badge variant="outline" className="capitalize">
-            {type}
-          </Badge>
+          <div className="font-medium">
+            {name}
+          </div>
         );
       },
     },
@@ -248,11 +255,11 @@ export default function AccountsPage() {
             </Badge>
           );
         }
-        
+
         const snapshotDate = new Date(latestSnapshot.snapshot_date);
         const daysSince = Math.floor((Date.now() - snapshotDate.getTime()) / (1000 * 60 * 60 * 24));
         const isOld = daysSince > 30;
-        
+
         return (
           <div className="flex flex-col gap-1">
             <span className="text-sm">
@@ -355,7 +362,7 @@ export default function AccountsPage() {
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold">{t('accounts.noAccounts')}</h3>
                 <p className="text-sm text-muted-foreground max-w-sm">
-                  {t('accounts.addFirstDescription') || 
+                  {t('accounts.addFirstDescription') ||
                     'Start tracking your wealth by adding your first account. Connect bank accounts, credit cards, or other financial accounts.'}
                 </p>
               </div>
@@ -383,9 +390,14 @@ export default function AccountsPage() {
       {/* Data Table with Filters */}
       <Card>
         <CardContent className="pt-6">
-          {/* Filters */}
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          {/* Filters and Batch Actions */}
+          <div className="relative mb-6">
+            <div
+              className={cn(
+                "flex flex-col gap-4 md:flex-row md:items-center md:justify-between transition-all duration-200",
+                selectedAccountIds.length > 0 ? "opacity-0 pointer-events-none invisible" : "opacity-100 visible"
+              )}
+            >
               <div className="flex items-center gap-2 flex-1 max-w-md">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
@@ -395,7 +407,7 @@ export default function AccountsPage() {
                   className="flex-1"
                 />
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <Select value={institutionFilter} onValueChange={setInstitutionFilter}>
@@ -409,7 +421,7 @@ export default function AccountsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                
+
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder={t('accounts.allTypes') || 'All Types'} />
@@ -418,7 +430,7 @@ export default function AccountsPage() {
                     <SelectItem value="all">{t('accounts.allTypes') || 'All Types'}</SelectItem>
                     {accountTypes.map((type) => (
                       <SelectItem key={type} value={type} className="capitalize">
-                        {type.replace('_', ' ')}
+                        {t(`accountTypes.${type}`, { defaultValue: type.replace('_', ' ') })}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -426,11 +438,11 @@ export default function AccountsPage() {
               </div>
             </div>
 
-            {/* Batch Actions Bar */}
+            {/* Batch Actions Overlay */}
             {selectedAccountIds.length > 0 && (
-              <div className="flex items-center justify-between bg-muted p-3 rounded-md">
+              <div className="absolute inset-0 flex items-center justify-between bg-muted p-3 rounded-md animate-in fade-in zoom-in-95 duration-200">
                 <span className="text-sm font-medium">
-                  {selectedAccountIds.length} {selectedAccountIds.length === 1 ? 
+                  {selectedAccountIds.length} {selectedAccountIds.length === 1 ?
                     t('accounts.accountSelected') : t('accounts.accountsSelected')
                   }
                 </span>
@@ -447,8 +459,8 @@ export default function AccountsPage() {
           </div>
 
           {/* DataTable */}
-          <DataTable 
-            columns={columns} 
+          <DataTable
+            columns={columns}
             data={filteredAccounts}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
@@ -464,7 +476,7 @@ export default function AccountsPage() {
               {t('accounts.deleteSelectedTitle') || 'Delete Selected Accounts'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('accounts.deleteSelectedConfirm') || 
+              {t('accounts.deleteSelectedConfirm') ||
                 `Are you sure you want to delete ${selectedAccountIds.length} account(s)? This action cannot be undone.`
               }
             </AlertDialogDescription>
@@ -473,7 +485,7 @@ export default function AccountsPage() {
             <AlertDialogCancel disabled={isDeleting}>
               {t('common.cancel')}
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleBatchDelete}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

@@ -35,8 +35,11 @@ export function useAccounts(options: UseAccountsOptions = {}): UseAccountsResult
         setError(null);
 
         logger.debug('Fetching accounts...');
-        
-        const response = await apiClient.get<{ data: Account[] }>('accounts', {
+
+        const query = new URLSearchParams();
+        if (userId) query.append('user_id', userId.toString());
+
+        const response = await apiClient.get<{ data: Account[] }>(`accounts?${query.toString()}`, {
           signal: controller.signal,
         });
 

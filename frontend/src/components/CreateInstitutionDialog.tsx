@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUser } from '@/contexts/UserContext';
 import { apiClient } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -25,6 +27,7 @@ import { Plus } from 'lucide-react';
 interface CreateInstitutionDialogProps {
   onSuccess?: () => void;
   compact?: boolean;
+  children?: React.ReactNode;
 }
 
 const INSTITUTION_TYPES = [
@@ -44,12 +47,14 @@ const COUNTRIES = [
   { value: 'other', label: 'Other' },
 ] as const;
 
-export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateInstitutionDialogProps) {
+export function CreateInstitutionDialog({ onSuccess, compact = false, children }: CreateInstitutionDialogProps) {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [type, setType] = useState<string>('bank');
+  const [website, setWebsite] = useState<string>('');
   const [country, setCountry] = useState<string>('DE');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,6 +72,7 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
           name: name.trim(),
           type,
           country,
+          website: website ? website.trim() : undefined,
           user_id: userId,
         },
       });
@@ -84,42 +90,63 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
     }
   };
 
+  const getInstitutionTypeLabel = (value: string) => {
+    return t(`institutions.types.${value}` as any) || value;
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {compact ? (
+          {children ? (
+          children
+        ) : compact ? (
           <Button variant="ghost" size="sm" type="button">
             <Plus className="h-3 w-3 mr-1" />
-            New
+              {t('institutions.createInstitution') || 'New'}
           </Button>
         ) : (
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Add Institution
+            {t('institutions.createInstitution') || 'Add Institution'}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Add New Institution</DialogTitle>
+            <DialogTitle>{t('institutions.createInstitution') || 'Add New Institution'}</DialogTitle>
             <DialogDescription>
-              Create a new financial institution (bank, broker, etc.).
+              {t('institutions.addFirst') || 'Create a new financial institution (bank, broker, etc.).'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            <div className="flex items-center gap-4">
+              <div>
+                <InstitutionLogo name={name || 'Institution'} domain={website ? website.replace(/^https?:\/\//, '') : undefined} size="large" className="rounded-full" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Logo Preview (from logo.dev)</p>
+              </div>
+            </div>
             <div className="grid gap-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name" required>{t('common.name') || 'Name'}</Label>
               <Input
                 id="name"
-                placeholder="e.g., ING DiBa, Sparkasse"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="type">Type *</Label>
+              <Label htmlFor="website">Website ({t('common.optional')})</Label>
+              <Input
+                id="website"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="type" required>{t('common.type') || 'Type'}</Label>
               <Select value={type} onValueChange={setType}>
                 <SelectTrigger id="type">
                   <SelectValue />
@@ -127,14 +154,14 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
                 <SelectContent>
                   {INSTITUTION_TYPES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                      {getInstitutionTypeLabel(t.value)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="country">Country *</Label>
+              <Label htmlFor="country" required>{t('institutions.country') || 'Country'}</Label>
               <Select value={country} onValueChange={setCountry}>
                 <SelectTrigger id="country">
                   <SelectValue />
@@ -151,10 +178,10 @@ export function CreateInstitutionDialog({ onSuccess, compact = false }: CreateIn
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel') || 'Cancel'}
             </Button>
             <Button type="submit" disabled={loading || !name.trim()}>
-              {loading ? 'Creating...' : 'Create Institution'}
+              {loading ? t('common.loading') : t('institutions.createInstitution')}
             </Button>
           </DialogFooter>
         </form>

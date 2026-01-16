@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useReactTable,
   getCoreRowModel,
@@ -60,6 +61,7 @@ function formatNumber(value: number, decimals: number = 2): string {
 }
 
 export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps) {
+  const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const columns = useMemo(
@@ -71,7 +73,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8 data-[state=open]:bg-accent"
           >
-            Ticker
+            {t('portfolio.ticker')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -86,7 +88,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8 data-[state=open]:bg-accent"
           >
-            Name
+            {t('portfolio.name')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -94,88 +96,97 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
       }),
       columnHelper.accessor('shares', {
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8 data-[state=open]:bg-accent"
-          >
-            Shares
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.shares')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         ),
         cell: ({ getValue }) => (
-          <div className="text-right font-mono">{formatNumber(getValue())}</div>
+          <div className="text-right font-mono pr-4">{formatNumber(getValue())}</div>
         ),
       }),
       columnHelper.accessor('avgCost', {
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8 data-[state=open]:bg-accent"
-          >
-            Avg. Cost
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.avgCost')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         ),
         cell: ({ getValue }) => (
-          <div className="text-right font-mono text-muted-foreground">
+          <div className="text-right font-mono text-muted-foreground pr-4">
             {formatCurrency(getValue())}
           </div>
         ),
       }),
       columnHelper.accessor('currentPrice', {
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8 data-[state=open]:bg-accent"
-          >
-            Current Price
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="text-right w-full">
+             <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.currentPrice')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         ),
         cell: ({ getValue }) => (
-          <div className="text-right font-mono font-medium">{formatCurrency(getValue())}</div>
+          <div className="text-right font-mono font-medium pr-4">{formatCurrency(getValue())}</div>
         ),
       }),
       columnHelper.accessor('marketValue', {
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8 data-[state=open]:bg-accent"
-          >
-            Market Value
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+           <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.marketValue')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         ),
         cell: ({ getValue }) => (
-          <div className="text-right font-mono font-semibold">{formatCurrency(getValue())}</div>
+          <div className="text-right font-mono font-semibold pr-4">{formatCurrency(getValue())}</div>
         ),
       }),
       columnHelper.accessor('totalGainLoss', {
         id: 'totalGainLoss',
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8 data-[state=open]:bg-accent"
-          >
-            Total Gain/Loss
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+           <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.totalGainLoss')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         ),
         cell: ({ row }) => {
           const value = row.original.totalGainLoss;
           const percent = row.original.totalGainLossPercent;
           const isPositive = value >= 0;
           return (
-            <div className="text-right">
+            <div className="text-right pr-4">
               <div
-                className={`font-mono font-semibold flex items-center justify-end gap-1 ${
-                  isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                }`}
+                className={`font-mono font-semibold flex items-center justify-end gap-1 ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  }`}
               >
                 {isPositive ? (
                   <TrendingUp className="h-3.5 w-3.5" />
@@ -185,9 +196,8 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
                 {formatCurrency(Math.abs(value))}
               </div>
               <div
-                className={`text-xs font-mono ${
-                  isPositive ? 'text-green-600/70 dark:text-green-400/70' : 'text-red-600/70 dark:text-red-400/70'
-                }`}
+                className={`text-xs font-mono ${isPositive ? 'text-green-600/70 dark:text-green-400/70' : 'text-red-600/70 dark:text-red-400/70'
+                  }`}
               >
                 {formatPercent(percent)}
               </div>
@@ -198,25 +208,26 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
       columnHelper.accessor('dayChange', {
         id: 'dayChange',
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8 data-[state=open]:bg-accent"
-          >
-            Day Change
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+           <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.dayChange')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         ),
         cell: ({ row }) => {
           const value = row.original.dayChange;
           const percent = row.original.dayChangePercent;
           const isPositive = value >= 0;
           return (
-            <div className="text-right">
+            <div className="text-right pr-4">
               <div
-                className={`font-mono font-medium flex items-center justify-end gap-1 ${
-                  isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                }`}
+                className={`font-mono font-medium flex items-center justify-end gap-1 ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  }`}
               >
                 {isPositive ? (
                   <TrendingUp className="h-3.5 w-3.5" />
@@ -226,9 +237,8 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
                 {formatCurrency(Math.abs(value))}
               </div>
               <div
-                className={`text-xs font-mono ${
-                  isPositive ? 'text-green-600/70 dark:text-green-400/70' : 'text-red-600/70 dark:text-red-400/70'
-                }`}
+                className={`text-xs font-mono ${isPositive ? 'text-green-600/70 dark:text-green-400/70' : 'text-red-600/70 dark:text-red-400/70'
+                  }`}
               >
                 {formatPercent(percent)}
               </div>
@@ -237,7 +247,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
         },
       }),
     ],
-    []
+    [t]
   );
 
   const table = useReactTable({
@@ -281,8 +291,8 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No portfolio holdings found.
+              <TableCell colSpan={8} className="h-24 text-center">
+                {t('portfolio.noHoldings')}
               </TableCell>
             </TableRow>
           )}

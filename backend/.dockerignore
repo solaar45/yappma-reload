@@ -1,0 +1,46 @@
+# Development files
+.git
+.gitignore
+README.md
+*.md
+
+# Build artifacts
+_build/
+deps/
+*.beam
+*.ez
+erl_crash.dump
+
+# Test and coverage
+cover/
+test/
+
+# Documentation
+doc/
+
+# Temporary files
+tmp/
+*.tmp
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Node (for Phoenix assets)
+node_modules/
+npm-debug.log
+
+# Elixir LS
+.elixir_ls/

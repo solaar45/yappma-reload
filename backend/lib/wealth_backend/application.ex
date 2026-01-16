@@ -12,6 +12,12 @@ defmodule WealthBackend.Application do
       WealthBackend.Repo,
       {DNSCluster, query: Application.get_env(:wealth_backend, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: WealthBackend.PubSub},
+      # Start Cachex for security validation caching
+      {Cachex, name: :security_validation_cache},
+      # Start FMP Type Cache for security type lookups
+      Yappma.Services.FMPTypeCache,
+      # Start scheduler for weekly cache refresh
+      Yappma.Services.FMPTypeCacheScheduler,
       # Start a worker by calling: WealthBackend.Worker.start_link(arg)
       # {WealthBackend.Worker, arg},
       # Start to serve requests, typically the last entry

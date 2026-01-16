@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -50,6 +51,7 @@ export function EditInstitutionDialog({ institution, onSuccess }: EditInstitutio
   const [name, setName] = useState(institution.name);
   const [type, setType] = useState(institution.type);
   const [country, setCountry] = useState(institution.country);
+  const [website, setWebsite] = useState(institution.website || '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +68,7 @@ export function EditInstitutionDialog({ institution, onSuccess }: EditInstitutio
           name: name.trim(),
           type,
           country,
+          website: website ? website.trim() : undefined,
         },
       });
 
@@ -94,8 +97,16 @@ export function EditInstitutionDialog({ institution, onSuccess }: EditInstitutio
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            <div className="flex items-center gap-4">
+              <div>
+                <InstitutionLogo name={name || 'Institution'} domain={website ? website.replace(/^https?:\/\//, '') : undefined} size="large" className="rounded-full" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Logo Preview (from logo.dev)</p>
+              </div>
+            </div>
             <div className="grid gap-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name" required>Name</Label>
               <Input
                 id="name"
                 placeholder="e.g., ING DiBa, Sparkasse"
@@ -105,8 +116,20 @@ export function EditInstitutionDialog({ institution, onSuccess }: EditInstitutio
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="type">Type *</Label>
-              <Select value={type} onValueChange={setType}>
+              <Label htmlFor="website">Website (optional)</Label>
+              <Input
+                id="website"
+                placeholder="e.g., dkb.de or https://dkb.de"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="type" required>Type</Label>
+              <Select
+                value={type}
+                onValueChange={(value) => setType(value as any)}
+              >
                 <SelectTrigger id="type">
                   <SelectValue />
                 </SelectTrigger>
@@ -120,7 +143,7 @@ export function EditInstitutionDialog({ institution, onSuccess }: EditInstitutio
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="country">Country *</Label>
+              <Label htmlFor="country" required>Country</Label>
               <Select value={country} onValueChange={setCountry}>
                 <SelectTrigger id="country">
                   <SelectValue />

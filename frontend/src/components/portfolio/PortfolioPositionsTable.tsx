@@ -1,15 +1,21 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
+  getExpandedRowModel,
+  getGroupedRowModel,
   flexRender,
   createColumnHelper,
   type SortingState,
   type ColumnFiltersState,
+  type GroupingState,
+  type ExpandedState,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Edit, FileText, Camera, MoreVertical, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Edit, FileText, Camera, MoreVertical, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -31,20 +37,21 @@ import {
 
 export interface PortfolioPosition {
   id: string;
-  type: 'Asset' | 'Account';
+  type: string;
+  subtype?: string;
   name: string;
   institution: string;
+  institutionDomain?: string;
   institutionLogo?: string;
-  assetClass: 'Equity' | 'Bond' | 'Real Estate' | 'Cash' | 'Crypto';
+  assetClass: string;
   riskScore: 1 | 2 | 3 | 4 | 5;
   currentValue: number;
-  portfolioShare: number; // percentage
-  performance: number; // percentage
-  performanceHistory: number[]; // for sparkline
-  savingsPlan?: number; // monthly amount or null
+  portfolioShare: number;
+  performance: number;
+  performanceHistory: number[];
+  savingsPlan?: number;
   fsaAllocated: number;
-  fsaTotal: number;
-  fsaUsedYTD: number; // in euros
+  fsaGlobalLimit: number;
 }
 
 const columnHelper = createColumnHelper<PortfolioPosition>();
@@ -57,6 +64,15 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('de-DE', {
     style: 'currency',
     currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatValue(value: number): string {
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
@@ -65,14 +81,6 @@ function formatCurrency(value: number): string {
 function formatPercent(value: number): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
 }
-
-const assetClassColors: Record<string, string> = {
-  Equity: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  Bond: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  'Real Estate': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  Cash: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
-  Crypto: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-};
 
 function RiskScoreVisual({ score }: { score: number }) {
   const dots = Array.from({ length: 5 }, (_, i) => i + 1);
@@ -118,156 +126,201 @@ function Sparkline({ data, isPositive }: { data: number[]; isPositive: boolean }
   );
 }
 
+// Helper to determine if an institution string is "valid" (not a placeholder)
+function isValidInstitution(inst: string | undefined | null): boolean {
+  if (!inst) return false;
+  const clean = inst.trim();
+  return clean.length > 0 && clean !== '-' && clean.toLowerCase() !== 'null';
+}
+
 export function PortfolioPositionsTable({ positions }: PortfolioPositionsTableProps) {
+  const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [grouping, setGrouping] = useState<GroupingState>(['institution']);
+  const [expanded, setExpanded] = useState<ExpandedState>(true); // Default all expanded
+
+  // Filter out positions without institution for separate display
+  // We treat "-", empty strings, or null as "no institution"
+  const { groupedPositions, flatPositions } = useMemo(() => {
+    const withInstitution = positions.filter(p => isValidInstitution(p.institution));
+    const withoutInstitution = positions.filter(p => !isValidInstitution(p.institution));
+    return { groupedPositions: withInstitution, flatPositions: withoutInstitution };
+  }, [positions]);
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor('type', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            Typ
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ getValue }) => {
-          const type = getValue();
-          return (
-            <Badge variant={type === 'Asset' ? 'default' : 'secondary'} className="font-medium">
-              {type}
-            </Badge>
-          );
-        },
-      }),
-      columnHelper.accessor('name', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            Name
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ getValue }) => <div className="font-medium">{getValue()}</div>,
-      }),
+      // Institution Group Column
       columnHelper.accessor('institution', {
+        id: 'institution',
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            Institution
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+              className="-ml-4 h-8"
+            >
+              {t('portfolio.institution')}
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
         ),
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-semibold">
-              {row.original.institution.substring(0, 2).toUpperCase()}
-            </div>
-            <span className="text-sm">{row.original.institution}</span>
-          </div>
-        ),
+        cell: ({ row, getValue }) => {
+           if (row.getIsGrouped()) {
+             const institutionName = getValue();
+             const domain = row.original.institutionDomain;
+             
+             return (
+               <div className="flex items-center gap-2 font-semibold">
+                 <span className="w-4 h-4 flex items-center justify-center">
+                    {row.getIsExpanded() ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                 </span>
+                 <InstitutionLogo
+                   name={institutionName}
+                   domain={domain}
+                   size="small"
+                   className="flex-shrink-0 rounded-full"
+                 />
+                 <span>{institutionName}</span>
+                 <Badge variant="outline" className="ml-2 text-xs font-normal">
+                   {row.subRows.length} {row.subRows.length === 1 ? t('common.item') : t('common.items')}
+                 </Badge>
+               </div>
+             );
+           }
+           // Use depth to detect if this is a child row within a group (depth > 0)
+           // If so, render the tree connector in this column (aligned right)
+           if (row.depth > 0) {
+              return (
+                <div className="flex justify-end w-full pr-1 h-full items-center">
+                    <div className="w-4 border-l-2 border-b-2 h-4 border-muted-foreground/20 rounded-bl-sm -mt-4 translate-x-1"></div>
+                </div>
+              );
+           }
+           return null;
+        },
       }),
-      columnHelper.accessor('assetClass', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            Asset-Klasse
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ getValue }) => {
-          const assetClass = getValue();
+      
+      // Position Name
+      columnHelper.accessor('name', {
+        header: t('portfolio.position'),
+        cell: ({ row }) => {
+          if (row.getIsGrouped()) return null;
+
+          const name = row.original.name;
+          const subtype = row.original.subtype;
+          const type = row.original.type;
+          
+          const displayName = (name === '-' || !name) && subtype
+            ? t(`accountTypes.${subtype}`, { defaultValue: subtype })
+            : name;
+          
           return (
-            <Badge variant="outline" className={assetClassColors[assetClass]}>
-              {assetClass}
-            </Badge>
+            <div className="flex items-center gap-2">
+               {/* Indentation logic removed to ensure flush alignment with header */}
+               <div className="flex flex-col">
+                 <span className="font-medium">{displayName}</span>
+                 <span className="text-xs text-muted-foreground">{t(`portfolio.${type.toLowerCase()}`, {defaultValue: type})}</span>
+               </div>
+            </div>
           );
         },
       }),
-      columnHelper.accessor('riskScore', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            Risiko
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ getValue }) => <RiskScoreVisual score={getValue()} />,
+
+      columnHelper.accessor('type', {
+         header: t('portfolio.type'),
+         cell: ({row, getValue}) => {
+             if (row.getIsGrouped()) return null;
+             return <Badge variant="secondary" className="text-xs">{getValue()}</Badge>
+         }
       }),
+
+      columnHelper.accessor('riskScore', {
+        header: t('portfolio.risk'),
+        cell: ({ row, getValue }) => {
+            if (row.getIsGrouped()) return null;
+            return <RiskScoreVisual score={getValue()} />;
+        }
+      }),
+
       columnHelper.accessor('currentValue', {
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            Aktueller Wert
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.marketValue')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         ),
-        cell: ({ getValue }) => (
-          <div className="text-right font-mono font-semibold">{formatCurrency(getValue())}</div>
-        ),
+        cell: ({ row, getValue }) => {
+          const value = row.getIsGrouped() 
+             ? row.subRows.reduce((sum, r) => sum + r.original.currentValue, 0)
+             : getValue();
+          
+          return (
+            <div className={`text-right font-mono pr-4 ${row.getIsGrouped() ? 'font-bold' : ''}`}>
+               {formatValue(value)}
+            </div>
+          );
+        },
+        aggregationFn: 'sum',
       }),
+
       columnHelper.accessor('portfolioShare', {
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            Anteil am Portfolio
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.share')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         ),
-        cell: ({ getValue }) => {
-          const value = getValue();
-          return (
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{value.toFixed(1)}%</span>
+        cell: ({ row, getValue }) => {
+           const value = row.getIsGrouped()
+             ? row.subRows.reduce((sum, r) => sum + r.original.portfolioShare, 0)
+             : getValue();
+             
+           return (
+            <div className="space-y-1 w-24 ml-auto pr-4">
+              <div className="flex items-center justify-end">
+                <span className={`text-xs ${row.getIsGrouped() ? 'font-bold' : ''}`}>{value.toFixed(1)}%</span>
               </div>
               <Progress value={value} className="h-1.5" />
             </div>
           );
         },
+        aggregationFn: 'sum',
       }),
+
       columnHelper.accessor('performance', {
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            Performance
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.performance')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         ),
         cell: ({ row }) => {
+          if (row.getIsGrouped()) return null;
+
           const value = row.original.performance;
           const isPositive = value >= 0;
           return (
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end pr-4">
               <span
-                className={`text-sm font-medium ${
-                  isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                }`}
+                className={`text-sm font-medium ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  }`}
               >
                 {formatPercent(value)}
               </span>
@@ -276,111 +329,80 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           );
         },
       }),
-      columnHelper.accessor('savingsPlan', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            Sparplan
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ getValue }) => {
-          const value = getValue();
-          return value ? (
-            <div className="text-right font-mono text-sm">{formatCurrency(value)}/Monat</div>
-          ) : (
-            <div className="text-center text-muted-foreground">-</div>
-          );
-        },
-      }),
+
       columnHelper.accessor('fsaAllocated', {
+        id: 'fsa',
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            FSA zugeteilt
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ row }) => (
-          <div className="text-right font-mono font-medium">
-            {formatCurrency(row.original.fsaAllocated)}
+          <div className="text-right w-full">
+            <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="h-8 data-[state=open]:bg-accent px-2"
+            >
+                {t('portfolio.fsa')}
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
           </div>
         ),
-      }),
-      columnHelper.accessor('fsaUsedYTD', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            FSA genutzt (YTD)
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
         cell: ({ row }) => {
-          const used = row.original.fsaUsedYTD;
-          const allocated = row.original.fsaAllocated;
-          const percentage = allocated > 0 ? (used / allocated) * 100 : 0;
-          return (
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{percentage.toFixed(0)}%</span>
-                <span className="text-xs text-muted-foreground font-mono">({formatCurrency(used)})</span>
-              </div>
-              <Progress value={percentage} className="h-1.5" />
-            </div>
-          );
+          if (row.getIsGrouped()) {
+              const representativeItem = row.leafRows.find(r => r.original.fsaAllocated > 0)?.original;
+              
+              if (!representativeItem) return <div className="pr-4"><span className="text-muted-foreground text-xs block text-right">-</span></div>;
+              
+              const allocated = representativeItem.fsaAllocated;
+              const globalLimit = representativeItem.fsaGlobalLimit || 1000;
+              const percentage = globalLimit > 0 ? (allocated / globalLimit) * 100 : 0;
+              
+              return (
+                <div className="space-y-1 w-32 ml-auto pr-4">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium">{formatCurrency(allocated)}</span>
+                    <span className="text-muted-foreground text-[10px]">{percentage.toFixed(0)}%</span>
+                  </div>
+                  <Progress value={percentage} className="h-2" />
+                </div>
+              );
+          }
+          if (!isValidInstitution(row.original.institution)) {
+             return <div className="pr-4"><span className="text-muted-foreground/30 text-xs block text-right">—</span></div>;
+          }
+          return null; 
         },
       }),
-      columnHelper.display({
-        id: 'actions',
-        header: 'Aktionen',
-        cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Edit className="mr-2 h-4 w-4" />
-                <span>Edit</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <FileText className="mr-2 h-4 w-4" />
-                <span>Details</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Camera className="mr-2 h-4 w-4" />
-                <span>Snapshot</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
-      }),
     ],
-    []
+    [t]
   );
 
-  const table = useReactTable({
-    data: positions,
+  // Table instance for GROUPED data
+  const groupedTable = useReactTable({
+    data: groupedPositions,
     columns,
     state: {
       sorting,
       columnFilters,
+      grouping, // Enable grouping only here
+      expanded,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGroupingChange: setGrouping,
+    onExpandedChange: setExpanded,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+  });
+
+  // Table instance for FLAT data (no grouping needed)
+  const flatTable = useReactTable({
+    data: flatPositions,
+    columns,
+    state: {
+      sorting,
+      columnFilters,
+      grouping: [], // No grouping for flat table
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -393,7 +415,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
     <div className="rounded-md border">
       <Table>
         <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
+          {groupedTable.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <TableHead key={header.id} className="h-12">
@@ -406,20 +428,46 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+          {/* 1. Grouped Positions (Institutions) */}
+          {groupedTable.getRowModel().rows.map((row) => (
+            <TableRow 
+              key={row.id} 
+              className={row.getIsGrouped() ? "bg-muted/30 hover:bg-muted/50 cursor-pointer" : ""}
+              onClick={row.getIsGrouped() ? row.getToggleExpandedHandler() : undefined}
+            >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
-              </TableRow>
-            ))
-          ) : (
+            </TableRow>
+          ))}
+
+          {/* 2. Separator if we have both types */}
+          {groupedPositions.length > 0 && flatPositions.length > 0 && (
+             <TableRow className="hover:bg-transparent">
+               <TableCell colSpan={columns.length} className="bg-muted/5 p-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider pl-4 border-y">
+                 {t('assetTypes.other', { defaultValue: 'Other' })} / {t('common.assets', { defaultValue: 'Assets' })}
+               </TableCell>
+             </TableRow>
+          )}
+
+          {/* 3. Flat Positions (No Institution) */}
+          {flatTable.getRowModel().rows.map((row) => (
+            <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+            </TableRow>
+          ))}
+
+          {/* Empty State */}
+          {positions.length === 0 && (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                Keine Positionen gefunden.
+                {t('portfolio.noPositions')}
               </TableCell>
             </TableRow>
           )}

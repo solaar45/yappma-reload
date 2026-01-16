@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { UserProvider } from '@/contexts/UserContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppSidebar } from '@/components/app-sidebar';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
@@ -21,21 +24,27 @@ import AccountsPage from '@/pages/AccountsPage';
 import AssetsPage from '@/pages/AssetsPage';
 import InstitutionsPage from '@/pages/InstitutionsPage';
 import SnapshotsPage from '@/pages/SnapshotsPage';
-
-function getBreadcrumb(pathname: string): string {
-  const breadcrumbs: Record<string, string> = {
-    '/': 'Dashboard',
-    '/accounts': 'Accounts',
-    '/assets': 'Assets',
-    '/snapshots': 'Snapshots',
-    '/institutions': 'Institutions',
-  };
-  
-  return breadcrumbs[pathname] || 'Dashboard';
-}
+import TaxesPage from '@/pages/TaxesPage';
+import LoginPage from '@/pages/LoginPage';
+import RegisterPage from '@/pages/RegisterPage';
 
 function AppContent() {
+  const { t } = useTranslation();
   const location = useLocation();
+
+  const getBreadcrumb = (pathname: string): string => {
+    const breadcrumbs: Record<string, string> = {
+      '/': t('navigation.dashboard'),
+      '/accounts': t('navigation.accounts'),
+      '/assets': t('navigation.assets'),
+      '/snapshots': t('navigation.snapshots'),
+      '/institutions': t('navigation.institutions'),
+      '/taxes': t('taxes.title'),
+    };
+
+    return breadcrumbs[pathname] || t('navigation.dashboard');
+  };
+
   const breadcrumb = getBreadcrumb(location.pathname);
 
   return (
@@ -58,23 +67,64 @@ function AppContent() {
             </Breadcrumb>
           </div>
         </header>
-        
+
         {/* Wrap Routes with ErrorBoundary */}
         <ErrorBoundary
           onError={(error, errorInfo) => {
-            // Log error for debugging
             logger.error('Route Error Caught', { error, errorInfo });
-            
-            // TODO: Send to error tracking service
-            // Example: sendToErrorTracking(error, errorInfo);
           }}
         >
           <Routes>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/accounts" element={<AccountsPage />} />
-            <Route path="/assets" element={<AssetsPage />} />
-            <Route path="/snapshots" element={<SnapshotsPage />} />
-            <Route path="/institutions" element={<InstitutionsPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/accounts"
+              element={
+                <ProtectedRoute>
+                  <AccountsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assets"
+              element={
+                <ProtectedRoute>
+                  <AssetsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/snapshots"
+              element={
+                <ProtectedRoute>
+                  <SnapshotsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/institutions"
+              element={
+                <ProtectedRoute>
+                  <InstitutionsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/taxes"
+              element={
+                <ProtectedRoute>
+                  <TaxesPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </ErrorBoundary>
       </SidebarInset>
@@ -89,11 +139,13 @@ export default function App() {
         logger.error('App Error Caught', { error, errorInfo });
       }}
     >
-      <UserProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </UserProvider>
+      <AuthProvider>
+        <UserProvider>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </UserProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

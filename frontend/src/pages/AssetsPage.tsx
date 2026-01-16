@@ -1,13 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useAssets, useAccounts } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
+import { useAssets, useAccounts } from '@/lib/api/hooks';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -20,6 +21,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateAssetDialog } from '@/components/CreateAssetDialog';
 import { EditAssetDialog } from '@/components/EditAssetDialog';
@@ -27,13 +34,15 @@ import { DeleteAssetDialog } from '@/components/DeleteAssetDialog';
 import { PiggyBank, Search, Filter, Trash2, CheckCircle2, XCircle, TrendingUp } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
-import type { Asset } from '@/lib/api/types';
+import { cn } from '@/lib/utils';
+import type { Asset, Account } from '@/lib/api/types';
 
 export default function AssetsPage() {
   const { t } = useTranslation();
   const { userId } = useUser();
+  // FIXME: userId can be null, handle auth properly
   const { assets, loading, error, refetch } = useAssets({ userId: userId! });
-  const { accounts } = useAccounts();
+  const { accounts } = useAccounts({ userId: userId ?? undefined });
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [accountFilter, setAccountFilter] = useState<string>('all');
@@ -45,43 +54,115 @@ export default function AssetsPage() {
   // Get unique asset types and accounts for filters
   const assetTypes = useMemo(() => {
     if (!assets) return [];
-    const typeSet = new Set(assets.map(asset => asset.asset_type?.description || 'Other'));
+    const typeSet = new Set(assets.map(asset => {
+      // Map DB type code to translation if possible, fallback to description or 'other'
+      const code = asset.asset_type?.code || 'other';
+      return t(`assetTypes.${code}`, { defaultValue: asset.asset_type?.description || 'Other' });
+    }));
     return Array.from(typeSet).sort();
-  }, [assets]);
+  }, [assets, t]);
 
   const accountsList = useMemo(() => {
-    if (!accounts) return [];
-    return accounts.map(acc => ({ id: acc.id, name: acc.name }));
+    if (!assets || !accounts) return [];
+    const seen = new Map<number, string>();
+    assets.forEach(a => {
+      if (a.account_id) {
+        const acc = accounts.find(c => c.id === a.account_id);
+        if (acc) seen.set(acc.id, acc.name);
+      }
+    });
+    return Array.from(seen.entries()).map(([id, name]) => ({ id, name }));
+  }, [assets, accounts]);
+
+  const accountsMap = useMemo(() => {
+    const map = new Map<number, Account>();
+    if (!accounts) return map;
+    accounts.forEach(acc => map.set(acc.id, acc));
+    return map;
   }, [accounts]);
+
+  // Helper function to get risk class color
+  const getRiskClassColor = (riskClass: number | null | undefined) => {
+    if (!riskClass) return 'bg-muted-foreground/30';
+
+    switch (riskClass) {
+      case 1:
+        return 'bg-green-500';
+      case 2:
+        return 'bg-lime-500';
+      case 3:
+        return 'bg-yellow-500';
+      case 4:
+        return 'bg-orange-500';
+      case 5:
+        return 'bg-red-500';
+      default:
+        return 'bg-muted-foreground/30';
+    }
+  };
+
+  // Helper function to get risk label
+  const getRiskLabel = (riskClass: number | null | undefined) => {
+    if (!riskClass) return t('assets.riskUnknown') || 'Unknown';
+
+    switch (riskClass) {
+      case 1:
+        return t('assets.riskVeryLow') || 'Very Low';
+      case 2:
+        return t('assets.riskLow') || 'Low';
+      case 3:
+        return t('assets.riskMedium') || 'Medium';
+      case 4:
+        return t('assets.riskHigh') || 'High';
+      case 5:
+        return t('assets.riskVeryHigh') || 'Very High';
+      default:
+        return t('assets.riskUnknown') || 'Unknown';
+    }
+  };
+
+  // Helper function to get risk source label
+  const getRiskSourceLabel = (source: string | null | undefined) => {
+    switch (source) {
+      case 'auto_api':
+        return t('assets.riskSourceApi') || 'Auto (API)';
+      case 'auto_type':
+        return t('assets.riskSourceType') || 'Auto (Type)';
+      case 'manual':
+        return t('assets.riskSourceManual') || 'Manual';
+      default:
+        return t('assets.riskSourceUnknown') || 'Unknown';
+    }
+  };
 
   // Filter and search logic
   const filteredAssets = useMemo(() => {
     if (!assets) return [];
-    
+
     return assets.filter((asset) => {
       // Search filter
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
         asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.symbol?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.security_asset?.isin?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.security_asset?.ticker?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       // Type filter
-      const matchesType = typeFilter === 'all' || 
-        (asset.asset_type?.description || 'Other') === typeFilter;
-      
+      const matchesType = typeFilter === 'all' ||
+        (t(`assetTypes.${asset.asset_type?.code || 'other'}`, { defaultValue: asset.asset_type?.description || 'Other' }) === typeFilter);
+
       // Account filter
-      const matchesAccount = accountFilter === 'all' || 
+      const matchesAccount = accountFilter === 'all' ||
         asset.account_id?.toString() === accountFilter;
-      
+
       // Status filter
       const matchesStatus = statusFilter === 'all' ||
         (statusFilter === 'active' && asset.is_active) ||
         (statusFilter === 'inactive' && !asset.is_active);
-      
+
       return matchesSearch && matchesType && matchesAccount && matchesStatus;
     });
-  }, [assets, searchTerm, typeFilter, accountFilter, statusFilter]);
+  }, [assets, searchTerm, typeFilter, accountFilter, statusFilter, t]);
 
   // Get selected asset IDs
   const selectedAssetIds = useMemo(() => {
@@ -95,11 +176,11 @@ export default function AssetsPage() {
     setIsDeleting(true);
     try {
       logger.info('Batch deleting assets', { count: selectedAssetIds.length, ids: selectedAssetIds });
-      
+
       await Promise.all(
         selectedAssetIds.map(id => apiClient.delete(`assets/${id}`))
       );
-      
+
       logger.info('Batch delete successful');
       await refetch();
       setRowSelection({});
@@ -141,9 +222,12 @@ export default function AssetsPage() {
         <DataTableColumnHeader column={column} title={t('assets.name') || 'Name'} />
       ),
       cell: ({ row }) => {
+        const ticker = row.original.security_asset?.ticker || row.original.ticker || null;
+        const isin = row.original.security_asset?.isin || null;
         return (
-          <div className="font-medium">
-            {row.original.name}
+          <div className="flex items-center gap-3">
+            <InstitutionLogo name={row.original.name} ticker={ticker ?? undefined} isin={isin ?? undefined} size="medium" className="flex-shrink-0 rounded-full" />
+            <div className="font-medium">{row.original.name}</div>
           </div>
         );
       },
@@ -154,11 +238,91 @@ export default function AssetsPage() {
         <DataTableColumnHeader column={column} title={t('assets.type') || 'Type'} />
       ),
       cell: ({ row }) => {
-        const type = row.original.asset_type?.description || 'Other';
+        const assetTypeCode = row.original.asset_type?.code || 'other';
+        const securityType = row.original.security_asset?.security_type;
+
+        // If asset type is 'security' and we have a security_type, show that instead
+        if (assetTypeCode === 'security' && securityType) {
+          const translatedType = t(`assets.security.types.${securityType}`, { defaultValue: securityType.replace('_', ' ') });
+          return (
+            <Badge variant="outline" className="capitalize">
+              {translatedType}
+            </Badge>
+          );
+        }
+
+        // Otherwise show the asset type
+        const description = row.original.asset_type?.description || 'Other';
+        const translatedType = t(`assetTypes.${assetTypeCode}`, { defaultValue: description });
+
         return (
           <Badge variant="outline" className="capitalize">
-            {type}
+            {translatedType}
           </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: 'risk_class',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('assets.risk') || 'Risk'} />
+      ),
+      cell: ({ row }) => {
+        const riskClass = row.original.risk_class;
+        const riskSource = row.original.risk_class_source;
+        const riskLabel = getRiskLabel(riskClass);
+        const sourceLabel = getRiskSourceLabel(riskSource);
+        const color = getRiskClassColor(riskClass);
+
+        if (!riskClass) {
+          return (
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="h-2 w-2 rounded-full bg-muted-foreground/30"
+                />
+              ))}
+            </div>
+          );
+        }
+
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 cursor-help">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "h-2 w-2 rounded-full transition-colors",
+                        i <= riskClass ? color : "bg-muted-foreground/30"
+                      )}
+                    />
+                  ))}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="text-xs">
+                  <div className="font-medium">{t('assets.risk')}: {riskLabel} ({riskClass}/5)</div>
+                  <div className="text-muted-foreground mt-1">
+                    {t('assets.riskSource')}: {sourceLabel}
+                  </div>
+                  {riskSource === 'auto_api' && (
+                    <div className="text-muted-foreground text-[10px] mt-0.5">
+                      {t('assets.riskSourceApiDesc') || 'Calculated from historical volatility'}
+                    </div>
+                  )}
+                  {riskSource === 'auto_type' && (
+                    <div className="text-muted-foreground text-[10px] mt-0.5">
+                      {t('assets.riskSourceTypeDesc') || 'Based on asset type'}
+                    </div>
+                  )}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       },
     },
@@ -171,6 +335,26 @@ export default function AssetsPage() {
         return (
           <div className="text-sm text-muted-foreground">
             {row.original.account?.name || '-'}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'provider',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('assets.provider') || 'Anbieter'} />
+      ),
+      accessorFn: (row) => {
+        const inst = row.account?.institution || (row.account_id ? accountsMap.get(row.account_id)?.institution : undefined);
+        return inst?.name || '';
+      },
+      cell: ({ row }) => {
+        const inst = row.original.account?.institution || (row.original.account_id ? accountsMap.get(row.original.account_id)?.institution : undefined);
+        if (!inst) return <div className="text-sm text-muted-foreground">-</div>;
+        return (
+          <div className="flex items-center gap-2">
+            <InstitutionLogo name={inst.name} domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+            <div className="text-sm text-muted-foreground">{inst.name}</div>
           </div>
         );
       },
@@ -239,11 +423,11 @@ export default function AssetsPage() {
       cell: ({ row }) => {
         const latestSnapshot = row.original.snapshots?.[0];
         const quantity = latestSnapshot?.quantity;
-        
+
         if (!quantity) {
           return <div className="text-right text-muted-foreground">-</div>;
         }
-        
+
         return (
           <div className="text-right text-sm">
             {parseFloat(quantity).toFixed(2)}
@@ -254,7 +438,13 @@ export default function AssetsPage() {
     {
       id: 'identification',
       accessorFn: (row) => {
-        return row.security_asset?.isin || row.security_asset?.ticker || row.symbol;
+        const isin = row.security_asset?.isin;
+        const ticker = row.security_asset?.ticker;
+        const symbol = row.symbol;
+        if (isin) return `0:${isin.toUpperCase()}`;
+        if (ticker) return `1:${ticker.toUpperCase()}`;
+        if (symbol) return `2:${symbol.toUpperCase()}`;
+        return '';
       },
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('assets.isinTicker') || 'ISIN/Ticker'} />
@@ -263,7 +453,7 @@ export default function AssetsPage() {
         const isin = row.original.security_asset?.isin;
         const ticker = row.original.security_asset?.ticker;
         const symbol = row.original.symbol;
-        
+
         if (isin) {
           return (
             <div className="text-xs font-mono text-muted-foreground">
@@ -271,7 +461,7 @@ export default function AssetsPage() {
             </div>
           );
         }
-        
+
         if (ticker) {
           return (
             <div className="flex items-center gap-2 text-sm">
@@ -280,7 +470,7 @@ export default function AssetsPage() {
             </div>
           );
         }
-        
+
         if (symbol) {
           return (
             <div className="text-sm text-muted-foreground">
@@ -288,7 +478,7 @@ export default function AssetsPage() {
             </div>
           );
         }
-        
+
         return <div className="text-muted-foreground">-</div>;
       },
     },
@@ -309,11 +499,11 @@ export default function AssetsPage() {
             </Badge>
           );
         }
-        
+
         const snapshotDate = new Date(latestSnapshot.snapshot_date);
         const daysSince = Math.floor((Date.now() - snapshotDate.getTime()) / (1000 * 60 * 60 * 24));
         const isOld = daysSince > 30;
-        
+
         return (
           <div className="flex flex-col gap-1">
             <span className="text-sm">
@@ -416,7 +606,7 @@ export default function AssetsPage() {
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold">{t('assets.noAssets')}</h3>
                 <p className="text-sm text-muted-foreground max-w-sm">
-                  {t('assets.addFirstDescription') || 
+                  {t('assets.addFirstDescription') ||
                     'Start tracking your investments by adding your first asset. Track stocks, bonds, real estate, and more.'}
                 </p>
               </div>
@@ -437,6 +627,8 @@ export default function AssetsPage() {
           <Badge variant="secondary" className="text-base">
             {filteredAssets.length} {filteredAssets.length === 1 ? t('common.asset') : t('assets.title')}
           </Badge>
+
+
         </div>
         <CreateAssetDialog onSuccess={refetch} />
       </div>
@@ -444,9 +636,14 @@ export default function AssetsPage() {
       {/* Data Table with Filters */}
       <Card>
         <CardContent className="pt-6">
-          {/* Filters */}
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          {/* Filters and Batch Actions */}
+          <div className="relative mb-6">
+            <div
+              className={cn(
+                "flex flex-col gap-4 md:flex-row md:items-center md:justify-between transition-all duration-200",
+                selectedAssetIds.length > 0 ? "opacity-0 pointer-events-none invisible" : "opacity-100 visible"
+              )}
+            >
               <div className="flex items-center gap-2 flex-1 max-w-md">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
@@ -456,10 +653,10 @@ export default function AssetsPage() {
                   className="flex-1"
                 />
               </div>
-              
+
               <div className="flex items-center gap-2 flex-wrap">
                 <Filter className="h-4 w-4 text-muted-foreground" />
-                
+
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder={t('assets.allTypes') || 'All Types'} />
@@ -471,7 +668,7 @@ export default function AssetsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                
+
                 <Select value={accountFilter} onValueChange={setAccountFilter}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder={t('assets.allAccounts') || 'All Accounts'} />
@@ -485,7 +682,7 @@ export default function AssetsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                
+
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[120px]">
                     <SelectValue placeholder={t('assets.allStatus') || 'All'} />
@@ -499,11 +696,11 @@ export default function AssetsPage() {
               </div>
             </div>
 
-            {/* Batch Actions Bar */}
+            {/* Batch Actions Overlay */}
             {selectedAssetIds.length > 0 && (
-              <div className="flex items-center justify-between bg-muted p-3 rounded-md">
+              <div className="absolute inset-0 flex items-center justify-between bg-muted p-3 rounded-md animate-in fade-in zoom-in-95 duration-200">
                 <span className="text-sm font-medium">
-                  {selectedAssetIds.length} {selectedAssetIds.length === 1 ? 
+                  {selectedAssetIds.length} {selectedAssetIds.length === 1 ?
                     t('assets.assetSelected') : t('assets.assetsSelected')
                   }
                 </span>
@@ -520,8 +717,8 @@ export default function AssetsPage() {
           </div>
 
           {/* DataTable */}
-          <DataTable 
-            columns={columns} 
+          <DataTable
+            columns={columns}
             data={filteredAssets}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
@@ -537,7 +734,7 @@ export default function AssetsPage() {
               {t('assets.deleteSelectedTitle') || 'Delete Selected Assets'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('assets.deleteSelectedConfirm') || 
+              {t('assets.deleteSelectedConfirm') ||
                 `Are you sure you want to delete ${selectedAssetIds.length} asset(s)? This action cannot be undone.`
               }
             </AlertDialogDescription>
@@ -546,7 +743,7 @@ export default function AssetsPage() {
             <AlertDialogCancel disabled={isDeleting}>
               {t('common.cancel')}
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleBatchDelete}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

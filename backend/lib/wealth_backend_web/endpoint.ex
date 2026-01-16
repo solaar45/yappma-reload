@@ -55,8 +55,9 @@ defmodule WealthBackendWeb.Endpoint do
   plug CORSPlug,
     origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
     max_age: 86400,
+    credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    headers: ["Authorization", "Content-Type", "Accept", "Origin"]
+    headers: ["Authorization", "Content-Type", "Accept", "Origin", "X-CSRF-Token"]
 
   plug WealthBackendWeb.Router
 end

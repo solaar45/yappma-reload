@@ -8,6 +8,7 @@ defmodule WealthBackend.Analytics.AccountSnapshot do
     field :currency, :string
     field :note, :string
 
+    belongs_to :user, WealthBackend.Accounts.User
     belongs_to :account, WealthBackend.Accounts.Account
 
     timestamps(type: :utc_datetime)
@@ -16,9 +17,10 @@ defmodule WealthBackend.Analytics.AccountSnapshot do
   @doc false
   def changeset(account_snapshot, attrs) do
     account_snapshot
-    |> cast(attrs, [:snapshot_date, :balance, :currency, :note, :account_id])
-    |> validate_required([:snapshot_date, :balance, :currency, :account_id])
+    |> cast(attrs, [:snapshot_date, :balance, :currency, :note, :account_id, :user_id])
+    |> validate_required([:snapshot_date, :balance, :currency, :account_id, :user_id])
     |> foreign_key_constraint(:account_id)
+    |> foreign_key_constraint(:user_id)
     |> unique_constraint(:snapshot_date, name: :account_snapshots_account_id_snapshot_date_index)
   end
 end

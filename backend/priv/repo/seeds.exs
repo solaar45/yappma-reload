@@ -5,6 +5,7 @@
 
 alias WealthBackend.Repo
 alias WealthBackend.Accounts
+alias WealthBackend.Institutions
 alias WealthBackend.Portfolio
 alias WealthBackend.Analytics
 
@@ -20,7 +21,7 @@ Repo.delete_all(WealthBackend.Portfolio.LoanAsset)
 Repo.delete_all(WealthBackend.Portfolio.RealEstateAsset)
 Repo.delete_all(WealthBackend.Portfolio.Asset)
 Repo.delete_all(WealthBackend.Accounts.Account)
-Repo.delete_all(WealthBackend.Accounts.Institution)
+Repo.delete_all(WealthBackend.Institutions.Institution)
 Repo.delete_all(WealthBackend.Portfolio.AssetType)
 Repo.delete_all(WealthBackend.Accounts.User)
 
@@ -30,12 +31,12 @@ Repo.delete_all(WealthBackend.Accounts.User)
 IO.puts("✅ Creating asset types...")
 
 asset_types = [
-  %{code: "cash", description: "Cash and equivalents"},
-  %{code: "security", description: "Securities (stocks, ETFs, bonds)"},
-  %{code: "insurance", description: "Insurance policies"},
-  %{code: "loan", description: "Loans and debts"},
-  %{code: "real_estate", description: "Real estate properties"},
-  %{code: "other", description: "Other assets"}
+  %{code: "cash", description: "Cash & Accounts"},
+  %{code: "security", description: "Securities"},
+  %{code: "real_estate", description: "Real Estate"},
+  %{code: "collectible", description: "Valuables"},
+  %{code: "insurance", description: "Insurance"},
+  %{code: "other", description: "Other Assets"}
 ]
 
 Enum.each(asset_types, fn attrs ->
@@ -54,37 +55,121 @@ cash_type = Portfolio.get_asset_type_by_code("cash")
 # ============================================================================
 IO.puts("✅ Creating demo user...")
 
-{:ok, user} = Accounts.create_user(%{
+{:ok, user} = Accounts.register_user(%{
   name: "Demo User",
   email: "demo@yappma.dev",
+  password: "password1234",
   currency_default: "EUR"
 })
 
+# Mark as confirmed
+user |> Ecto.Changeset.change(%{confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)}) |> Repo.update!()
+
 # ============================================================================
-# 3. Create Institutions
+# 3. Create Institutions (Global Master Data)
 # ============================================================================
 IO.puts("✅ Creating institutions...")
 
-{:ok, bank} = Accounts.create_institution(%{
-  name: "Deutsche Bank",
-  type: :bank,
-  country: "DE",
-  user_id: user.id
-})
+institutions_data = [
+  # --- Major Banks ---
+  %{name: "Deutsche Bank", website: "deutsche-bank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Commerzbank", website: "commerzbank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "ING DiBa", website: "ing.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "DKB", website: "dkb.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Postbank", website: "postbank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Comdirect", website: "comdirect.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Consorsbank", website: "consorsbank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "HypoVereinsbank", website: "hvb.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Targobank", website: "targobank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Santander Consumer Bank", website: "santander.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Norisbank", website: "norisbank.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "1822direkt", website: "1822direkt.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Sparkasse", website: "sparkasse.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Volksbank Raiffeisenbank", website: "vr.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Sparda-Bank", website: "sparda.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "Deutsche Kreditbank", website: "dkb.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "GLS Bank", website: "gls.de", type: "bank", category: "bank", country: "DE"},
+  %{name: "DBK", website: "dbk.de", type: "bank", category: "bank", country: "DE"},
 
-{:ok, broker} = Accounts.create_institution(%{
-  name: "Trade Republic",
-  type: :broker,
-  country: "DE",
-  user_id: user.id
-})
+  # --- Neobanks ---
+  %{name: "N26", website: "n26.com", type: "bank", category: "neobank", country: "DE"},
+  %{name: "C24 Bank", website: "c24.de", type: "bank", category: "neobank", country: "DE"},
+  %{name: "Revolut", website: "revolut.com", type: "bank", category: "neobank", country: "DE"},
+  %{name: "Bunq", website: "bunq.com", type: "bank", category: "neobank", country: "NL"},
+  %{name: "Tomorrow", website: "tomorrow.one", type: "bank", category: "neobank", country: "DE"},
+  %{name: "Vivid Money", website: "vivid.money", type: "bank", category: "neobank", country: "DE"},
+  %{name: "Klarna", website: "klarna.com", type: "bank", category: "neobank", country: "SE"},
 
-{:ok, insurance_company} = Accounts.create_institution(%{
-  name: "Allianz",
-  type: :insurance,
-  country: "DE",
-  user_id: user.id
-})
+  # --- Brokers ---
+  %{name: "Trade Republic", website: "traderepublic.com", type: "broker", category: "broker", country: "DE"},
+  %{name: "Scalable Capital", website: "scalable.capital", type: "broker", category: "broker", country: "DE"},
+  %{name: "Flatex", website: "flatex.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "Smartbroker", website: "smartbroker.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "onvista bank", website: "onvista-bank.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "JustTRADE", website: "justtrade.com", type: "broker", category: "broker", country: "DE"},
+  %{name: "Finanzen.net ZERO", website: "finanzen.net", type: "broker", category: "broker", country: "DE"},
+  %{name: "S Broker", website: "sbroker.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "Degiro", website: "degiro.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "CapTrader", website: "captrader.com", type: "broker", category: "broker", country: "DE"},
+  %{name: "Lynx", website: "lynxbroker.de", type: "broker", category: "broker", country: "DE"},
+  %{name: "Interactive Brokers", website: "interactivebrokers.com", type: "broker", category: "broker", country: "US"},
+  %{name: "Trading 212", website: "trading212.com", type: "broker", category: "broker", country: "UK"},
+  %{name: "eToro", website: "etoro.com", type: "broker", category: "broker", country: "CY"},
+
+  # --- Insurance ---
+  %{name: "Allianz", website: "allianz.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "HUK-COBURG", website: "huk.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "CosmosDirekt", website: "cosmosdirekt.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "ERGO", website: "ergo.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "AXA", website: "axa.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "R+V Versicherung", website: "ruv.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Generali", website: "generali.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Debeka", website: "debeka.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Signal Iduna", website: "signal-iduna.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "HanseMerkur", website: "hansemerkur.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Gothaer", website: "gothaer.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Zurich", website: "zurich.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "DEVK", website: "devk.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "Techniker Krankenkasse", website: "tk.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "AOK", website: "aok.de", type: "insurance", category: "insurance", country: "DE"},
+  %{name: "BARMER", website: "barmer.de", type: "insurance", category: "insurance", country: "DE"},
+
+  # --- Crypto Exchanges (moved to "other" type, crypto category) ---
+  %{name: "Binance", website: "binance.com", type: "other", category: "crypto", country: "MT"},
+  %{name: "Coinbase", website: "coinbase.com", type: "other", category: "crypto", country: "US"},
+  %{name: "Kraken", website: "kraken.com", type: "other", category: "crypto", country: "US"},
+  %{name: "Bitpanda", website: "bitpanda.com", type: "other", category: "crypto", country: "AT"},
+  %{name: "Bison", website: "bisonapp.com", type: "other", category: "crypto", country: "DE"},
+  %{name: "Crypto.com", website: "crypto.com", type: "other", category: "crypto", country: "SG"},
+  %{name: "Ledger", website: "ledger.com", type: "other", category: "crypto", country: "FR"},
+  %{name: "Trezor", website: "trezor.io", type: "other", category: "crypto", country: "CZ"},
+  %{name: "KuCoin", website: "kucoin.com", type: "other", category: "crypto", country: "SC"},
+  %{name: "Bybit", website: "bybit.com", type: "other", category: "crypto", country: "AE"},
+  %{name: "Bitvavo", website: "bitvavo.com", type: "other", category: "crypto", country: "NL"}
+]
+
+# Insert all institutions
+institutions_map = Enum.reduce(institutions_data, %{}, fn attrs, acc ->
+  case Institutions.create_institution(Map.put(attrs, :is_system_provided, true)) do
+    {:ok, institution} -> Map.put(acc, attrs.name, institution)
+    {:error, changeset} -> 
+      IO.puts("❌ Failed to create #{attrs.name}: #{inspect(changeset.errors)}")
+      acc
+  end
+end)
+
+# Retrieve specific institutions for account associations (using new map for safety)
+bank = institutions_map["Deutsche Bank"]
+broker = institutions_map["Trade Republic"]
+insurance_company = institutions_map["Allianz"]
+
+if is_nil(bank) do
+  IO.puts("⚠️ Warning: Deutsche Bank not found in created institutions map. Falling back to first available.")
+end
+# Safe fallback if specific ones failed (just for demo accounts below)
+bank = bank || Enum.at(Map.values(institutions_map), 0)
+broker = broker || Enum.at(Map.values(institutions_map), 1)
+_insurance_company = insurance_company || Enum.at(Map.values(institutions_map), 2)
 
 # ============================================================================
 # 4. Create Accounts
@@ -93,7 +178,7 @@ IO.puts("✅ Creating accounts...")
 
 {:ok, checking_account} = Accounts.create_account(%{
   name: "Girokonto",
-  type: :checking,
+  type: "checking",
   currency: "EUR",
   is_active: true,
   opened_at: ~D[2020-01-15],
@@ -103,7 +188,7 @@ IO.puts("✅ Creating accounts...")
 
 {:ok, savings_account} = Accounts.create_account(%{
   name: "Tagesgeldkonto",
-  type: :savings,
+  type: "savings",
   currency: "EUR",
   is_active: true,
   opened_at: ~D[2020-03-01],
@@ -113,7 +198,7 @@ IO.puts("✅ Creating accounts...")
 
 {:ok, brokerage_account} = Accounts.create_account(%{
   name: "Depot",
-  type: :brokerage,
+  type: "brokerage",
   currency: "EUR",
   is_active: true,
   opened_at: ~D[2021-06-15],
@@ -123,7 +208,7 @@ IO.puts("✅ Creating accounts...")
 
 {:ok, cash_account} = Accounts.create_account(%{
   name: "Bargeld",
-  type: :cash,
+  type: "cash",
   currency: "EUR",
   is_active: true,
   user_id: user.id,
@@ -135,68 +220,78 @@ IO.puts("✅ Creating accounts...")
 # ============================================================================
 IO.puts("✅ Creating assets...")
 
-# Security 1: MSCI World ETF
-{:ok, etf_msci_world} = Portfolio.create_full_asset(%{
+# Helper function to create asset with error handling
+create_asset_safe = fn name, attrs ->
+  case Portfolio.create_full_asset(user.id, attrs) do
+    {:ok, asset} ->
+      IO.puts("   ✓ Created: #{name}")
+      {:ok, asset}
+    {:error, :security_not_found} ->
+      IO.puts("   ⚠️ Skipped #{name}: Security not found in FMP API")
+      {:error, :skipped}
+    {:error, reason} ->
+      IO.puts("   ❌ Failed to create #{name}: #{inspect(reason)}")
+      {:error, reason}
+  end
+end
+
+# Security 1: MSCI World ETF - using ISIN only (ticker IWDA might not be in FMP)
+etf_msci_world_result = create_asset_safe.("iShares Core MSCI World", %{
   name: "iShares Core MSCI World",
   symbol: "IE00B4L5Y983",
   currency: "EUR",
   is_active: true,
   created_at_date: ~D[2021-06-15],
-  user_id: user.id,
   account_id: brokerage_account.id,
   asset_type_id: security_type.id,
   security_asset: %{
     isin: "IE00B4L5Y983",
     wkn: "A0RPWH",
-    ticker: "IWDA",
+    # Don't set ticker to avoid validation issues
     exchange: "XETRA",
     sector: "Diversified"
   }
 })
 
 # Security 2: Vanguard All-World
-{:ok, etf_vanguard} = Portfolio.create_full_asset(%{
+etf_vanguard_result = create_asset_safe.("Vanguard FTSE All-World", %{
   name: "Vanguard FTSE All-World",
   symbol: "IE00BK5BQT80",
   currency: "EUR",
   is_active: true,
   created_at_date: ~D[2022-01-10],
-  user_id: user.id,
   account_id: brokerage_account.id,
   asset_type_id: security_type.id,
   security_asset: %{
     isin: "IE00BK5BQT80",
-    ticker: "VWCE",
+    # Don't set ticker to avoid validation issues
     exchange: "XETRA",
     sector: "Diversified"
   }
 })
 
-# Security 3: Bitcoin ETF
-{:ok, bitcoin_etf} = Portfolio.create_full_asset(%{
-  name: "iShares Bitcoin Trust ETF",
-  symbol: "US46428V5093",
-  currency: "EUR",
+# Security 3: Use a US stock that should be in FMP - Apple
+apple_result = create_asset_safe.("Apple Inc.", %{
+  name: "Apple Inc.",
+  symbol: "AAPL",
+  currency: "USD",
   is_active: true,
   created_at_date: ~D[2024-02-15],
-  user_id: user.id,
   account_id: brokerage_account.id,
   asset_type_id: security_type.id,
   security_asset: %{
-    isin: "US46428V5093",
-    ticker: "IBIT",
-    exchange: "NYSE",
-    sector: "Cryptocurrency"
+    ticker: "AAPL",
+    exchange: "NASDAQ",
+    sector: "Technology"
   }
 })
 
 # Insurance 1: Haftpflicht
-{:ok, liability_insurance} = Portfolio.create_full_asset(%{
+{:ok, _liability_insurance} = create_asset_safe.("Privathaftpflichtversicherung", %{
   name: "Privathaftpflichtversicherung",
   currency: "EUR",
   is_active: true,
   created_at_date: ~D[2020-01-01],
-  user_id: user.id,
   asset_type_id: insurance_type.id,
   insurance_asset: %{
     insurer_name: "Allianz",
@@ -208,12 +303,11 @@ IO.puts("✅ Creating assets...")
 })
 
 # Insurance 2: Lebensversicherung
-{:ok, life_insurance} = Portfolio.create_full_asset(%{
+{:ok, _life_insurance} = create_asset_safe.("Kapitallebensversicherung", %{
   name: "Kapitallebensversicherung",
   currency: "EUR",
   is_active: true,
   created_at_date: ~D[2015-03-15],
-  user_id: user.id,
   asset_type_id: insurance_type.id,
   insurance_asset: %{
     insurer_name: "Allianz",
@@ -225,12 +319,11 @@ IO.puts("✅ Creating assets...")
 })
 
 # Real Estate
-{:ok, apartment} = Portfolio.create_full_asset(%{
+{:ok, apartment} = create_asset_safe.("Eigentumswohnung München", %{
   name: "Eigentumswohnung München",
   currency: "EUR",
   is_active: true,
   created_at_date: ~D[2018-09-01],
-  user_id: user.id,
   asset_type_id: real_estate_type.id,
   real_estate_asset: %{
     address: "Maximilianstraße 42, 80539 München",
@@ -241,11 +334,10 @@ IO.puts("✅ Creating assets...")
 })
 
 # Cash Asset
-{:ok, cash_home} = Portfolio.create_full_asset(%{
+{:ok, cash_home} = create_asset_safe.("Bargeld zu Hause", %{
   name: "Bargeld zu Hause",
   currency: "EUR",
   is_active: true,
-  user_id: user.id,
   account_id: cash_account.id,
   asset_type_id: cash_type.id
 })
@@ -268,7 +360,7 @@ Enum.each([
   {~D[2025-11-30], "4200.50"},
   {~D[2025-12-30], "5000.00"}
 ], fn {date, balance} ->
-  {:ok, _} = Analytics.create_account_snapshot(%{
+  {:ok, _} = Analytics.create_account_snapshot(user.id, %{
     account_id: checking_account.id,
     snapshot_date: date,
     balance: Decimal.new(balance),
@@ -282,11 +374,96 @@ Enum.each([
   {~D[2025-11-30], "12500.00"},
   {~D[2025-12-30], "13000.00"}
 ], fn {date, balance} ->
-  {:ok, _} = Analytics.create_account_snapshot(%{
+  {:ok, _} = Analytics.create_account_snapshot(user.id, %{
     account_id: savings_account.id,
     snapshot_date: date,
     balance: Decimal.new(balance),
     currency: "EUR"
+  })
+end)
+
+# Depot Snapshots
+Enum.each([
+  {~D[2025-10-31], "28000.00"},
+  {~D[2025-11-30], "29500.00"},
+  {~D[2025-12-30], "31000.00"}
+], fn {date, balance} ->
+  {:ok, _} = Analytics.create_account_snapshot(user.id, %{
+    account_id: brokerage_account.id,
+    snapshot_date: date,
+    balance: Decimal.new(balance),
+    currency: "EUR"
+  })
+end)
+
+# ============================================================================
+# 7. Create Asset Snapshots (only for successfully created assets)
+# ============================================================================
+IO.puts("✅ Creating asset snapshots...")
+
+# Only create snapshots for successfully created securities
+case etf_msci_world_result do
+  {:ok, etf_msci_world} ->
+    Enum.each([
+      {~D[2025-10-31], "110.50", "15000.00"},
+      {~D[2025-11-30], "112.80", "15500.00"},
+      {~D[2025-12-30], "115.20", "16000.00"}
+    ], fn {date, price, value} ->
+      {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
+        asset_id: etf_msci_world.id,
+        snapshot_date: date,
+        quantity: Decimal.new("138.5"),
+        market_price_per_unit: Decimal.new(price),
+        value: Decimal.new(value)
+      })
+    end)
+  _ -> :ok
+end
+
+case etf_vanguard_result do
+  {:ok, etf_vanguard} ->
+    Enum.each([
+      {~D[2025-10-31], "108.20", "10820.00"},
+      {~D[2025-11-30], "110.00", "11000.00"},
+      {~D[2025-12-30], "112.50", "11250.00"}
+    ], fn {date, price, value} ->
+      {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
+        asset_id: etf_vanguard.id,
+        snapshot_date: date,
+        quantity: Decimal.new("100.0"),
+        market_price_per_unit: Decimal.new(price),
+        value: Decimal.new(value)
+      })
+    end)
+  _ -> :ok
+end
+
+case apple_result do
+  {:ok, apple} ->
+    Enum.each([
+      {~D[2025-10-31], "227.50", "11375.00"},
+      {~D[2025-11-30], "234.00", "11700.00"},
+      {~D[2025-12-30], "241.50", "12075.00"}
+    ], fn {date, price, value} ->
+      {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
+        asset_id: apple.id,
+        snapshot_date: date,
+        quantity: Decimal.new("50.0"),
+        market_price_per_unit: Decimal.new(price),
+        value: Decimal.new(value)
+      })
+    end)
+  _ -> :ok
+end
+
+# Immobilie Snapshots (gleicher Wert, aber für Tracking)
+Enum.each(dates, fn date ->
+  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
+    asset_id: apartment.id,
+    snapshot_date: date,
+    quantity: Decimal.new("1.0"),
+    market_price_per_unit: Decimal.new("480000.00"),
+    value: Decimal.new("480000.00")
   })
 end)
 
@@ -295,139 +472,24 @@ Enum.each([
   {~D[2025-10-31], "500.00"},
   {~D[2025-11-30], "450.00"},
   {~D[2025-12-30], "600.00"}
-], fn {date, balance} ->
-  {:ok, _} = Analytics.create_account_snapshot(%{
-    account_id: cash_account.id,
-    snapshot_date: date,
-    balance: Decimal.new(balance),
-    currency: "EUR"
-  })
-end)
-
-# ============================================================================
-# 7. Create Asset Snapshots
-# ============================================================================
-IO.puts("✅ Creating asset snapshots...")
-
-# MSCI World ETF Snapshots (100 Stück)
-Enum.each([
-  {~D[2025-10-31], "100", "85.50"},
-  {~D[2025-11-30], "100", "87.20"},
-  {~D[2025-12-30], "100", "89.75"}
-], fn {date, qty, price} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
-    asset_id: etf_msci_world.id,
-    snapshot_date: date,
-    quantity: Decimal.new(qty),
-    market_price_per_unit: Decimal.new(price),
-    value: Decimal.mult(Decimal.new(qty), Decimal.new(price))
-  })
-end)
-
-# Vanguard All-World ETF Snapshots (50 Stück)
-Enum.each([
-  {~D[2025-10-31], "50", "98.00"},
-  {~D[2025-11-30], "50", "99.50"},
-  {~D[2025-12-30], "50", "101.20"}
-], fn {date, qty, price} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
-    asset_id: etf_vanguard.id,
-    snapshot_date: date,
-    quantity: Decimal.new(qty),
-    market_price_per_unit: Decimal.new(price),
-    value: Decimal.mult(Decimal.new(qty), Decimal.new(price))
-  })
-end)
-
-# Bitcoin ETF Snapshots (20 Stück)
-Enum.each([
-  {~D[2025-10-31], "20", "42.50"},
-  {~D[2025-11-30], "20", "45.80"},
-  {~D[2025-12-30], "20", "48.25"}
-], fn {date, qty, price} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
-    asset_id: bitcoin_etf.id,
-    snapshot_date: date,
-    quantity: Decimal.new(qty),
-    market_price_per_unit: Decimal.new(price),
-    value: Decimal.mult(Decimal.new(qty), Decimal.new(price))
-  })
-end)
-
-# Haftpflicht Snapshots (Rückkaufswert = 0, keine Quantity)
-Enum.each([
-  {~D[2025-10-31], "0"},
-  {~D[2025-11-30], "0"},
-  {~D[2025-12-30], "0"}
 ], fn {date, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
-    asset_id: liability_insurance.id,
-    snapshot_date: date,
-    value: Decimal.new(value),
-    note: "Keine Rückkaufswert bei Haftpflicht"
-  })
-end)
-
-# Lebensversicherung Snapshots (steigender Rückkaufswert)
-Enum.each([
-  {~D[2025-10-31], "18500.00"},
-  {~D[2025-11-30], "18750.00"},
-  {~D[2025-12-30], "19000.00"}
-], fn {date, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
-    asset_id: life_insurance.id,
-    snapshot_date: date,
-    value: Decimal.new(value),
-    note: "Rückkaufswert"
-  })
-end)
-
-# Immobilie Snapshots (steigende Bewertung)
-Enum.each([
-  {~D[2025-10-31], "480000.00"},
-  {~D[2025-11-30], "482000.00"},
-  {~D[2025-12-30], "485000.00"}
-], fn {date, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
-    asset_id: apartment.id,
-    snapshot_date: date,
-    value: Decimal.new(value),
-    note: "Marktwertschätzung"
-  })
-end)
-
-# Bargeld Snapshots
-Enum.each([
-  {~D[2025-10-31], "800.00"},
-  {~D[2025-11-30], "750.00"},
-  {~D[2025-12-30], "900.00"}
-], fn {date, value} ->
-  {:ok, _} = Analytics.create_asset_snapshot(%{
+  {:ok, _} = Analytics.create_asset_snapshot(user.id, %{
     asset_id: cash_home.id,
     snapshot_date: date,
+    quantity: Decimal.new("1.0"),
+    market_price_per_unit: Decimal.new(value),
     value: Decimal.new(value)
   })
 end)
 
-# ============================================================================
-# Summary
-# ============================================================================
-IO.puts("\n✅ Seed process completed!\n")
+IO.puts("\n✅ Seeding completed successfully!\n")
 IO.puts("📊 Summary:")
-IO.puts("   - User: #{user.email} (ID: #{user.id})")
-IO.puts("   - Institutions: 3")
+IO.puts("   - Asset Types: #{length(asset_types)}")
+IO.puts("   - Institutions: #{map_size(institutions_map)}")
 IO.puts("   - Accounts: 4")
-IO.puts("   - Assets: 8")
-IO.puts("   - Account Snapshots: #{3 * 3} (3 months × 3 accounts)")
-IO.puts("   - Asset Snapshots: #{7 * 3} (3 months × 7 assets)")
-
-net_worth = Analytics.calculate_net_worth(user.id)
-IO.puts("\n💰 Current Net Worth (#{Date.utc_today()}):")
-IO.puts("   - Total: €#{net_worth.total}")
-IO.puts("   - Accounts: €#{net_worth.accounts}")
-IO.puts("   - Assets: €#{net_worth.assets}")
-
-IO.puts("\n🚀 Test the API:")
-IO.puts("   curl http://localhost:4000/api/users")
-IO.puts("   curl http://localhost:4000/api/dashboard/net_worth?user_id=#{user.id}")
-IO.puts("")
+IO.puts("   - Assets: Created (with validation)")
+IO.puts("   - Account Snapshots: 9")
+IO.puts("   - Asset Snapshots: Created for valid assets")
+IO.puts("\n🎉 You can now log in with:")
+IO.puts("   Email: demo@yappma.dev")
+IO.puts("   Password: password1234\n")

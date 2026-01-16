@@ -1,0 +1,62 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README*
+docs/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Development
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backend artifacts (will be built in container)
+backend/_build/
+backend/deps/
+backend/cover/
+backend/doc/
+backend/tmp/
+backend/*.ez
+backend/erl_crash.dump
+backend/node_modules/
+
+# Frontend artifacts (will be built in container)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/build/
+frontend/.vite/
+frontend/coverage/
+
+# Docker
+docker-compose.override.yml
+*.log
+
+# Existing Docker files (avoid conflicts)
+backend/Dockerfile
+backend/.dockerignore
+frontend/Dockerfile
+frontend/.dockerignore
+frontend/nginx.conf
+
+# Deployment
+deploy-dockerhub.sh
+*.xml

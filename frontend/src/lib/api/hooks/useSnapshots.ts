@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { apiClient, ApiError, DeduplicationError } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
-import type { AccountSnapshot, AssetSnapshot, Account, Asset } from '../types';
+import type { AccountSnapshot, AssetSnapshot, Account, Asset, Institution } from '../types';
 
 interface UseSnapshotsParams {
   userId: number;
   key?: number;
 }
 
-export type CombinedSnapshot = 
-  | (AccountSnapshot & { snapshot_type: 'account'; entity_name: string })
-  | (AssetSnapshot & { snapshot_type: 'asset'; entity_name: string });
+export type CombinedSnapshot =
+  | (AccountSnapshot & { snapshot_type: 'account'; entity_name: string; entity_subtype?: string; institution?: Institution })
+  | (AssetSnapshot & { snapshot_type: 'asset'; entity_name: string; entity_subtype?: string; institution?: Institution; ticker?: string; isin?: string });
 
 interface UseSnapshotsResult {
   snapshots: CombinedSnapshot[];
@@ -36,9 +36,13 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
 
         logger.debug('Fetching snapshots...', { userId });
 
+        const query = new URLSearchParams();
+        if (userId) query.append('user_id', userId.toString());
+        const queryString = query.toString() ? `?${query.toString()}` : '';
+
         const [accountsResponse, assetsResponse] = await Promise.all([
-          apiClient.get<{ data: Account[] }>('accounts', { signal: controller.signal }),
-          apiClient.get<{ data: Asset[] }>('assets', { signal: controller.signal }),
+          apiClient.get<{ data: Account[] }>(`accounts${queryString}`, { signal: controller.signal }),
+          apiClient.get<{ data: Asset[] }>(`assets${queryString}`, { signal: controller.signal }),
         ]);
 
         if (!isMounted) return;
@@ -52,6 +56,8 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
               ...snapshot,
               snapshot_type: 'account' as const,
               entity_name: account.name,
+              entity_subtype: account.type,
+              institution: account.institution,
             }))
         );
 
@@ -61,6 +67,10 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
               ...snapshot,
               snapshot_type: 'asset' as const,
               entity_name: asset.name,
+              entity_subtype: asset.asset_type?.code,
+              institution: asset.account?.institution,
+              ticker: asset.security_asset?.ticker || asset.ticker,
+              isin: asset.security_asset?.isin || asset.isin,
             }))
         );
 
@@ -70,10 +80,10 @@ export function useSnapshots({ userId, key = 0 }: UseSnapshotsParams): UseSnapsh
 
         if (isMounted) {
           setSnapshots(combined);
-          logger.info('Snapshots loaded', { 
+          logger.info('Snapshots loaded', {
             total: combined.length,
             accounts: accountSnapshots.length,
-            assets: assetSnapshots.length 
+            assets: assetSnapshots.length
           });
         }
       } catch (err) {

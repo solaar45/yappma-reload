@@ -118,8 +118,14 @@ class ApiClient {
 
     // Add CSRF token for state-changing requests
     const csrfToken = this.getCsrfToken();
+    
+    // Determine headers
+    // If body is FormData, we must NOT set Content-Type (let browser set it with boundary)
+    const isFormData = options.body instanceof FormData;
+    const baseHeaders = isFormData ? {} : this.defaultHeaders;
+    
     const headers: HeadersInit = {
-      ...this.defaultHeaders,
+      ...baseHeaders,
       ...options.headers,
     };
 
@@ -131,6 +137,7 @@ class ApiClient {
       logger.debug('API Request', {
         method: options.method || 'GET',
         endpoint: sanitizedEndpoint,
+        isFormData
       });
 
       const response = await fetch(url, {
@@ -222,10 +229,11 @@ class ApiClient {
    * POST request
    */
   async post<T>(endpoint: string, data?: unknown, options?: RequestInit): Promise<T> {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? (data as FormData) : (data ? JSON.stringify(data) : undefined),
     });
   }
 

@@ -1,56 +1,91 @@
 defmodule WealthBackendWeb.Router do
   use WealthBackendWeb, :router
 
-  pipeline :api do
+  import WealthBackendWeb.UserAuth
+
+  pipeline :browser do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_flash
+    plug :put_root_layout, html: {WealthBackendWeb.Layouts, :root}
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+    plug :fetch_current_user
+  end
+
+  pipeline :api_auth do
     plug :accepts, ["json"]
+    plug :fetch_session
+    plug :fetch_current_user
   end
 
   scope "/api", WealthBackendWeb do
-    pipe_through :api
+    pipe_through :api_auth
 
-    # Users
-    resources "/users", UserController, except: [:new, :edit]
+    post "/users/log_in", UserSessionController, :create
+    delete "/users/log_out", UserSessionController, :delete
+    
+    # Public User Registration
+    post "/users", UserController, :create
+    get "/users/check_username/:username", UserController, :check_username
 
-    # Institutions (filtered by user_id via query param)
-    get "/institutions", InstitutionController, :index
-    resources "/institutions", InstitutionController, except: [:new, :edit, :index]
+    scope "/" do
+      pipe_through :require_authenticated_user
 
-    # Accounts (filtered by user_id via query param)
-    get "/accounts", AccountController, :index
-    resources "/accounts", AccountController, except: [:new, :edit, :index]
+      # Protected Users API
+      resources "/users", UserController, except: [:new, :edit, :create]
+      put "/users/settings/update_password", UserSettingsController, :update_password
 
-    # Asset Types
-    resources "/asset_types", AssetTypeController, only: [:index, :show]
+      # Institutions
+      get "/institutions", InstitutionController, :index
+      resources "/institutions", InstitutionController, except: [:new, :edit, :index]
 
-    # Assets (filtered by user_id via query param)
-    get "/assets", AssetController, :index
-    resources "/assets", AssetController, except: [:new, :edit, :index]
+      # Accounts
+      get "/accounts", AccountController, :index
+      resources "/accounts", AccountController, except: [:new, :edit, :index]
 
-    # Account Snapshots (filtered by account_id via query param)
-    get "/account_snapshots", AccountSnapshotController, :index
-    resources "/account_snapshots", AccountSnapshotController, except: [:new, :edit, :index]
+      # Asset Types
+      resources "/asset_types", AssetTypeController, only: [:index, :show]
 
-    # Asset Snapshots (filtered by asset_id via query param)
-    get "/asset_snapshots", AssetSnapshotController, :index
-    resources "/asset_snapshots", AssetSnapshotController, except: [:new, :edit, :index]
+      # Assets
+      get "/assets", AssetController, :index
+      resources "/assets", AssetController, except: [:new, :edit, :index]
 
-    # Snapshots API (frontend-friendly routes)
-    scope "/snapshots" do
-      # Account snapshots
-      post "/accounts", AccountSnapshotController, :create
-      put "/accounts/:id", AccountSnapshotController, :update
-      delete "/accounts/:id", AccountSnapshotController, :delete
+      # Securities
+      post "/securities/search", SecurityController, :search
+      post "/securities/enrich", SecurityController, :enrich
 
-      # Asset snapshots  
-      post "/assets", AssetSnapshotController, :create
-      put "/assets/:id", AssetSnapshotController, :update
-      delete "/assets/:id", AssetSnapshotController, :delete
+      # Account Snapshots
+      get "/account_snapshots", AccountSnapshotController, :index
+      resources "/account_snapshots", AccountSnapshotController, except: [:new, :edit, :index]
+
+      # Asset Snapshots
+      get "/asset_snapshots", AssetSnapshotController, :index
+      resources "/asset_snapshots", AssetSnapshotController, except: [:new, :edit, :index]
+
+      # Snapshots API
+      scope "/snapshots" do
+        post "/accounts", AccountSnapshotController, :create
+        put "/accounts/:id", AccountSnapshotController, :update
+        delete "/accounts/:id", AccountSnapshotController, :delete
+
+        post "/assets", AssetSnapshotController, :create
+        put "/assets/:id", AssetSnapshotController, :update
+        delete "/assets/:id", AssetSnapshotController, :delete
+        
+        # Import
+        post "/import", ImportController, :create
+      end
+
+      # Tax Exemptions
+      get "/tax_exemptions", TaxExemptionController, :index
+      resources "/tax_exemptions", TaxExemptionController, except: [:new, :edit, :index]
+
+      # Dashboard / Analytics
+      get "/dashboard/net_worth", DashboardController, :net_worth
+      get "/dashboard/account_snapshots", DashboardController, :account_snapshots
+      get "/dashboard/asset_snapshots", DashboardController, :asset_snapshots
     end
-
-    # Dashboard / Analytics
-    get "/dashboard/net_worth", DashboardController, :net_worth
-    get "/dashboard/account_snapshots", DashboardController, :account_snapshots
-    get "/dashboard/asset_snapshots", DashboardController, :asset_snapshots
   end
 
   # Enable LiveDashboard in development

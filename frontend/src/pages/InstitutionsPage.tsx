@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import {
   Select,
   SelectContent,
@@ -50,19 +51,19 @@ export default function InstitutionsPage() {
     setRowSelection({});
   };
 
-  const getTypeLabel = (type: string) => {
-    return t(`institutions.types.${type}`);
+  const getTypeLabel = (type: string): string => {
+    return t(`institutions.types.${type}` as any) || type;
   };
 
   // Get unique types and countries for filters
   const uniqueTypes = useMemo(() => {
     if (!institutions) return [];
-    return Array.from(new Set(institutions.map((i) => i.type)));
+    return Array.from(new Set(institutions.map((i) => i.type).filter(Boolean))) as string[];
   }, [institutions]);
 
   const uniqueCountries = useMemo(() => {
     if (!institutions) return [];
-    return Array.from(new Set(institutions.map((i) => i.country))).sort();
+    return Array.from(new Set(institutions.map((i) => i.country).filter(Boolean))) as string[];
   }, [institutions]);
 
   // Filter institutions
@@ -73,7 +74,7 @@ export default function InstitutionsPage() {
       const matchesSearch =
         searchQuery === '' ||
         institution.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        institution.country.toLowerCase().includes(searchQuery.toLowerCase());
+        (institution.country?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
       const matchesType = typeFilter === 'all' || institution.type === typeFilter;
       const matchesCountry = countryFilter === 'all' || institution.country === countryFilter;
@@ -135,7 +136,15 @@ export default function InstitutionsPage() {
         <DataTableColumnHeader column={column} title={t('institutions.name')} />
       ),
       cell: ({ row }) => (
-        <div className="font-semibold">{row.getValue('name')}</div>
+        <div className="flex items-center gap-3">
+          <InstitutionLogo
+            name={row.getValue('name')}
+            domain={row.original.website ? row.original.website.replace(/^https?:\/\//, '') : undefined}
+            size="medium"
+            className="flex-shrink-0 rounded-full"
+          />
+          <div className="font-semibold">{row.getValue('name')}</div>
+        </div>
       ),
     },
     {
@@ -247,10 +256,12 @@ export default function InstitutionsPage() {
                   {t('institutions.addFirst')}
                 </p>
               </div>
-              <Button onClick={() => {}} size="lg">
-                <Plus className="mr-2 h-5 w-5" />
-                {t('institutions.createInstitution')}
-              </Button>
+              <CreateInstitutionDialog onSuccess={handleInstitutionChanged}>
+                <Button size="lg">
+                  <Plus className="mr-2 h-5 w-5" />
+                  {t('institutions.createInstitution')}
+                </Button>
+              </CreateInstitutionDialog>
             </div>
           </CardContent>
         </Card>

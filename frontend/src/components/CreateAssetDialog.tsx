@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCreateAsset } from '@/lib/api/hooks';
 import { useUser } from '@/contexts/UserContext';
 import { apiClient } from '@/lib/api/client';
-import type { AssetType } from '@/lib/api/types';
+import type { AssetType, SecurityAsset, InsuranceAsset, RealEstateAsset } from '@/lib/api/types';
 import {
   Dialog,
   DialogContent,
@@ -24,40 +25,76 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
+import { useAccounts } from '@/lib/api/hooks';
+import InstitutionLogo from '@/components/InstitutionLogo';
+import { InsuranceAssetForm } from '@/components/portfolio/InsuranceAssetForm';
+import { RealEstateAssetForm } from '@/components/portfolio/RealEstateAssetForm';
+import { SecuritySearchCombobox } from '@/components/portfolio/SecuritySearchCombobox';
+import { useToast } from '@/hooks/use-toast';
+
+interface SecurityResult {
+  ticker: string;
+  name: string;
+  exchange?: string;
+  exchange_short?: string;
+  currency?: string;
+  type?: string;
+}
 
 interface CreateAssetDialogProps {
   onSuccess?: () => void;
 }
 
 export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
+  const { t } = useTranslation();
   const { userId } = useUser();
   const { createAsset, loading, error } = useCreateAsset();
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(false);
-  const [formData, setFormData] = useState({
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Security search state
+  const [selectedSecurity, setSelectedSecurity] = useState<SecurityResult | undefined>();
+
+  const [formData, setFormData] = useState<{
+    name: string;
+    asset_type_id: string;
+    currency: string;
+    is_active: boolean;
+    security_asset?: Partial<SecurityAsset>;
+    insurance_asset?: Partial<InsuranceAsset>;
+    real_estate_asset?: Partial<RealEstateAsset>;
+    savings_plan_amount: string;
+  }>({
     name: '',
     asset_type_id: '',
-    isin: '',
-    ticker: '',
     currency: 'EUR',
     is_active: true,
+    savings_plan_amount: '',
   });
+  const { accounts } = useAccounts({ userId: userId! });
+  const [accountId, setAccountId] = useState('');
+
+  // Get selected asset type
+  const selectedAssetType = assetTypes.find(
+    (t) => t.id.toString() === formData.asset_type_id
+  );
+
+  // Check if we should show remaining fields
+  const shouldShowRemainingFields =
+    selectedAssetType?.code === 'security'
+      ? selectedSecurity !== undefined
+      : formData.asset_type_id !== '';
 
   useEffect(() => {
     const fetchAssetTypes = async () => {
       setLoadingTypes(true);
       try {
         const response = await apiClient.get<{ data: AssetType[] }>('asset_types');
-        // Handle both response formats
         const types = Array.isArray(response) ? response : (response.data || []);
         setAssetTypes(types);
-        
-        // Set default to 'security' if available
-        const securityType = types.find((t) => t.code === 'security');
-        if (securityType) {
-          setFormData((prev) => ({ ...prev, asset_type_id: securityType.id.toString() }));
-        }
       } catch (err) {
         console.error('Failed to load asset types:', err);
       } finally {
@@ -67,6 +104,20 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
 
     if (open) {
       fetchAssetTypes();
+      // Reset all form state
+      setValidationError(null);
+      setSelectedSecurity(undefined);
+      setFormData({
+        name: '',
+        asset_type_id: '',
+        currency: 'EUR',
+        is_active: true,
+        security_asset: undefined,
+        insurance_asset: undefined,
+        real_estate_asset: undefined,
+        savings_plan_amount: '',
+      });
+      setAccountId('');
     }
   }, [open]);
 
@@ -74,25 +125,74 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
     e.preventDefault();
     if (!userId || !formData.asset_type_id) return;
 
-    const result = await createAsset({
-      user_id: userId,
-      asset_type_id: parseInt(formData.asset_type_id),
-      name: formData.name,
-      currency: formData.currency,
-      is_active: formData.is_active,
-      security_asset:
-        formData.isin || formData.ticker
-          ? {
-              isin: formData.isin || undefined,
-              ticker: formData.ticker || undefined,
-            }
-          : undefined,
-    });
+    // Clear previous validation errors
+    setValidationError(null);
 
-    if (result) {
-      setOpen(false);
-      setFormData({ name: '', asset_type_id: '', isin: '', ticker: '', currency: 'EUR', is_active: true });
-      onSuccess?.();
+    // Helper to convert null values to undefined to satisfy API types
+    const sanitize = <T,>(obj?: T) => {
+      if (!obj) return undefined;
+      const out: any = {};
+      for (const key of Object.keys(obj as any)) {
+        const val = (obj as any)[key];
+        out[key] = val === null ? undefined : val;
+      }
+      return out as T;
+    };
+
+    const sanitizedSecurity = sanitize(formData.security_asset) as {
+      isin?: string;
+      ticker?: string;
+      security_type?: string;
+    } | undefined;
+
+    try {
+      const result = await createAsset({
+        user_id: userId,
+        asset_type_id: parseInt(formData.asset_type_id),
+        name: formData.name,
+        currency: formData.currency,
+        is_active: formData.is_active,
+        savings_plan_amount: formData.savings_plan_amount || undefined,
+        security_asset: sanitizedSecurity,
+        ... (accountId ? { account_id: parseInt(accountId) } : {}),
+      });
+
+      if (result) {
+        setOpen(false);
+        setFormData({
+          name: '',
+          asset_type_id: '',
+          currency: 'EUR',
+          is_active: true,
+          savings_plan_amount: '',
+        });
+        setAccountId('');
+        setSelectedSecurity(undefined);
+        toast({
+          title: t('common.success'),
+          description: 'Asset erfolgreich angelegt',
+        });
+        onSuccess?.();
+      }
+    } catch (err: any) {
+      console.error('Asset creation error:', err);
+
+      // Extract error details from ApiError structure
+      const errorData = err?.data || {};
+      const errorDetail = errorData?.errors?.detail || '';
+      const errorMessage = errorData?.errors?.message || err?.message || '';
+
+      // Handle specific security validation errors
+      if (errorDetail === 'security_not_found') {
+        const identifier = sanitizedSecurity?.ticker || sanitizedSecurity?.isin || 'unbekannt';
+        setValidationError(`Wertpapier "${identifier}" konnte nicht validiert werden. Bitte überprüfen Sie den Ticker oder die ISIN.`);
+      } else if (errorDetail === 'validation_failed') {
+        setValidationError('Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.');
+      } else if (errorMessage.includes('FMP_API_KEY')) {
+        setValidationError('API-Konfiguration fehlt. Das Wertpapier kann derzeit nicht gespeichert werden. Bitte verwenden Sie einen Ticker anstelle der ISIN oder kontaktieren Sie den Administrator.');
+      } else {
+        setValidationError(errorMessage || 'Fehler beim Erstellen des Assets');
+      }
     }
   };
 
@@ -101,103 +201,213 @@ export function CreateAssetDialog({ onSuccess }: CreateAssetDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4" />
-          Add Asset
+          {t('assets.createAsset')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Asset</DialogTitle>
+            <DialogTitle>{t('assets.createAsset')}</DialogTitle>
             <DialogDescription>
-              Add a new asset to track your investments.
+              {t('assets.addFirstDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            {/* Step 1: Asset Type - Always shown */}
             <div className="grid gap-2">
-              <Label htmlFor="name">Asset Name *</Label>
-              <Input
-                id="name"
-                placeholder="e.g., Apple Inc."
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="asset_type">Asset Type *</Label>
+              <Label htmlFor="asset_type" required>{t('assets.assetType')}</Label>
               <Select
                 value={formData.asset_type_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, asset_type_id: value })
-                }
+                onValueChange={(value) => {
+                  setFormData({ ...formData, asset_type_id: value });
+                  // Reset security selection when asset type changes
+                  setSelectedSecurity(undefined);
+                }}
                 disabled={loadingTypes}
               >
                 <SelectTrigger id="asset_type">
-                  <SelectValue placeholder="Select asset type" />
+                  <SelectValue placeholder={t('assets.allTypes')} />
                 </SelectTrigger>
                 <SelectContent>
                   {assetTypes.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
-                      {type.description || type.code}
+                      {t(`assetTypes.${type.code}`, { defaultValue: type.description || type.code })}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="ticker">Ticker Symbol (optional)</Label>
-              <Input
-                id="ticker"
-                placeholder="e.g., AAPL"
-                value={formData.ticker}
-                onChange={(e) => setFormData({ ...formData, ticker: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="isin">ISIN (optional)</Label>
-              <Input
-                id="isin"
-                placeholder="e.g., US0378331005"
-                value={formData.isin}
-                onChange={(e) => setFormData({ ...formData, isin: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="currency">Currency *</Label>
-              <Input
-                id="currency"
-                placeholder="EUR"
-                value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                required
-              />
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="is-active" className="text-base">
-                  Asset Status
-                </Label>
-                <div className="text-sm text-muted-foreground">
-                  {formData.is_active ? 'Active' : 'Inactive'}
-                </div>
+
+            {/* Step 2: Security Search - Directly after selecting Security asset type */}
+            {selectedAssetType?.code === 'security' && (
+              <div className="grid gap-2">
+                <Label required>{t('common.tickerOrName')}</Label>
+                <SecuritySearchCombobox
+                  value={selectedSecurity}
+                  onSelect={(security) => {
+                    setSelectedSecurity(security);
+                    setFormData(prev => ({
+                      ...prev,
+                      name: security.name,
+                      currency: security.currency || 'USD',
+                      security_asset: {
+                        ticker: security.ticker,
+                        // Cast security.type to the expected union type
+                        security_type: security.type as SecurityAsset['security_type'],
+                        isin: undefined,
+                      }
+                    }));
+                  }}
+                  placeholder={t('common.search')}
+                />
               </div>
-              <Switch
-                id="is-active"
-                checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-              />
-            </div>
-            {error && <div className="text-sm text-destructive">{error}</div>}
+            )}
+
+            {/* Specialized forms for non-security assets */}
+            {selectedAssetType?.code === 'insurance' && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-3">
+                  {t('assets.insurance.details')}
+                </h4>
+                <InsuranceAssetForm
+                  value={formData.insurance_asset || {}}
+                  onChange={(value) => setFormData({ ...formData, insurance_asset: value })}
+                />
+              </div>
+            )}
+
+            {selectedAssetType?.code === 'real_estate' && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-3">
+                  {t('assets.realEstate.details')}
+                </h4>
+                <RealEstateAssetForm
+                  value={formData.real_estate_asset || {}}
+                  onChange={(value) => setFormData({ ...formData, real_estate_asset: value })}
+                />
+              </div>
+            )}
+
+            {/* Remaining fields - shown after security selection or immediately for other types */}
+            {shouldShowRemainingFields && (
+              <>
+                <div className="border-t pt-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name" required>{t('assets.assetName')}</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="currency" required>{t('common.currency')}</Label>
+                  <Input
+                    id="currency"
+                    value={formData.currency}
+                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="account">{t('assets.linkedAccount')}</Label>
+                  <Select value={accountId === '' ? '_none' : accountId} onValueChange={(v) => setAccountId(v === '_none' ? '' : v)}>
+                    <SelectTrigger id="account">
+                      <SelectValue placeholder={t('assets.noAccountSelected')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">{t('assets.noAccount')}</SelectItem>
+                      {accounts
+                        ?.filter((a) => a.is_active)
+                        .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                        .map((a) => {
+                          const accountName = (a.name && a.name !== '-')
+                            ? a.name
+                            : t(`accountTypes.${a.type}`, { defaultValue: t('common.account') });
+
+                          return (
+                            <SelectItem key={a.id} value={a.id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <InstitutionLogo name={a.institution?.name || accountName} domain={a.institution?.website ? a.institution.website.replace(/^https?:\/\//, '') : undefined} size="small" className="flex-shrink-0 rounded-full" />
+                                <div className="flex flex-col">
+                                  <span>{accountName}</span>
+                                  <span className="text-[10px] text-muted-foreground">{a.institution?.name || '-'}</span>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="is-active" className="text-base">
+                      {t('assets.status')}
+                    </Label>
+                    <div className="text-sm text-muted-foreground">
+                      {formData.is_active ? t('assets.active') : t('assets.inactive')}
+                    </div>
+                  </div>
+                  <Switch
+                    id="is-active"
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                  />
+                </div>
+
+                {/* Savings Plan Amount */}
+                <div className="grid gap-2">
+                  <Label htmlFor="savings_plan_amount">
+                    {t('portfolio.savingsPlan') || 'Savings Plan'}
+                    <span className="text-muted-foreground font-normal ml-1">({t('common.optional') || 'optional'})</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="savings_plan_amount"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.savings_plan_amount}
+                      onChange={(e) => setFormData({ ...formData, savings_plan_amount: e.target.value })}
+                      placeholder="0.00"
+                      className="pr-12"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-sm">
+                      {formData.currency}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Error Display */}
+            {validationError && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {validationError}
+              </div>
+            )}
+
+            {error && !validationError && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
-              disabled={loading || !formData.name || !formData.asset_type_id}
+              disabled={loading || !formData.name || !formData.asset_type_id || !shouldShowRemainingFields}
             >
-              {loading ? 'Creating...' : 'Create Asset'}
+              {loading ? t('common.loading') : t('common.create')}
             </Button>
           </DialogFooter>
         </form>
