@@ -5,13 +5,6 @@ defmodule WealthBackend.Import.Adapters.TradeRepublic do
   def parse_rows(_), do: []
 end
 
-defmodule WealthBackend.Import.Adapters.DKB do
-  @behaviour WealthBackend.Import.AdapterBehavior
-  def name, do: "DKB"
-  def matches?(_), do: false
-  def parse_rows(_), do: []
-end
-
 defmodule WealthBackend.Import.Adapters.Comdirect do
   @behaviour WealthBackend.Import.AdapterBehavior
   def name, do: "Comdirect"
