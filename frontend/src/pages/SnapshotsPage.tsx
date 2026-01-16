@@ -23,8 +23,9 @@ import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { CreateSnapshotDialog } from '@/components/CreateSnapshotDialog';
 import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
 import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
+import { CsvImportButton } from '@/components/csv-import-button';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Trash2 } from 'lucide-react';
+import { Search, Filter, Trash2, Plus } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -51,6 +52,8 @@ export default function SnapshotsPage() {
   const [rowSelection, setRowSelection] = useState({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  // Add state for Create Dialog to control it via Button
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const handleSnapshotChanged = () => {
     setRefreshKey((prev) => prev + 1);
@@ -284,6 +287,7 @@ export default function SnapshotsPage() {
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">{t('snapshots.title')}</h1>
+          {/* Note: In empty state, we might also want to show Import button, but original design just had Create */}
           <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
         </div>
         <Card>
@@ -307,7 +311,16 @@ export default function SnapshotsPage() {
             {filteredSnapshots.length} {filteredSnapshots.length === 1 ? t('common.snapshot') : t('snapshots.title')}
           </Badge>
         </div>
-        <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
+        <div className="flex gap-2">
+          <CsvImportButton />
+          {/* We wrap CreateSnapshotDialog with a custom trigger if needed, but it has its own trigger. 
+              The original code used <CreateSnapshotDialog /> directly which renders a button.
+              If we want to style them together, we might need to adjust CreateSnapshotDialog or just place them side by side.
+              The original component renders a <Dialog><DialogTrigger asChild><Button>...</Button></DialogTrigger>...
+              So placing them side-by-side works fine.
+          */}
+          <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
+        </div>
       </div>
 
       {/* Mobile: Card Layout */}
