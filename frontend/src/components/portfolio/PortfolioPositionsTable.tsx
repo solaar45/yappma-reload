@@ -51,8 +51,7 @@ export interface PortfolioPosition {
   performanceHistory: number[];
   savingsPlan?: number;
   fsaAllocated: number;
-  fsaTotal: number;
-  fsaUsedYTD: number;
+  fsaGlobalLimit: number; // e.g. 1000 or 2000
 }
 
 const columnHelper = createColumnHelper<PortfolioPosition>();
@@ -65,10 +64,21 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('de-DE', {
     style: 'currency',
     currency: 'EUR',
+    minimumFractionDigits: 0, // No cents for FSA usually
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+// Separate formatter for regular values with cents
+function formatValue(value: number): string {
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
 }
+
 
 function formatPercent(value: number): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
@@ -225,7 +235,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           
           return (
             <div className={`text-right font-mono ${row.getIsGrouped() ? 'font-bold' : ''}`}>
-               {formatCurrency(value)}
+               {formatValue(value)}
             </div>
           );
         },
@@ -281,23 +291,21 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           // Only show FSA in the group row (Institution)
           if (row.getIsGrouped()) {
               // Get the first item in the group that has an FSA allocated
-              // This is necessary because some items in the group might not have FSA data mapped correctly if they come from different sources, 
-              // although our logic tries to be consistent. 
-              // More importantly, we just need *one* representative value for the institution.
               const representativeItem = row.leafRows.find(r => r.original.fsaAllocated > 0)?.original;
               
               if (!representativeItem) return <span className="text-muted-foreground text-xs block text-center">-</span>;
               
               const allocated = representativeItem.fsaAllocated;
-              const used = representativeItem.fsaUsedYTD;
+              const globalLimit = representativeItem.fsaGlobalLimit || 1000;
               
-              const percentage = allocated > 0 ? (used / allocated) * 100 : 0;
+              // Percentage of the global limit (e.g. 500/1000 = 50%)
+              const percentage = globalLimit > 0 ? (allocated / globalLimit) * 100 : 0;
               
               return (
                 <div className="space-y-1 w-32">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{t('portfolio.used')}: {formatCurrency(used)}</span>
                     <span className="font-medium">{formatCurrency(allocated)}</span>
+                    <span className="text-muted-foreground text-[10px]">{percentage.toFixed(0)}%</span>
                   </div>
                   <Progress value={percentage} className="h-2" />
                 </div>
