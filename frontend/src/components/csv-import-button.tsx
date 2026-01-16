@@ -120,11 +120,18 @@ export function CsvImportButton() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">{t('import.noAccount') || 'None (Asset Import / Scalable)'}</SelectItem>
-                {accountOptions.map((acc) => (
-                  <SelectItem key={acc.id} value={acc.id.toString()}>
-                    {acc.name} ({acc.institution?.name})
-                  </SelectItem>
-                ))}
+                {accountOptions.map((acc) => {
+                  const hasName = acc.name && acc.name.trim() !== '' && acc.name !== '-';
+                  const typeName = t(`accountTypes.${acc.type}`, { defaultValue: acc.type.replace('_', ' ') });
+                  const displayName = hasName ? acc.name : typeName;
+                  const institutionName = acc.institution?.name || 'Other';
+                  
+                  return (
+                    <SelectItem key={acc.id} value={acc.id.toString()}>
+                      {displayName} ({institutionName})
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
