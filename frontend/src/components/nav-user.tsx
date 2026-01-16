@@ -3,8 +3,11 @@ import {
   Languages,
   LogOut,
   User,
+  Settings,
 } from "lucide-react"
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 import {
   Avatar,
@@ -45,13 +48,26 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const changeLanguage = (langCode: string) => {
     i18n.changeLanguage(langCode);
   };
 
-  
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  const userInitials = user?.name
+    ? user.name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+    : 'U';
 
   return (
     <SidebarMenu>
@@ -64,10 +80,10 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">{userInitials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-semibold">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -83,10 +99,10 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{userInitials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-semibold">{user.name}</span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
@@ -94,13 +110,17 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <User />
-                Account
+                <User className="mr-2 h-4 w-4" />
+                <span>{t('common.account')}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>{t('settings.title')}</span>
               </DropdownMenuItem>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
-                  <Languages />
-                  <span>Language</span>
+                  <Languages className="mr-2 h-4 w-4" />
+                  <span>{t('settings.language')}</span>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
                   {languages.map((language) => (
@@ -108,7 +128,7 @@ export function NavUser({
                       key={language.code}
                       onClick={() => changeLanguage(language.code)}
                     >
-                      <span>{language.flag}</span>
+                      <span className="mr-2">{language.flag}</span>
                       <span>{language.name}</span>
                       {language.code === i18n.language && (
                         <span className="ml-auto text-xs">✓</span>
@@ -119,9 +139,9 @@ export function NavUser({
               </DropdownMenuSub>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut />
-              Log out
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>{t('common.logout')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
