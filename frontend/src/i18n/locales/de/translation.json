@@ -108,7 +108,11 @@
     "warningTitle": "Import Warnungen",
     "warningDescription": "Einige Zeilen konnten nicht importiert werden: {{count}} Warnungen.",
     "errorTitle": "Import fehlgeschlagen",
-    "errorDescription": "Ein Fehler ist beim Hochladen aufgetreten. Bitte versuchen Sie es erneut."
+    "errorDescription": "Ein Fehler ist beim Hochladen aufgetreten. Bitte versuchen Sie es erneut.",
+    "targetAccount": "Ziel-Konto (für Bank-Importe)",
+    "selectAccount": "Wählen Sie ein Konto...",
+    "noAccount": "Keines (Depot-Import / Scalable)",
+    "accountHelp": "Erforderlich für Bankumsatz-Importe (z.B. DKB). Nicht benötigt für Depot-Importe (Scalable)."
   },
   "taxes": {
     "title": "Steuern",
