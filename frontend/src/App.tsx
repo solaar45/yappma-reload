@@ -26,6 +26,7 @@ import InstitutionsPage from '@/pages/InstitutionsPage';
 import SnapshotsPage from '@/pages/SnapshotsPage';
 import TaxesPage from '@/pages/TaxesPage';
 import LoginPage from '@/pages/LoginPage';
+import RegisterPage from '@/pages/RegisterPage';
 
 function AppContent() {
   const { t } = useTranslation();
@@ -75,6 +76,7 @@ function AppContent() {
         >
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route
               path="/"
               element={

@@ -24,12 +24,16 @@ defmodule WealthBackendWeb.Router do
 
     post "/users/log_in", UserSessionController, :create
     delete "/users/log_out", UserSessionController, :delete
+    
+    # Public User Registration
+    post "/users", UserController, :create
+    get "/users/check_username/:username", UserController, :check_username
 
     scope "/" do
       pipe_through :require_authenticated_user
 
       # Protected Users API
-      resources "/users", UserController, except: [:new, :edit]
+      resources "/users", UserController, except: [:new, :edit, :create]
       put "/users/settings/update_password", UserSettingsController, :update_password
 
       # Institutions

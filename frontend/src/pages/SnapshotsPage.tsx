@@ -26,7 +26,7 @@ import { EditSnapshotDialog } from '@/components/EditSnapshotDialog';
 import { DeleteSnapshotDialog } from '@/components/DeleteSnapshotDialog';
 import { CsvImportButton } from '@/components/csv-import-button';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Trash2 } from 'lucide-react';
+import { Search, Filter, Trash2, Camera } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -319,14 +319,22 @@ export default function SnapshotsPage() {
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">{t('snapshots.title')}</h1>
-          {/* Note: In empty state, we might also want to show Import button, but original design just had Create */}
           <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
         </div>
-        <Card>
+        <Card className="border-dashed">
           <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <p className="text-lg text-muted-foreground">{t('snapshots.noSnapshots')}</p>
-              <p className="text-sm text-muted-foreground mt-2">{t('snapshots.addFirst')}</p>
+            <div className="flex flex-col items-center text-center py-12 space-y-4">
+              <div className="rounded-full bg-muted p-4">
+                <Camera className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold">{t('snapshots.noSnapshots')}</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  {t('snapshots.addFirstDescription') ||
+                    'Start tracking your wealth by adding your first snapshot. Records balances and prices over time.'}
+                </p>
+              </div>
+              <CreateSnapshotDialog onSuccess={handleSnapshotChanged} />
             </div>
           </CardContent>
         </Card>

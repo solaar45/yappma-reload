@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ export default function LoginPage() {
     const location = useLocation();
     const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +33,7 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            await login(email, password);
+            await login(username, password);
             // Navigate to the page they tried to visit or dashboard
             const from = (location.state as any)?.from?.pathname || '/';
             navigate(from, { replace: true });
@@ -81,15 +81,15 @@ export default function LoginPage() {
                         )}
 
                         <div className="space-y-2">
-                            <Label htmlFor="email">{t('auth.email')}</Label>
+                            <Label htmlFor="username">{t('auth.username', { defaultValue: 'Username' })}</Label>
                             <Input
-                                id="email"
-                                type="email"
-                                placeholder="demo@yappma.dev"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                id="username"
+                                type="text"
+                                placeholder=""
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                                 required
-                                autoComplete="email"
+                                autoComplete="username"
                                 autoFocus
                                 disabled={isLoading}
                             />
@@ -113,10 +113,15 @@ export default function LoginPage() {
                         </Button>
                     </form>
 
-                    <div className="mt-6 text-center text-sm text-muted-foreground">
-                        <p>{t('auth.demoHint')}</p>
-                        <p className="mt-1 font-mono text-xs">demo@yappma.dev / password1234</p>
+                    <div className="mt-4 text-center text-sm">
+                        <span className="text-muted-foreground mr-1">
+                            {t('auth.noAccountYet', { defaultValue: 'Don\'t have an account?' })}
+                        </span>
+                        <Link to="/register" className="text-primary hover:underline font-medium">
+                            {t('auth.registerHere')}
+                        </Link>
                     </div>
+
                 </CardContent>
             </Card>
         </div>

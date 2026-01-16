@@ -12,12 +12,20 @@ defmodule WealthBackendWeb.UserController do
   end
 
   def create(conn, %{"user" => user_params}) do
+    # Default name to email (username) if not provided
+    user_params = Map.put_new(user_params, "name", user_params["email"])
+
     with {:ok, %User{} = user} <- Accounts.create_user(user_params) do
       conn
       |> put_status(:created)
-      |> put_resp_header("location", ~p"/api/users/#{user}")
+      |> WealthBackendWeb.UserAuth.log_in_user(user)
       |> render(:show, user: user)
     end
+  end
+
+  def check_username(conn, %{"username" => username}) do
+    available = !Accounts.get_user_by_email(username)
+    json(conn, %{available: available})
   end
 
   def show(conn, %{"id" => id}) do
