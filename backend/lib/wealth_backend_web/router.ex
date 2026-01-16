@@ -68,10 +68,10 @@ defmodule WealthBackendWeb.Router do
         post "/assets", AssetSnapshotController, :create
         put "/assets/:id", AssetSnapshotController, :update
         delete "/assets/:id", AssetSnapshotController, :delete
+        
+        # Import
+        post "/import", ImportController, :create
       end
-      
-      # Import
-      post "/import/csv", ImportController, :create
 
       # Tax Exemptions
       get "/tax_exemptions", TaxExemptionController, :index
