@@ -52,6 +52,7 @@ export function AppSidebar() {
   const languages = [
     { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
     { code: 'en', name: 'English', flag: '🇬🇧' },
+    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
   ];
 
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
@@ -149,7 +150,7 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {/* Language Switcher (Dropdown for selection, but looks like a menu item) */}
+          {/* Language Switcher */}
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
