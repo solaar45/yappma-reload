@@ -169,11 +169,15 @@ defmodule WealthBackend.Analytics do
         group_by: s.account_id,
         select: %{account_id: s.account_id, max_date: max(s.snapshot_date)}
 
+    # Preload tax exemptions for the relevant year (from the date parameter)
+    tax_query = from te in WealthBackend.Taxes.TaxExemption, 
+                where: te.year == ^date.year and te.user_id == ^user_id
+
     # Join back to get full snapshot data
     from(s in AccountSnapshot,
       join: ld in subquery(latest_dates),
       on: s.account_id == ld.account_id and s.snapshot_date == ld.max_date,
-      preload: [account: :institution]
+      preload: [account: [institution: [tax_exemptions: ^tax_query]]]
     )
     |> Repo.all()
   end
