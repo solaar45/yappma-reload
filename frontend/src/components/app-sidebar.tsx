@@ -6,7 +6,7 @@ import {
   Receipt,
   Settings,
   LogOut,
-  User,
+  Languages,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, useNavigate } from 'react-router-dom';
@@ -22,16 +22,20 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarSeparator,
 } from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useUser } from '@/contexts/UserContext';
 import { NavUser } from '@/components/nav-user';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher'; // Assuming we want language switching somewhere accessible or in settings page, but for sidebar footer we can keep it simple or remove if handled in settings page. Let's keep specific actions as items.
 
 export function AppSidebar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useUser();
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -40,6 +44,17 @@ export function AppSidebar() {
     await logout();
     navigate('/login');
   };
+
+  const changeLanguage = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+  };
+
+  const languages = [
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'en', name: 'English', flag: '🇬🇧' },
+  ];
+
+  const currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
 
   const mainItems = [
     {
@@ -78,7 +93,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      {/* 1. Static User Info in Header (No dropdown, just visual context or link to profile) */}
+      {/* 1. Static User Info in Header */}
       <SidebarHeader>
         <NavUser user={userData} />
       </SidebarHeader>
@@ -112,7 +127,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* 2. Footer with explicit Actions (Settings, Logout) */}
+      {/* 2. Footer with explicit Actions (Settings, Language, Logout) */}
       <SidebarFooter>
         <SidebarMenu>
           {/* Settings Link */}
@@ -132,6 +147,35 @@ export function AppSidebar() {
                 <span>{t('settings.title')}</span>
               </NavLink>
             </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* Language Switcher (Dropdown for selection, but looks like a menu item) */}
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton tooltip={t('settings.language')}>
+                  <Languages />
+                  <span>{currentLanguage.name}</span>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="start" className="w-48">
+                {languages.map((language) => (
+                  <DropdownMenuItem
+                    key={language.code}
+                    onClick={() => changeLanguage(language.code)}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-base">{language.flag}</span>
+                      <span>{language.name}</span>
+                    </span>
+                    {i18n.language === language.code && (
+                      <span className="text-xs">✓</span>
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
 
           {/* Logout Button */}
