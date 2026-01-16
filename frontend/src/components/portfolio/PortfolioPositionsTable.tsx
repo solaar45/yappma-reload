@@ -5,12 +5,16 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
+  getExpandedRowModel,
+  getGroupedRowModel,
   flexRender,
   createColumnHelper,
   type SortingState,
   type ColumnFiltersState,
+  type GroupingState,
+  type AggregationFn,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Edit, FileText, Camera, MoreVertical, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Edit, FileText, Camera, MoreVertical, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
 import InstitutionLogo from '@/components/InstitutionLogo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -118,139 +122,141 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
   const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  // Group by institution by default
+  const [grouping, setGrouping] = useState<GroupingState>(['institution']);
+  const [expanded, setExpanded] = useState({});
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor('type', {
+      // Institution Group Column
+      columnHelper.accessor('institution', {
+        id: 'institution',
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            {t('portfolio.type')}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+              className="-ml-4 h-8"
+            >
+              {t('portfolio.institution')}
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
         ),
-        cell: ({ getValue }) => {
-          const type = getValue();
-          return (
-            <Badge variant="secondary" className="font-medium">
-              {type === 'Account' ? t('portfolio.account') : t('portfolio.asset')}
-            </Badge>
-          );
+        cell: ({ row, getValue }) => {
+           if (row.getIsGrouped()) {
+             const institutionName = getValue();
+             const domain = row.original.institutionDomain; // Note: row.original refers to first row in group
+             
+             return (
+               <div className="flex items-center gap-2 font-semibold cursor-pointer" onClick={row.getToggleExpandedHandler()}>
+                 <span className="w-4 h-4 flex items-center justify-center">
+                    {row.getIsExpanded() ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                 </span>
+                 <InstitutionLogo
+                   name={institutionName}
+                   domain={domain}
+                   size="small"
+                   className="flex-shrink-0 rounded-full"
+                 />
+                 <span>{institutionName}</span>
+                 <Badge variant="outline" className="ml-2 text-xs font-normal">
+                   {row.subRows.length} {row.subRows.length === 1 ? t('common.item') : t('common.items')}
+                 </Badge>
+               </div>
+             );
+           }
+           return null; // Should not happen as this column is grouped
         },
       }),
+      
+      // Position Name (Account/Asset)
       columnHelper.accessor('name', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            {t('portfolio.name')}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
+        header: t('portfolio.position'),
         cell: ({ row }) => {
+          if (row.getIsGrouped()) return null; // Don't show in group row
+
           const name = row.original.name;
           const subtype = row.original.subtype;
+          const type = row.original.type;
+          
           const displayName = (name === '-' || !name) && subtype
             ? t(`accountTypes.${subtype}`, { defaultValue: subtype })
             : name;
-          return <div className="font-medium">{displayName}</div>;
-        },
-      }),
-      columnHelper.accessor('institution', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            {t('portfolio.institution')}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ row }) => {
-          const institution = row.original.institution;
 
           return (
-            <div className="flex items-center gap-2">
-              <InstitutionLogo
-                name={institution}
-                domain={row.original.institutionDomain}
-                size="small"
-                className="flex-shrink-0 rounded-full"
-              />
-              <span className="text-sm font-medium">{institution}</span>
+            <div className="flex items-center gap-2 pl-8">
+               {/* Indentation visual */}
+               <div className="w-4 border-l-2 border-b-2 h-4 border-muted-foreground/20 rounded-bl-sm -mt-4 mr-2"></div>
+               
+               <div className="flex flex-col">
+                 <span className="font-medium">{displayName}</span>
+                 <span className="text-xs text-muted-foreground">{t(`portfolio.${type.toLowerCase()}`, {defaultValue: type})}</span>
+               </div>
             </div>
           );
         },
       }),
-      columnHelper.accessor('riskScore', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            {t('portfolio.risk')}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ getValue }) => <RiskScoreVisual score={getValue()} />,
+
+      columnHelper.accessor('type', {
+         header: t('portfolio.type'),
+         cell: ({row, getValue}) => {
+             if (row.getIsGrouped()) return null;
+             return <Badge variant="secondary" className="text-xs">{getValue()}</Badge>
+         }
       }),
+
+      columnHelper.accessor('riskScore', {
+        header: t('portfolio.risk'),
+        cell: ({ row, getValue }) => {
+            if (row.getIsGrouped()) return null; // Or aggregate risk?
+            return <RiskScoreVisual score={getValue()} />;
+        }
+      }),
+
       columnHelper.accessor('currentValue', {
         header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            {t('portfolio.marketValue')}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="text-right">
+             {t('portfolio.marketValue')}
+          </div>
         ),
-        cell: ({ getValue }) => (
-          <div className="text-right font-mono font-semibold">{formatCurrency(getValue())}</div>
-        ),
-      }),
-      columnHelper.accessor('portfolioShare', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            {t('portfolio.portfolioShare')}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ getValue }) => {
-          const value = getValue();
+        cell: ({ row, getValue }) => {
+          const value = row.getIsGrouped() 
+             ? row.subRows.reduce((sum, r) => sum + r.original.currentValue, 0)
+             : getValue();
+          
           return (
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{value.toFixed(1)}%</span>
+            <div className={`text-right font-mono ${row.getIsGrouped() ? 'font-bold' : ''}`}>
+               {formatCurrency(value)}
+            </div>
+          );
+        },
+        aggregationFn: 'sum',
+      }),
+
+      columnHelper.accessor('portfolioShare', {
+        header: t('portfolio.share'),
+        cell: ({ row, getValue }) => {
+           // For groups, we could sum shares too
+           const value = row.getIsGrouped()
+             ? row.subRows.reduce((sum, r) => sum + r.original.portfolioShare, 0)
+             : getValue();
+             
+           return (
+            <div className="space-y-1 w-24 ml-auto">
+              <div className="flex items-center justify-end">
+                <span className={`text-xs ${row.getIsGrouped() ? 'font-bold' : ''}`}>{value.toFixed(1)}%</span>
               </div>
               <Progress value={value} className="h-1.5" />
             </div>
           );
         },
+        aggregationFn: 'sum',
       }),
+
       columnHelper.accessor('performance', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            {t('portfolio.performance')}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
+        header: t('portfolio.performance'),
         cell: ({ row }) => {
+          if (row.getIsGrouped()) return null; // Hard to aggregate performance correctly without weighted avg
+
           const value = row.original.performance;
           const isPositive = value >= 0;
           return (
@@ -266,75 +272,45 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           );
         },
       }),
-      columnHelper.accessor('savingsPlan', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            {t('portfolio.savingsPlan')}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ getValue }) => {
-          const value = getValue();
-          return value ? (
-            <div className="text-right font-mono text-sm">
-              {formatCurrency(value)}/{t('portfolio.monthly')}
-            </div>
-          ) : (
-            <div className="text-center text-muted-foreground">-</div>
-          );
-        },
-      }),
+
+      // FSA Column - Only show on Group Level
       columnHelper.accessor('fsaAllocated', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            {t('portfolio.fsaAllocated')}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ row }) => (
-          <div className="text-right font-mono font-medium">
-            {formatCurrency(row.original.fsaAllocated)}
-          </div>
-        ),
-      }),
-      columnHelper.accessor('fsaUsedYTD', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            {t('portfolio.fsaUsedYTD')}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
+        id: 'fsa',
+        header: t('portfolio.fsa'),
         cell: ({ row }) => {
-          const used = row.original.fsaUsedYTD;
-          const allocated = row.original.fsaAllocated;
-          const percentage = allocated > 0 ? (used / allocated) * 100 : 0;
-          return (
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{percentage.toFixed(0)}%</span>
-                <span className="text-xs text-muted-foreground font-mono">({formatCurrency(used)})</span>
-              </div>
-              <Progress value={percentage} className="h-1.5" />
-            </div>
-          );
+          // Only show FSA in the group row (Institution)
+          // Because FSA is per institution, we can take it from the first leaf row
+          if (row.getIsGrouped()) {
+              const firstItem = row.leafRows[0]?.original;
+              if (!firstItem) return null;
+              
+              const allocated = firstItem.fsaAllocated;
+              const used = firstItem.fsaUsedYTD; // Assuming we map this correctly
+              
+              if (allocated === 0 && used === 0) return <span className="text-muted-foreground text-xs text-center block">-</span>;
+
+              const percentage = allocated > 0 ? (used / allocated) * 100 : 0;
+              
+              return (
+                <div className="space-y-1 w-32">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">{t('portfolio.used')}: {formatCurrency(used)}</span>
+                    <span className="font-medium">{formatCurrency(allocated)}</span>
+                  </div>
+                  <Progress value={percentage} className="h-2" />
+                </div>
+              );
+          }
+          return null; 
         },
       }),
+
       columnHelper.display({
         id: 'actions',
-        header: t('portfolio.actions'),
-        cell: () => (
+        cell: ({ row }) => {
+          if (row.getIsGrouped()) return null;
+          
+          return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -361,7 +337,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ),
+        )},
       }),
     ],
     [t]
@@ -373,12 +349,18 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
     state: {
       sorting,
       columnFilters,
+      grouping,
+      expanded,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onGroupingChange: setGrouping,
+    onExpandedChange: setExpanded,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
   });
 
   return (
@@ -399,15 +381,24 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
+            table.getRowModel().rows.map((row) => {
+               // Only render Group rows or Expanded rows' children
+               // Tanstack table flattened rows automatically handle this when using getExpandedRowModel
+               return (
+                  <TableRow key={row.id} className={row.getIsGrouped() ? "bg-muted/30 hover:bg-muted/50" : ""}>
+                    {row.getVisibleCells().map((cell) => {
+                      // Logic to merge cells for grouping row if needed, 
+                      // but default flexRender handles grouping cell + placeholders usually.
+                      // We defined custom cells that return null for grouped rows on non-group columns.
+                      
+                      return (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    )})}
+                  </TableRow>
+               )
+            })
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
