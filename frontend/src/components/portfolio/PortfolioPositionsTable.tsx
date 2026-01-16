@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useReactTable,
   getCoreRowModel,
@@ -10,6 +11,7 @@ import {
   type ColumnFiltersState,
 } from '@tanstack/react-table';
 import { ArrowUpDown, Edit, FileText, Camera, MoreVertical, Trash2 } from 'lucide-react';
+import InstitutionLogo from '@/components/InstitutionLogo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -31,20 +33,22 @@ import {
 
 export interface PortfolioPosition {
   id: string;
-  type: 'Asset' | 'Account';
+  type: 'Account';
+  subtype?: string;
   name: string;
   institution: string;
+  institutionDomain?: string;
   institutionLogo?: string;
-  assetClass: 'Equity' | 'Bond' | 'Real Estate' | 'Cash' | 'Crypto';
+  assetClass: string;
   riskScore: 1 | 2 | 3 | 4 | 5;
   currentValue: number;
-  portfolioShare: number; // percentage
-  performance: number; // percentage
-  performanceHistory: number[]; // for sparkline
-  savingsPlan?: number; // monthly amount or null
+  portfolioShare: number;
+  performance: number;
+  performanceHistory: number[];
+  savingsPlan?: number;
   fsaAllocated: number;
   fsaTotal: number;
-  fsaUsedYTD: number; // in euros
+  fsaUsedYTD: number;
 }
 
 const columnHelper = createColumnHelper<PortfolioPosition>();
@@ -65,14 +69,6 @@ function formatCurrency(value: number): string {
 function formatPercent(value: number): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
 }
-
-const assetClassColors: Record<string, string> = {
-  Equity: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  Bond: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  'Real Estate': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  Cash: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
-  Crypto: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-};
 
 function RiskScoreVisual({ score }: { score: number }) {
   const dots = Array.from({ length: 5 }, (_, i) => i + 1);
@@ -119,6 +115,7 @@ function Sparkline({ data, isPositive }: { data: number[]; isPositive: boolean }
 }
 
 export function PortfolioPositionsTable({ positions }: PortfolioPositionsTableProps) {
+  const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
@@ -131,15 +128,14 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8"
           >
-            Typ
+            {t('portfolio.type')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        cell: ({ getValue }) => {
-          const type = getValue();
+        cell: () => {
           return (
-            <Badge variant={type === 'Asset' ? 'default' : 'secondary'} className="font-medium">
-              {type}
+            <Badge variant="secondary" className="font-medium">
+              {t('portfolio.account')}
             </Badge>
           );
         },
@@ -151,11 +147,18 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8"
           >
-            Name
+            {t('portfolio.name')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        cell: ({ getValue }) => <div className="font-medium">{getValue()}</div>,
+        cell: ({ row }) => {
+          const name = row.original.name;
+          const subtype = row.original.subtype;
+          const displayName = (name === '-' || !name) && subtype
+            ? t(`accountTypes.${subtype}`, { defaultValue: subtype })
+            : name;
+          return <div className="font-medium">{displayName}</div>;
+        },
       }),
       columnHelper.accessor('institution', {
         header: ({ column }) => (
@@ -164,36 +167,23 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8"
           >
-            Institution
+            {t('portfolio.institution')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-semibold">
-              {row.original.institution.substring(0, 2).toUpperCase()}
-            </div>
-            <span className="text-sm">{row.original.institution}</span>
-          </div>
-        ),
-      }),
-      columnHelper.accessor('assetClass', {
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4 h-8"
-          >
-            Asset-Klasse
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ getValue }) => {
-          const assetClass = getValue();
+        cell: ({ row }) => {
+          const institution = row.original.institution;
+
           return (
-            <Badge variant="outline" className={assetClassColors[assetClass]}>
-              {assetClass}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <InstitutionLogo
+                name={institution}
+                domain={row.original.institutionDomain}
+                size="small"
+                className="flex-shrink-0 rounded-full"
+              />
+              <span className="text-sm font-medium">{institution}</span>
+            </div>
           );
         },
       }),
@@ -204,7 +194,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8"
           >
-            Risiko
+            {t('portfolio.risk')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -217,7 +207,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8"
           >
-            Aktueller Wert
+            {t('portfolio.marketValue')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -232,7 +222,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8"
           >
-            Anteil am Portfolio
+            {t('portfolio.portfolioShare')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -255,7 +245,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8"
           >
-            Performance
+            {t('portfolio.performance')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -265,9 +255,8 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           return (
             <div className="flex items-center justify-end">
               <span
-                className={`text-sm font-medium ${
-                  isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                }`}
+                className={`text-sm font-medium ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  }`}
               >
                 {formatPercent(value)}
               </span>
@@ -283,14 +272,16 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8"
           >
-            Sparplan
+            {t('portfolio.savingsPlan')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
         cell: ({ getValue }) => {
           const value = getValue();
           return value ? (
-            <div className="text-right font-mono text-sm">{formatCurrency(value)}/Monat</div>
+            <div className="text-right font-mono text-sm">
+              {formatCurrency(value)}/{t('portfolio.monthly')}
+            </div>
           ) : (
             <div className="text-center text-muted-foreground">-</div>
           );
@@ -303,7 +294,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8"
           >
-            FSA zugeteilt
+            {t('portfolio.fsaAllocated')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -320,7 +311,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8"
           >
-            FSA genutzt (YTD)
+            {t('portfolio.fsaUsedYTD')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -341,7 +332,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
       }),
       columnHelper.display({
         id: 'actions',
-        header: 'Aktionen',
+        header: t('portfolio.actions'),
         cell: () => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -352,27 +343,27 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
             <DropdownMenuContent align="end">
               <DropdownMenuItem>
                 <Edit className="mr-2 h-4 w-4" />
-                <span>Edit</span>
+                <span>{t('portfolio.edit')}</span>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <FileText className="mr-2 h-4 w-4" />
-                <span>Details</span>
+                <span>{t('portfolio.details')}</span>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Camera className="mr-2 h-4 w-4" />
-                <span>Snapshot</span>
+                <span>{t('portfolio.snapshot')}</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete</span>
+                <span>{t('portfolio.delete')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ),
       }),
     ],
-    []
+    [t]
   );
 
   const table = useReactTable({
@@ -419,7 +410,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                Keine Positionen gefunden.
+                {t('portfolio.noPositions')}
               </TableCell>
             </TableRow>
           )}

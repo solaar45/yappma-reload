@@ -12,103 +12,8 @@ import type { PortfolioHolding } from '@/components/portfolio/PortfolioHoldingsT
 import type { PortfolioPosition } from '@/components/portfolio/PortfolioPositionsTable';
 import InstitutionLogo from '@/components/InstitutionLogo';
 
-// Mock data for positions demo
-const mockPortfolioPositions: PortfolioPosition[] = [
-  {
-    id: '1',
-    type: 'Asset',
-    name: 'Apple Inc.',
-    institution: 'Trade Republic',
-    assetClass: 'Equity',
-    riskScore: 3,
-    currentValue: 15450.00,
-    portfolioShare: 12.5,
-    performance: 8.5,
-    performanceHistory: [100, 102, 101, 105, 107, 108, 109],
-    savingsPlan: 250,
-    fsaAllocated: 1000,
-    fsaTotal: 1000,
-    fsaUsedYTD: 227.50,
-  },
-  {
-    id: '2',
-    type: 'Account',
-    name: 'Girokonto DKB',
-    institution: 'Deutsche Bank',
-    assetClass: 'Cash',
-    riskScore: 1,
-    currentValue: 8720.00,
-    portfolioShare: 7.1,
-    performance: 0.0,
-    performanceHistory: [100, 100, 100, 100, 100, 100, 100],
-    fsaAllocated: 0,
-    fsaTotal: 1000,
-    fsaUsedYTD: 0,
-  },
-  {
-    id: '3',
-    type: 'Asset',
-    name: 'Vanguard FTSE All-World',
-    institution: 'Scalable Capital',
-    assetClass: 'Equity',
-    riskScore: 4,
-    currentValue: 32100.00,
-    portfolioShare: 26.0,
-    performance: 12.3,
-    performanceHistory: [100, 98, 103, 108, 110, 112, 112],
-    savingsPlan: 500,
-    fsaAllocated: 500,
-    fsaTotal: 1000,
-    fsaUsedYTD: 325.00,
-  },
-  {
-    id: '4',
-    type: 'Asset',
-    name: 'iShares Core Global Aggregate Bond',
-    institution: 'ING',
-    assetClass: 'Bond',
-    riskScore: 2,
-    currentValue: 18900.00,
-    portfolioShare: 15.3,
-    performance: 3.2,
-    performanceHistory: [100, 101, 102, 102, 103, 103, 103],
-    savingsPlan: 300,
-    fsaAllocated: 350,
-    fsaTotal: 1000,
-    fsaUsedYTD: 115.80,
-  },
-  {
-    id: '5',
-    type: 'Asset',
-    name: 'Bitcoin',
-    institution: 'Bitpanda',
-    assetClass: 'Crypto',
-    riskScore: 5,
-    currentValue: 6500.00,
-    portfolioShare: 5.3,
-    performance: -15.7,
-    performanceHistory: [100, 95, 92, 88, 85, 84, 84],
-    fsaAllocated: 0,
-    fsaTotal: 1000,
-    fsaUsedYTD: 0,
-  },
-  {
-    id: '6',
-    type: 'Asset',
-    name: 'REITs Portfolio',
-    institution: 'Consorsbank',
-    assetClass: 'Real Estate',
-    riskScore: 3,
-    currentValue: 24300.00,
-    portfolioShare: 19.7,
-    performance: 6.8,
-    performanceHistory: [100, 102, 104, 105, 106, 107, 107],
-    savingsPlan: 400,
-    fsaAllocated: 150,
-    fsaTotal: 1000,
-    fsaUsedYTD: 98.50,
-  },
-];
+// PortfolioPosition formatting logic is handled within DashboardPage via useMemo
+
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -123,7 +28,6 @@ export default function DashboardPage() {
       .filter((asset) => asset.asset_type?.code === 'security')
       .map((asset) => {
         const snapshots = asset.snapshots || [];
-        // Sort snapshots by date descending just to be safe, though usually they come sorted
         const sortedSnapshots = [...snapshots].sort(
           (a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime()
         );
@@ -133,24 +37,15 @@ export default function DashboardPage() {
 
         const quantity = latestSnapshot?.quantity ? parseFloat(latestSnapshot.quantity) : 0;
         const marketPrice = latestSnapshot?.market_price_per_unit ? parseFloat(latestSnapshot.market_price_per_unit) : 0;
-
-        // Calculate market value from price * quantity to ensure consistency
-        // For securities, Value should always be Price * Quantity.
-        // If Price is 0 (missing), Value should be 0.
-        // This fixes the issue where Price is 0 but Value is 20, leading to a confusing gain.
         const marketValue = quantity > 0 ? quantity * marketPrice : (latestSnapshot?.value ? parseFloat(latestSnapshot.value) : 0);
-
         const costBasis = latestSnapshot?.cost_basis ? parseFloat(latestSnapshot.cost_basis) : 0;
 
-        // Calculations
         const avgCost = quantity > 0 ? costBasis / quantity : 0;
         const totalGainLoss = marketValue - costBasis;
         const totalGainLossPercent = costBasis > 0 ? (totalGainLoss / costBasis) * 100 : 0;
 
-        // Day Change calculation
         let dayChange = 0;
         let dayChangePercent = 0;
-
         if (latestSnapshot && previousSnapshot) {
           const prevValue = parseFloat(previousSnapshot.value || '0');
           dayChange = marketValue - prevValue;
@@ -172,6 +67,53 @@ export default function DashboardPage() {
         };
       });
   }, [data?.assets]);
+
+  // Calculate account positions from real data
+  const accountPositions: PortfolioPosition[] = useMemo(() => {
+    if (!data?.accounts) return [];
+
+    const totalNetWorth = parseFloat(data.totalValue || '0');
+
+    return data.accounts.map((account) => {
+      const snapshots = account.snapshots || [];
+      const latestSnapshot = snapshots[0];
+      const previousSnapshot = snapshots[1];
+
+      const currentValue = latestSnapshot ? parseFloat(latestSnapshot.balance) : 0;
+      const portfolioShare = totalNetWorth > 0 ? (currentValue / totalNetWorth) * 100 : 0;
+
+      let performance = 0;
+      if (latestSnapshot && previousSnapshot) {
+        const prevValue = parseFloat(previousSnapshot.balance);
+        if (prevValue > 0) {
+          performance = ((currentValue - prevValue) / prevValue) * 100;
+        }
+      }
+
+      const performanceHistory = snapshots.slice(0, 7).reverse().map(s => parseFloat(s.balance));
+      if (performanceHistory.length === 1) performanceHistory.unshift(performanceHistory[0]);
+      if (performanceHistory.length === 0) performanceHistory.push(0, 0);
+
+      return {
+        id: account.id.toString(),
+        type: 'Account' as const,
+        name: account.name,
+        subtype: account.type,
+        institution: account.institution?.name || '-',
+        institutionDomain: account.institution?.website ? account.institution.website.replace(/^https?:\/\//, '') : undefined,
+        assetClass: 'Cash',
+        riskScore: 1 as const,
+        currentValue: currentValue,
+        portfolioShare: portfolioShare,
+        performance: performance,
+        performanceHistory: performanceHistory,
+        fsaAllocated: 0,
+        fsaTotal: 1000,
+        fsaUsedYTD: 0,
+      };
+    }).sort((a, b) => a.institution.localeCompare(b.institution));
+  }, [data?.accounts, data?.totalValue]);
+
 
   if (error) {
     return (
@@ -258,7 +200,7 @@ export default function DashboardPage() {
       {/* Portfolio Holdings Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Portfolio Holdings</CardTitle>
+          <CardTitle>{t('portfolio.holdingsTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <PortfolioHoldingsTable holdings={portfolioHoldings} />
@@ -268,10 +210,10 @@ export default function DashboardPage() {
       {/* Portfolio Positions Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Portfolio Positionen</CardTitle>
+          <CardTitle>{t('portfolio.positionsTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <PortfolioPositionsTable positions={mockPortfolioPositions} />
+          <PortfolioPositionsTable positions={accountPositions} />
         </CardContent>
       </Card>
 
@@ -298,7 +240,9 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-3">
                         <InstitutionLogo name={account.institution?.name || account.name} domain={account.institution?.website ? account.institution.website.replace(/^https?:\/\//, '') : undefined} size="medium" className="flex-shrink-0 rounded-full" />
                         <div className="space-y-1">
-                          <p className="text-sm font-medium leading-none">{account.name}</p>
+                          <p className="text-sm font-medium leading-none">
+                            {account.type ? t(`accountTypes.${account.type}`, { defaultValue: account.name }) : account.name}
+                          </p>
                           <p className="text-xs text-muted-foreground">{account.institution?.name || 'No institution'}</p>
                         </div>
                       </div>

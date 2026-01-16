@@ -130,7 +130,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            
+
             {/* Institution Selection */}
             <div className="grid gap-2">
               <Label htmlFor="institution" required>{t('accounts.institution') || 'Institution'}</Label>
@@ -143,9 +143,27 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                     className="w-full justify-between font-normal"
                     disabled={institutionsLoading}
                   >
-                    {formData.institution_id
-                      ? institutions?.find((inst) => inst.id.toString() === formData.institution_id)?.name
-                      : institutionsLoading ? t('common.loading') : t('institutions.searchPlaceholder') || "Select institution..."}
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      {formData.institution_id ? (
+                        (() => {
+                          const inst = institutions?.find((i) => i.id.toString() === formData.institution_id);
+                          if (inst) {
+                            return (
+                              <>
+                                <InstitutionLogo
+                                  name={inst.name}
+                                  domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined}
+                                  size="small"
+                                  className="flex-shrink-0 rounded-full"
+                                />
+                                <span className="truncate">{inst.name}</span>
+                              </>
+                            );
+                          }
+                          return t('institutions.searchPlaceholder') || "Select institution...";
+                        })()
+                      ) : institutionsLoading ? t('common.loading') : t('institutions.searchPlaceholder') || "Select institution..."}
+                    </div>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -175,7 +193,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
                               <div className="flex flex-col">
                                 <span>{inst.name}</span>
                                 <span className="text-[10px] text-muted-foreground capitalize">
-                                  {inst.type ? t(`institutions.types.${inst.type}`) : inst.category}
+                                  {inst.type ? t(`institutions.types.${inst.type}` as any) : inst.category}
                                 </span>
                               </div>
                             </div>
@@ -248,7 +266,7 @@ export function CreateAccountDialog({ onSuccess }: CreateAccountDialogProps) {
             {/* Name Input (Optional, moved to bottom) */}
             <div className="grid gap-2">
               <Label htmlFor="name">
-                {t('accounts.name') || 'Account Name'} 
+                {t('accounts.name') || 'Account Name'}
                 <span className="text-muted-foreground font-normal ml-1">({t('common.optional') || 'optional'})</span>
               </Label>
               <Input

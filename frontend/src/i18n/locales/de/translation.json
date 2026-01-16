@@ -132,6 +132,7 @@
   "accounts": {
     "title": "Konten",
     "name": "Name",
+    "accountName": "Kontoname",
     "type": "Typ",
     "accountType": "Kontotyp",
     "balance": "Saldo",
@@ -399,5 +400,43 @@
     "securityNotFound": "Das Wertpapier \"{{identifier}}\" wurde in der Datenbank nicht gefunden. Bitte überprüfe die Schreibweise des Tickers oder der ISIN und versuche es erneut.",
     "validationFailed": "Die Validierung des Wertpapiers ist fehlgeschlagen. Möglicherweise ist der Service vorübergehend nicht verfügbar. Bitte versuche es später erneut.",
     "assetCreationFailed": "Beim Anlegen des Assets ist ein Fehler aufgetreten. Bitte versuche es erneut."
+  },
+  "portfolio": {
+    "holdingsTitle": "Portfolio-Bestände",
+    "positionsTitle": "Portfolio-Positionen",
+    "ticker": "Ticker",
+    "name": "Name",
+    "shares": "Anteile",
+    "avgCost": "Durchschnittskosten",
+    "currentPrice": "Aktueller Kurs",
+    "marketValue": "Marktwert",
+    "totalGainLoss": "Gesamtgewinn/-verlust",
+    "dayChange": "Tagesänderung",
+    "noHoldings": "Keine Portfolio-Bestände gefunden.",
+    "type": "Typ",
+    "institution": "Institution",
+    "assetClass": "Asset-Klasse",
+    "risk": "Risiko",
+    "portfolioShare": "Anteil am Portfolio",
+    "performance": "Performance",
+    "savingsPlan": "Sparplan",
+    "fsaAllocated": "FSA zugeteilt",
+    "fsaUsedYTD": "FSA genutzt (YTD)",
+    "actions": "Aktionen",
+    "noPositions": "Keine Positionen gefunden.",
+    "monthly": "Monat",
+    "edit": "Bearbeiten",
+    "details": "Details",
+    "snapshot": "Snapshot",
+    "delete": "Löschen",
+    "asset": "Asset",
+    "account": "Konto",
+    "assetClasses": {
+      "equity": "Aktien",
+      "bond": "Anleihen",
+      "realEstate": "Immobilien",
+      "cash": "Bargeld",
+      "crypto": "Krypto"
+    }
   }
 }

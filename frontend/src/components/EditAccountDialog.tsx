@@ -60,10 +60,10 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
   const { institutions, loading: institutionsLoading } = useInstitutions({ userId: userId! });
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   // If the account name is "-", treat it as empty for the input field
   const [name, setName] = useState(account.name === '-' ? '' : account.name);
-  
+
   const [type, setType] = useState(account.type);
   const [currency, setCurrency] = useState(account.currency);
   const [institutionId, setInstitutionId] = useState(account.institution_id?.toString() || '');
@@ -86,7 +86,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
     if (!institutionId) {
       return;
     }
-    
+
     // Send "-" if empty to pass validation
     const nameToSend = name.trim() || "-";
 
@@ -141,7 +141,29 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
               ) : institutions && institutions.length > 0 ? (
                 <Select value={institutionId} onValueChange={setInstitutionId}>
                   <SelectTrigger id="institution">
-                    <SelectValue placeholder={t('accounts.selectInstitution')} />
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      {institutionId ? (
+                        (() => {
+                          const inst = institutions?.find((i) => i.id.toString() === institutionId);
+                          if (inst) {
+                            return (
+                              <>
+                                <InstitutionLogo
+                                  name={inst.name}
+                                  domain={inst.website ? inst.website.replace(/^https?:\/\//, '') : undefined}
+                                  size="small"
+                                  className="flex-shrink-0 rounded-full"
+                                />
+                                <span className="truncate">{inst.name}</span>
+                              </>
+                            );
+                          }
+                          return <SelectValue placeholder={t('accounts.selectInstitution')} />;
+                        })()
+                      ) : (
+                        <SelectValue placeholder={t('accounts.selectInstitution')} />
+                      )}
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     {institutions.map((inst) => (
@@ -151,7 +173,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
                           <div className="flex flex-col">
                             <span>{inst.name}</span>
                             <span className="text-[10px] text-muted-foreground capitalize">
-                              {inst.type ? t(`institutions.types.${inst.type}`, { defaultValue: inst.type }) : inst.category}
+                              {inst.type ? t(`institutions.types.${inst.type}` as any, { defaultValue: inst.type }) : inst.category}
                             </span>
                           </div>
                         </div>
@@ -226,7 +248,7 @@ export function EditAccountDialog({ account, onSuccess }: EditAccountDialogProps
             {/* Name Input (Optional, moved to bottom) */}
             <div className="grid gap-2">
               <Label htmlFor="name">
-                {t('accounts.accountName')}
+                {t('accounts.accountName' as any)}
                 <span className="text-muted-foreground font-normal ml-1">({t('common.optional') || 'optional'})</span>
               </Label>
               <Input

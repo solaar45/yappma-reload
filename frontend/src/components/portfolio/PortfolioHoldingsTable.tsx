@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useReactTable,
   getCoreRowModel,
@@ -60,6 +61,7 @@ function formatNumber(value: number, decimals: number = 2): string {
 }
 
 export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps) {
+  const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const columns = useMemo(
@@ -71,7 +73,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8 data-[state=open]:bg-accent"
           >
-            Ticker
+            {t('portfolio.ticker')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -86,7 +88,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8 data-[state=open]:bg-accent"
           >
-            Name
+            {t('portfolio.name')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -99,7 +101,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8 data-[state=open]:bg-accent"
           >
-            Shares
+            {t('portfolio.shares')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -114,7 +116,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8 data-[state=open]:bg-accent"
           >
-            Avg. Cost
+            {t('portfolio.avgCost')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -131,7 +133,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8 data-[state=open]:bg-accent"
           >
-            Current Price
+            {t('portfolio.currentPrice')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -146,7 +148,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8 data-[state=open]:bg-accent"
           >
-            Market Value
+            {t('portfolio.marketValue')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -162,7 +164,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8 data-[state=open]:bg-accent"
           >
-            Total Gain/Loss
+            {t('portfolio.totalGainLoss')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -173,9 +175,8 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
           return (
             <div className="text-right">
               <div
-                className={`font-mono font-semibold flex items-center justify-end gap-1 ${
-                  isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                }`}
+                className={`font-mono font-semibold flex items-center justify-end gap-1 ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  }`}
               >
                 {isPositive ? (
                   <TrendingUp className="h-3.5 w-3.5" />
@@ -185,9 +186,8 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
                 {formatCurrency(Math.abs(value))}
               </div>
               <div
-                className={`text-xs font-mono ${
-                  isPositive ? 'text-green-600/70 dark:text-green-400/70' : 'text-red-600/70 dark:text-red-400/70'
-                }`}
+                className={`text-xs font-mono ${isPositive ? 'text-green-600/70 dark:text-green-400/70' : 'text-red-600/70 dark:text-red-400/70'
+                  }`}
               >
                 {formatPercent(percent)}
               </div>
@@ -203,7 +203,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="-ml-4 h-8 data-[state=open]:bg-accent"
           >
-            Day Change
+            {t('portfolio.dayChange')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         ),
@@ -214,9 +214,8 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
           return (
             <div className="text-right">
               <div
-                className={`font-mono font-medium flex items-center justify-end gap-1 ${
-                  isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                }`}
+                className={`font-mono font-medium flex items-center justify-end gap-1 ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  }`}
               >
                 {isPositive ? (
                   <TrendingUp className="h-3.5 w-3.5" />
@@ -226,9 +225,8 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
                 {formatCurrency(Math.abs(value))}
               </div>
               <div
-                className={`text-xs font-mono ${
-                  isPositive ? 'text-green-600/70 dark:text-green-400/70' : 'text-red-600/70 dark:text-red-400/70'
-                }`}
+                className={`text-xs font-mono ${isPositive ? 'text-green-600/70 dark:text-green-400/70' : 'text-red-600/70 dark:text-red-400/70'
+                  }`}
               >
                 {formatPercent(percent)}
               </div>
@@ -237,7 +235,7 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
         },
       }),
     ],
-    []
+    [t]
   );
 
   const table = useReactTable({
@@ -281,8 +279,8 @@ export function PortfolioHoldingsTable({ holdings }: PortfolioHoldingsTableProps
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No portfolio holdings found.
+              <TableCell colSpan={6} className="h-24 text-center">
+                {t('portfolio.noHoldings')}
               </TableCell>
             </TableRow>
           )}

@@ -408,5 +408,43 @@
     "securityNotFound": "\"{{identifier}}\" menkul kıymeti veritabanında bulunamadı. Lütfen ticker veya ISIN yazımını kontrol edin ve tekrar deneyin.",
     "validationFailed": "Menkul kıymet doğrulaması başarısız oldu. Servis geçici olarak kullanılamıyor olabilir. Lütfen daha sonra tekrar deneyin.",
     "assetCreationFailed": "Varlık oluşturulurken bir hata oluştu. Lütfen tekrar deneyin."
+  },
+  "portfolio": {
+    "holdingsTitle": "Portföy Varlıkları",
+    "positionsTitle": "Portföy Pozisyonları",
+    "ticker": "Sembol",
+    "name": "İsim",
+    "shares": "Paylar",
+    "avgCost": "Ort. Maliyet",
+    "currentPrice": "Güncel Fiyat",
+    "marketValue": "Piyasa Değeri",
+    "totalGainLoss": "Toplam Kar/Zarar",
+    "dayChange": "Günlük Değişim",
+    "noHoldings": "Portföy varlığı bulunamadı.",
+    "type": "Tür",
+    "institution": "Kurum",
+    "assetClass": "Varlık Sınıfı",
+    "risk": "Risk",
+    "portfolioShare": "Portföy Payı",
+    "performance": "Performans",
+    "savingsPlan": "Tasarruf Planı",
+    "fsaAllocated": "FSA Tahsis Edilen",
+    "fsaUsedYTD": "FSA Kullanılan (YTD)",
+    "actions": "Eylemler",
+    "noPositions": "Pozisyon bulunamadı.",
+    "monthly": "ay",
+    "edit": "Düzenle",
+    "details": "Detaylar",
+    "snapshot": "Görüntü",
+    "delete": "Sil",
+    "asset": "Varlık",
+    "account": "Hesap",
+    "assetClasses": {
+      "equity": "Hisse Senedi",
+      "bond": "Tahvil",
+      "realEstate": "Gayrimenkul",
+      "cash": "Nakit",
+      "crypto": "Kripto"
+    }
   }
 }

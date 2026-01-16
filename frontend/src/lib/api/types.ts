@@ -22,17 +22,17 @@ export interface Institution {
 }
 
 // Account types
-export type AccountType = 
-  | 'checking' 
-  | 'savings' 
+export type AccountType =
+  | 'checking'
+  | 'savings'
   | 'savings_account'
   | 'fixed_deposit'
-  | 'brokerage' 
+  | 'brokerage'
   | 'wallet'
   | 'credit_card'
   | 'loan'
-  | 'insurance' 
-  | 'cash' 
+  | 'insurance'
+  | 'cash'
   | 'other';
 
 export interface AccountSnapshot {
@@ -132,13 +132,20 @@ export interface Asset {
   account_id?: number;
   asset_type_id: number;
   asset_type?: AssetType;
-  
+  account?: Account;
+
+  // Flattened properties from JSON
+  isin?: string;
+  ticker?: string;
+  risk_class?: number;
+  risk_class_source?: string;
+
   // Specific asset details (one of these will be populated based on type)
   security_asset?: SecurityAsset;
   insurance_asset?: InsuranceAsset;
   real_estate_asset?: RealEstateAsset;
   loan_asset?: LoanAsset;
-  
+
   snapshots?: AssetSnapshot[];
 }
 
@@ -159,7 +166,7 @@ export interface CreateAssetParams {
   asset_type_id: number;
   is_active?: boolean;
   created_at_date?: string; // Optional: date when asset was added/bought
-  
+
   // Specific fields based on type
   security_asset?: SecurityAsset;
   insurance_asset?: InsuranceAsset;
@@ -172,4 +179,13 @@ export interface WealthHistoryPoint {
   date: string;
   total_wealth: number;
   by_type: Record<string, number>;
+}
+
+export interface TaxExemption {
+  id: number;
+  user_id: number;
+  institution_id: number;
+  year: number;
+  amount: string;
+  institution?: Institution;
 }

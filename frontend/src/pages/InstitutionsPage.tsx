@@ -58,12 +58,12 @@ export default function InstitutionsPage() {
   // Get unique types and countries for filters
   const uniqueTypes = useMemo(() => {
     if (!institutions) return [];
-    return Array.from(new Set(institutions.map((i) => i.type)));
+    return Array.from(new Set(institutions.map((i) => i.type).filter(Boolean))) as string[];
   }, [institutions]);
 
   const uniqueCountries = useMemo(() => {
     if (!institutions) return [];
-    return Array.from(new Set(institutions.map((i) => i.country))).sort();
+    return Array.from(new Set(institutions.map((i) => i.country).filter(Boolean))) as string[];
   }, [institutions]);
 
   // Filter institutions
@@ -74,7 +74,7 @@ export default function InstitutionsPage() {
       const matchesSearch =
         searchQuery === '' ||
         institution.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        institution.country.toLowerCase().includes(searchQuery.toLowerCase());
+        (institution.country?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
       const matchesType = typeFilter === 'all' || institution.type === typeFilter;
       const matchesCountry = countryFilter === 'all' || institution.country === countryFilter;

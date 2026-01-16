@@ -408,5 +408,43 @@
     "securityNotFound": "The security \"{{identifier}}\" was not found in the database. Please check the spelling of the ticker or ISIN and try again.",
     "validationFailed": "Security validation failed. The service may be temporarily unavailable. Please try again later.",
     "assetCreationFailed": "An error occurred while creating the asset. Please try again."
+  },
+  "portfolio": {
+    "holdingsTitle": "Portfolio Holdings",
+    "positionsTitle": "Portfolio Positions",
+    "ticker": "Ticker",
+    "name": "Name",
+    "shares": "Shares",
+    "avgCost": "Avg. Cost",
+    "currentPrice": "Current Price",
+    "marketValue": "Market Value",
+    "totalGainLoss": "Total Gain/Loss",
+    "dayChange": "Day Change",
+    "noHoldings": "No portfolio holdings found.",
+    "type": "Type",
+    "institution": "Institution",
+    "assetClass": "Asset Class",
+    "risk": "Risk",
+    "portfolioShare": "Portfolio Share",
+    "performance": "Performance",
+    "savingsPlan": "Savings Plan",
+    "fsaAllocated": "FSA Allocated",
+    "fsaUsedYTD": "FSA Used (YTD)",
+    "actions": "Actions",
+    "noPositions": "No positions found.",
+    "monthly": "month",
+    "edit": "Edit",
+    "details": "Details",
+    "snapshot": "Snapshot",
+    "delete": "Delete",
+    "asset": "Asset",
+    "account": "Account",
+    "assetClasses": {
+      "equity": "Equity",
+      "bond": "Bond",
+      "realEstate": "Real Estate",
+      "cash": "Cash",
+      "crypto": "Crypto"
+    }
   }
 }
