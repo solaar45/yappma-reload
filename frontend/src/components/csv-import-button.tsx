@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { Upload } from 'lucide-react';
-import { api } from '@/lib/api/client';
+import { apiClient } from '@/lib/api/client';
 
 export function CsvImportButton() {
   const { t } = useTranslation();
@@ -29,11 +29,15 @@ export function CsvImportButton() {
     formData.append('file', file);
 
     try {
-      const response = await api.post('/snapshots/import', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const response = await apiClient.post<any>('/snapshots/import', formData, {
+        headers: {
+            // Let the browser set Content-Type for FormData
+            // If we set 'Content-Type': 'multipart/form-data', it will miss the boundary
+            // apiClient logic handles this check (isFormData ? {} : defaultHeaders)
+        },
       });
 
-      const { snapshots_created, warnings } = response.data;
+      const { snapshots_created, warnings } = response;
 
       if (warnings && warnings.length > 0) {
         toast({
