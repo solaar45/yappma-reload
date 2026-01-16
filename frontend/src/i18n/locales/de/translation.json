@@ -97,6 +97,19 @@
     "errorLoading": "Fehler beim Laden des Dashboards",
     "asOf": "Stand"
   },
+  "import": {
+    "buttonLabel": "CSV Import",
+    "dialogTitle": "Snapshots importieren (CSV)",
+    "dialogDescription": "Laden Sie eine CSV-Datei Ihrer Bank oder Ihres Brokers hoch. Unterstützte Formate: Scalable Capital (Baader Bank), Trade Republic, DKB, Comdirect.",
+    "fileLabel": "CSV Datei",
+    "uploadButton": "Import starten",
+    "successTitle": "Import erfolgreich",
+    "successDescription": "{{count}} Snapshots wurden erfolgreich importiert.",
+    "warningTitle": "Import Warnungen",
+    "warningDescription": "Einige Zeilen konnten nicht importiert werden: {{count}} Warnungen.",
+    "errorTitle": "Import fehlgeschlagen",
+    "errorDescription": "Ein Fehler ist beim Hochladen aufgetreten. Bitte versuchen Sie es erneut."
+  },
   "taxes": {
     "title": "Steuern",
     "yearToDate": "Jahr bis heute",
