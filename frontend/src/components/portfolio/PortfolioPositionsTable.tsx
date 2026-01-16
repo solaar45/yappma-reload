@@ -169,7 +169,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
              const domain = row.original.institutionDomain;
              
              return (
-               <div className="flex items-center gap-2 font-semibold cursor-pointer" onClick={row.getToggleExpandedHandler()}>
+               <div className="flex items-center gap-2 font-semibold">
                  <span className="w-4 h-4 flex items-center justify-center">
                     {row.getIsExpanded() ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                  </span>
@@ -367,43 +367,7 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
           return null; 
         },
       }),
-
-      columnHelper.display({
-        id: 'actions',
-        cell: ({ row }) => {
-          if (row.getIsGrouped()) return null;
-          
-          return (
-          <div className="text-right pr-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>
-                  <Edit className="mr-2 h-4 w-4" />
-                  <span>{t('portfolio.edit')}</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <FileText className="mr-2 h-4 w-4" />
-                  <span>{t('portfolio.details')}</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Camera className="mr-2 h-4 w-4" />
-                  <span>{t('portfolio.snapshot')}</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  <span>{t('portfolio.delete')}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )},
-      }),
+      // Actions column removed entirely
     ],
     [t]
   );
@@ -464,7 +428,11 @@ export function PortfolioPositionsTable({ positions }: PortfolioPositionsTablePr
         <TableBody>
           {/* 1. Grouped Positions (Institutions) */}
           {groupedTable.getRowModel().rows.map((row) => (
-            <TableRow key={row.id} className={row.getIsGrouped() ? "bg-muted/30 hover:bg-muted/50" : ""}>
+            <TableRow 
+              key={row.id} 
+              className={row.getIsGrouped() ? "bg-muted/30 hover:bg-muted/50 cursor-pointer" : ""}
+              onClick={row.getIsGrouped() ? row.getToggleExpandedHandler() : undefined}
+            >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
