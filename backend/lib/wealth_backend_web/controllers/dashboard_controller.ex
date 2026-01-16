@@ -9,10 +9,9 @@ defmodule WealthBackendWeb.DashboardController do
   Returns net worth calculation for a user.
   Query params: user_id (required), date (optional, defaults to today)
   """
-  def net_worth(conn, params) do
-    user = conn.assigns.current_user
+  def net_worth(conn, %{"user_id" => user_id} = params) do
     date = parse_date(params["date"])
-    net_worth = Analytics.calculate_net_worth(user.id, date)
+    net_worth = Analytics.calculate_net_worth(user_id, date)
     
     render(conn, :net_worth, net_worth: net_worth, date: date)
   end
@@ -21,10 +20,9 @@ defmodule WealthBackendWeb.DashboardController do
   Returns latest snapshots for all accounts of a user.
   Query params: user_id (required), date (optional)
   """
-  def account_snapshots(conn, params) do
-    user = conn.assigns.current_user
+  def account_snapshots(conn, %{"user_id" => user_id} = params) do
     date = parse_date(params["date"])
-    snapshots = Analytics.get_latest_account_snapshots(user.id, date)
+    snapshots = Analytics.get_latest_account_snapshots(user_id, date)
     
     render(conn, :account_snapshots, snapshots: snapshots, date: date)
   end
@@ -33,12 +31,22 @@ defmodule WealthBackendWeb.DashboardController do
   Returns latest snapshots for all assets of a user.
   Query params: user_id (required), date (optional)
   """
-  def asset_snapshots(conn, params) do
-    user = conn.assigns.current_user
+  def asset_snapshots(conn, %{"user_id" => user_id} = params) do
     date = parse_date(params["date"])
-    snapshots = Analytics.get_latest_asset_snapshots(user.id, date)
+    snapshots = Analytics.get_latest_asset_snapshots(user_id, date)
     
     render(conn, :asset_snapshots, snapshots: snapshots, date: date)
+  end
+
+  @doc """
+  Returns asset allocation by type for a user.
+  Query params: user_id (required), date (optional)
+  """
+  def asset_allocation(conn, %{"user_id" => user_id} = params) do
+    date = parse_date(params["date"])
+    allocation = Analytics.get_asset_allocation(user_id, date)
+    
+    render(conn, :asset_allocation, allocation: allocation, date: date)
   end
 
   defp parse_date(nil), do: Date.utc_today()
