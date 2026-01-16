@@ -86,6 +86,8 @@
   },
   "dashboard": {
     "title": "Panel",
+    "overview": "Genel Bakış",
+    "analytics": "Analiz",
     "totalValue": "Toplam Değer",
     "totalNetWorth": "Net Varlık",
     "netWorth": "Net Varlık",
@@ -100,6 +102,12 @@
     "noAssetSnapshots": "Varlık anlık görüntüsü mevcut değil",
     "errorLoading": "Panel yüklenirken hata oluştu",
     "asOf": "itibariyle"
+  },
+  "analytics": {
+    "assetAllocation": "Varlık Dağılımı",
+    "netWorthTrend": "Net Varlık Eğilimi",
+    "topPerformers": "En İyi Performans Gösterenler",
+    "liquidity": "Likidite"
   },
   "import": {
     "buttonLabel": "CSV İçe Aktar",
