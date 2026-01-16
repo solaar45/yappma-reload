@@ -9,7 +9,8 @@ defmodule WealthBackend.Import.Parser do
 
   # Define supported adapters
   @adapters [
-    WealthBackend.Import.Adapters.ScalableCapital
+    WealthBackend.Import.Adapters.ScalableCapital,
+    WealthBackend.Import.Adapters.DKB
   ]
 
   @doc """
@@ -25,6 +26,14 @@ defmodule WealthBackend.Import.Parser do
         
         # 2. Parse using adapter
         try do
+          # Special handling for DKB which has metadata lines before header
+          # The adapter should ideally handle this, but NimbleCSV expects consistent columns
+          # For DKB, we pass the raw content to the adapter's custom parser if it implements one,
+          # or we clean it up here.
+          
+          # Since DKB adapter expects raw rows to extract metadata from first lines, 
+          # we parse it without skipping headers initially.
+          
           rows = 
             csv_content
             |> CSV.parse_string(skip_headers: false)
@@ -49,7 +58,7 @@ defmodule WealthBackend.Import.Parser do
 
   defp detect_adapter(content) do
     # Get first few lines to check headers
-    preview = String.split(content, "\n") |> Enum.take(5) |> Enum.join("\n")
+    preview = String.split(content, "\n") |> Enum.take(15) |> Enum.join("\n")
     
     found = Enum.find(@adapters, fn adapter -> 
       adapter.matches?(preview)
