@@ -83,6 +83,8 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "overview": "Overview",
+    "analytics": "Analytics",
     "totalValue": "Total Value",
     "totalNetWorth": "Net Worth",
     "totalInAccounts": "Total in Accounts",
@@ -96,6 +98,12 @@
     "noAssetSnapshots": "No asset snapshots available",
     "errorLoading": "Error loading dashboard",
     "asOf": "As of"
+  },
+  "analytics": {
+    "assetAllocation": "Asset Allocation",
+    "netWorthTrend": "Net Worth Trend",
+    "topPerformers": "Top Performers",
+    "liquidity": "Liquidity"
   },
   "import": {
     "buttonLabel": "Import CSV",
