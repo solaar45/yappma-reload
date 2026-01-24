@@ -60,12 +60,22 @@ defmodule WealthBackend.Accounts.User do
   """
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :password, :name, :currency_default, :tax_allowance_limit, :tax_status])
+    |> cast(attrs, [:email, :password, :name, :currency_default, :tax_allowance_limit, :tax_status, :role])
     |> validate_email(opts)
     |> validate_password(opts)
     |> validate_required([:name])
     |> validate_inclusion(:tax_status, ~w(single married))
     |> validate_number(:tax_allowance_limit, greater_than_or_equal_to: 0)
+    |> validate_role_on_registration()
+  end
+
+  # Validates role only if explicitly provided (for first user super_admin)
+  defp validate_role_on_registration(changeset) do
+    if get_change(changeset, :role) do
+      validate_inclusion(changeset, :role, @valid_roles)
+    else
+      changeset
+    end
   end
 
   @doc """
