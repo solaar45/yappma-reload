@@ -6,6 +6,12 @@ export interface User {
   currency_default: string;
   tax_status: 'single' | 'married';
   tax_allowance_limit: number;
+  // Admin/Multi-user fields
+  role: 'user' | 'admin' | 'super_admin' | 'read_only';
+  is_active?: boolean;
+  last_login_at?: string;
+  login_count?: number;
+  force_password_change?: boolean;
 }
 
 // Institution types
