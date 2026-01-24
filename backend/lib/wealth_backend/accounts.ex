@@ -147,7 +147,20 @@ defmodule WealthBackend.Accounts do
   ## User registration
 
   @doc """
+  Checks if this is the first user in the system.
+  Used to automatically assign super_admin role.
+  """
+  defp is_first_user? do
+    User
+    |> limit(1)
+    |> Repo.aggregate(:count, :id) == 0
+  end
+
+  @doc """
   Registers a user.
+
+  The first user to register automatically becomes a super_admin.
+  All subsequent users get the default 'user' role.
 
   ## Examples
 
@@ -159,6 +172,16 @@ defmodule WealthBackend.Accounts do
 
   """
   def register_user(attrs) do
+    # Check if this is the first user
+    is_first = is_first_user?()
+    
+    # If first user, set role to super_admin
+    attrs = if is_first do
+      Map.put(attrs, :role, "super_admin")
+    else
+      attrs
+    end
+
     %User{}
     |> User.registration_changeset(attrs)
     |> Repo.insert()
