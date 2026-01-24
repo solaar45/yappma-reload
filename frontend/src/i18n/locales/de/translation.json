@@ -50,13 +50,17 @@
     "items": "Elemente"
   },
   "navigation": {
+    "menu": "Menü",
     "dashboard": "Dashboard",
     "accounts": "Konten",
     "assets": "Vermögenswerte",
     "institutions": "Institutionen",
     "snapshots": "Momentaufnahmen",
     "taxes": "Steuern",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "admin": "Administration",
+    "profile": "Profil",
+    "logout": "Abmelden"
   },
   "languages": {
     "en": "Englisch",

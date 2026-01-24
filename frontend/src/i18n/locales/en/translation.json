@@ -48,13 +48,17 @@
     "balance": "Balance"
   },
   "navigation": {
+    "menu": "Menu",
     "dashboard": "Dashboard",
     "accounts": "Accounts",
     "assets": "Assets",
     "institutions": "Institutions",
     "snapshots": "Snapshots",
     "taxes": "Taxes",
-    "settings": "Settings"
+    "settings": "Settings",
+    "admin": "Administration",
+    "profile": "Profile",
+    "logout": "Logout"
   },
   "languages": {
     "en": "English",
