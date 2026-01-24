@@ -50,6 +50,7 @@
     "balance": "Bakiye"
   },
   "navigation": {
+    "menu": "Menü",
     "dashboard": "Panel",
     "accounts": "Hesaplar",
     "assets": "Varlıklar",
@@ -57,7 +58,10 @@
     "snapshots": "Anlık Görüntüler",
     "taxes": "Vergiler",
     "settings": "Ayarlar",
-    "portfolio": "Portföy"
+    "portfolio": "Portföy",
+    "admin": "Yönetim",
+    "profile": "Profil",
+    "logout": "Çıkış Yap"
   },
   "languages": {
     "en": "İngilizce",
@@ -309,7 +313,7 @@
     "insurance": {
       "details": "Sigorta Detayları",
       "insurerName": "Sigorta Şirketi",
-      "policyNumber": "Poliçe Numarası",
+      "policyNumber": "Poliçe Numaraı",
       "type": "Sigorta Türü",
       "typePlaceholder": "orn. Hayat Sigortası, Sorumluluk",
       "policyStartDate": "Poliçe Başlangıcı",
@@ -345,7 +349,7 @@
       "purchaseDate": "Alım Tarihi",
       "constructionYear": "İnşaat Yılı",
       "renovationYear": "Renovasyon Yılı",
-      "cadastralNumber": "Kadastro Numarası",
+      "cadastralNumber": "Kadastro Numaraı",
       "financials": "Finansal Veriler",
       "rentalIncome": "Kira Geliri (aylık)",
       "operatingExpenses": "İşletme Giderleri (aylık)",
