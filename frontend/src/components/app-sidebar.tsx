@@ -1,4 +1,4 @@
-import { Home, Database, TrendingUp, Building2, Receipt, ChevronUp, User2, Shield, Users } from 'lucide-react';
+import { Home, Database, TrendingUp, Building2, Receipt, ChevronUp, User2, Shield, Users, Languages } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -74,12 +74,24 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
   };
+
+  const changeLanguage = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+  };
+
+  const languages = [
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'en', name: 'English', flag: '🇬🇧' },
+    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+  ];
+
+  const currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
 
   return (
     <Sidebar>
@@ -149,6 +161,36 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          {/* Language Switcher */}
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton tooltip={t('settings.language')}>
+                  <Languages className="h-4 w-4" />
+                  <span>{currentLanguage.name}</span>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="start" className="w-48">
+                {languages.map((language) => (
+                  <DropdownMenuItem
+                    key={language.code}
+                    onClick={() => changeLanguage(language.code)}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-base">{language.flag}</span>
+                      <span>{language.name}</span>
+                    </span>
+                    {i18n.language === language.code && (
+                      <span className="text-xs">✓</span>
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+
+          {/* User Menu */}
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
