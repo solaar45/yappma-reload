@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { UserProvider } from '@/contexts/UserContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { AdminRoute } from '@/components/AdminRoute';
 import { AppSidebar } from '@/components/app-sidebar';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
@@ -27,6 +28,8 @@ import SnapshotsPage from '@/pages/SnapshotsPage';
 import TaxesPage from '@/pages/TaxesPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
+import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
+import UserManagementPage from '@/pages/admin/UserManagementPage';
 
 function AppContent() {
   const { t } = useTranslation();
@@ -40,6 +43,8 @@ function AppContent() {
       '/snapshots': t('navigation.snapshots'),
       '/institutions': t('navigation.institutions'),
       '/taxes': t('taxes.title'),
+      '/admin': t('admin.dashboard.title', { defaultValue: 'Admin Dashboard' }),
+      '/admin/users': t('admin.users.title', { defaultValue: 'Benutzerverwaltung' }),
     };
 
     return breadcrumbs[pathname] || t('navigation.dashboard');
@@ -123,6 +128,24 @@ function AppContent() {
                 <ProtectedRoute>
                   <TaxesPage />
                 </ProtectedRoute>
+              }
+            />
+            
+            {/* Admin Routes */}
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminDashboardPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <AdminRoute>
+                  <UserManagementPage />
+                </AdminRoute>
               }
             />
           </Routes>
