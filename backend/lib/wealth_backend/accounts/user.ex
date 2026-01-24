@@ -2,6 +2,8 @@ defmodule WealthBackend.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @valid_roles ~w(user admin super_admin read_only)
+
   schema "users" do
     field :email, :string
     field :password, :string, virtual: true, redact: true
@@ -15,7 +17,17 @@ defmodule WealthBackend.Accounts.User do
     field :tax_allowance_limit, :integer, default: 1000
     field :tax_status, :string, default: "single"
 
+    # Multi-user/Admin fields
+    field :role, :string, default: "user"
+    field :is_active, :boolean, default: true
+    field :last_login_at, :utc_datetime
+    field :login_count, :integer, default: 0
+    field :deactivated_at, :utc_datetime
+    field :force_password_change, :boolean, default: false
+
     # Associations
+    belongs_to :created_by_user, __MODULE__
+    belongs_to :deactivated_by_user, __MODULE__
     has_many :institutions, WealthBackend.Accounts.Institution
     has_many :accounts, WealthBackend.Accounts.Account
     has_many :tax_exemptions, WealthBackend.Taxes.TaxExemption
@@ -54,6 +66,49 @@ defmodule WealthBackend.Accounts.User do
     |> validate_required([:name])
     |> validate_inclusion(:tax_status, ~w(single married))
     |> validate_number(:tax_allowance_limit, greater_than_or_equal_to: 0)
+  end
+
+  @doc """
+  Admin registration changeset - allows setting role and other admin fields.
+  """
+  def admin_registration_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :password, :name, :role, :currency_default, :tax_allowance_limit, :tax_status])
+    |> validate_email(opts)
+    |> validate_password(opts)
+    |> validate_required([:name])
+    |> validate_inclusion(:role, @valid_roles)
+    |> validate_inclusion(:tax_status, ~w(single married))
+    |> validate_number(:tax_allowance_limit, greater_than_or_equal_to: 0)
+  end
+
+  @doc """
+  Admin changeset for updating user fields that only admins can change.
+  """
+  def admin_changeset(user, attrs) do
+    user
+    |> cast(attrs, [
+      :email, :name, :role, :is_active, :currency_default,
+      :tax_allowance_limit, :tax_status, :deactivated_at, :deactivated_by_user_id
+    ])
+    |> validate_required([:email, :name, :role])
+    |> validate_format(:email, ~r/^[^\s]+$/, message: "must have no spaces")
+    |> validate_length(:email, max: 160)
+    |> validate_inclusion(:role, @valid_roles)
+    |> validate_inclusion(:tax_status, ~w(single married))
+    |> validate_number(:tax_allowance_limit, greater_than_or_equal_to: 0)
+    |> validate_role_change()
+    |> unique_constraint(:email)
+  end
+
+  @doc """
+  Admin password reset changeset - allows admin to reset password without knowing current one.
+  """
+  def admin_password_reset_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:password, :force_password_change])
+    |> validate_required([:password])
+    |> validate_password([])
   end
 
   @doc """
@@ -113,6 +168,21 @@ defmodule WealthBackend.Accounts.User do
     end
   end
 
+  # Validates that super_admin role cannot be changed
+  defp validate_role_change(changeset) do
+    case get_field(changeset, :role) do
+      "super_admin" ->
+        # Prevent changing super_admin role
+        if get_change(changeset, :role) && get_field(changeset, :role, :original) == "super_admin" do
+          add_error(changeset, :role, "cannot change super admin role")
+        else
+          changeset
+        end
+      _ ->
+        changeset
+    end
+  end
+
   @doc """
   A user changeset for changing the email.
 
@@ -156,6 +226,17 @@ defmodule WealthBackend.Accounts.User do
   end
 
   @doc """
+  Updates login tracking fields.
+  """
+  def login_changeset(user) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    change(user, 
+      last_login_at: now,
+      login_count: (user.login_count || 0) + 1
+    )
+  end
+
+  @doc """
   Verifies the password.
 
   If there is no user or the user doesn't have a password, we call
@@ -183,4 +264,27 @@ defmodule WealthBackend.Accounts.User do
       add_error(changeset, :current_password, "is not valid")
     end
   end
+
+  @doc """
+  Checks if user is an admin (admin or super_admin).
+  """
+  def is_admin?(%__MODULE__{role: role}) when role in ["admin", "super_admin"], do: true
+  def is_admin?(_), do: false
+
+  @doc """
+  Checks if user is a super admin.
+  """
+  def is_super_admin?(%__MODULE__{role: "super_admin"}), do: true
+  def is_super_admin?(_), do: false
+
+  @doc """
+  Checks if user account is active.
+  """
+  def is_active?(%__MODULE__{is_active: true}), do: true
+  def is_active?(_), do: false
+
+  @doc """
+  Returns list of valid roles.
+  """
+  def valid_roles, do: @valid_roles
 end
