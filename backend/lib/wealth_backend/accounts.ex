@@ -175,9 +175,9 @@ defmodule WealthBackend.Accounts do
     # Check if this is the first user
     is_first = is_first_user?()
     
-    # If first user, set role to super_admin
+    # If first user, set role to super_admin (using string key for web params)
     attrs = if is_first do
-      Map.put(attrs, :role, "super_admin")
+      Map.put(attrs, "role", "super_admin")
     else
       attrs
     end
