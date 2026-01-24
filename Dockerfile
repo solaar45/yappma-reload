@@ -66,7 +66,7 @@ RUN npm run build
 # ============================================
 FROM alpine:3.18.4
 
-# Install runtime dependencies
+# Install runtime dependencies (including postgresql-client for auto-DB creation)
 RUN apk add --no-cache \
     bash \
     openssl \
@@ -75,7 +75,8 @@ RUN apk add --no-cache \
     libgcc \
     nginx \
     supervisor \
-    curl
+    curl \
+    postgresql-client
 
 # Create app user
 RUN addgroup -g 1000 app && \
