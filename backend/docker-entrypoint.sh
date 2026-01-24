@@ -1,20 +1,72 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Starting YAPPMA Backend..."
+echo "========================================"
+echo "YAPPMA Reload - Starting..."
+echo "========================================"
 
-# Wait for Postgres to be ready
-echo "⏳ Waiting for PostgreSQL to be ready..."
-while ! pg_isready -h "${DB_HOSTNAME:-postgres}" -U "${DB_USERNAME:-postgres}" -q; do
+# Parse DB_HOSTNAME to extract host and port
+DB_HOST="${DB_HOSTNAME:-postgres}"
+DB_PORT="5432"
+
+# If DB_HOSTNAME contains a port (e.g., "192.168.0.161:5439")
+if [[ $DB_HOST == *":"* ]]; then
+  DB_PORT="${DB_HOST##*:}"
+  DB_HOST="${DB_HOST%:*}"
+fi
+
+DB_USER="${DB_USERNAME:-postgres}"
+DB_NAME="${DB_DATABASE:-wealth_backend_prod}"
+
+echo "Database Configuration:"
+echo "  Host: $DB_HOST"
+echo "  Port: $DB_PORT"
+echo "  User: $DB_USER"
+echo "  Database: $DB_NAME"
+echo ""
+
+# Wait for PostgreSQL to be ready (max 10 seconds)
+echo "Waiting for database..."
+MAX_RETRIES=10
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  if pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -q; then
+    echo "✅ PostgreSQL is ready!"
+    break
+  fi
+  RETRY_COUNT=$((RETRY_COUNT + 1))
+  echo "Waiting for database... ($RETRY_COUNT/$MAX_RETRIES)"
   sleep 1
 done
-echo "✅ PostgreSQL is ready!"
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+  echo "⚠ Warning: Could not verify backend connectivity, continuing anyway..."
+fi
+
+# Create database if it doesn't exist
+echo "Checking if database exists..."
+if ! PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -lqt | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
+  echo "📦 Database '$DB_NAME' does not exist, creating..."
+  PGPASSWORD="${DB_PASSWORD}" createdb -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME"
+  echo "✅ Database created!"
+else
+  echo "✅ Database '$DB_NAME' already exists"
+fi
 
 # Run database migrations
-echo "🔄 Running database migrations..."
-bin/wealth_backend eval "WealthBackend.Release.migrate()"
-echo "✅ Migrations complete!"
+echo "Running database migrations..."
+if bin/wealth_backend eval "WealthBackend.Release.migrate()"; then
+  echo "✅ Migrations complete!"
+else
+  echo "⚠ Warning: Migrations failed or not needed"
+fi
+
+echo "========================================"
+echo "Starting services..."
+echo "  Backend API: http://localhost:4000"
+echo "  Frontend UI: http://localhost:8080"
+echo "========================================"
 
 # Start the application
-echo "🎯 Starting application..."
 exec bin/wealth_backend start
