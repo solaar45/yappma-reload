@@ -56,23 +56,11 @@ fi
 
 # Run database migrations
 echo "Running database migrations..."
-cd /app/backend
 if bin/wealth_backend eval "WealthBackend.Release.migrate()"; then
   echo "✅ Migrations complete!"
 else
   echo "⚠ Warning: Migrations failed or not needed"
 fi
-
-# Generate runtime configuration for frontend
-echo "Generating runtime configuration..."
-cat <<EOF > /app/frontend/config.js
-window.APP_CONFIG = {
-  "VITE_API_BASE_URL": "${VITE_API_BASE_URL:-/api}",
-  "VITE_LOGOKIT_TOKEN": "${VITE_LOGOKIT_TOKEN:-}",
-  "VITE_LOGO_DEV_TOKEN": "${VITE_LOGO_DEV_TOKEN:-}"
-};
-EOF
-echo "✅ Runtime configuration generated with following vars: $(echo "VITE_API_BASE_URL VITE_LOGOKIT_TOKEN VITE_LOGO_DEV_TOKEN" | xargs -n1 | grep -v '^$' | paste -sd,)"
 
 echo "========================================"
 echo "Starting services..."
@@ -80,5 +68,5 @@ echo "  Backend API: http://localhost:4000"
 echo "  Frontend UI: http://localhost:8080"
 echo "========================================"
 
-# Start supervisord (manages backend + nginx)
-exec /usr/bin/supervisord -c /etc/supervisord.conf
+# Start the application
+exec bin/wealth_backend start

@@ -291,6 +291,8 @@ docker-compose.override.yml
 .stylelintcache
 .yarn/
 .pnp.*
+cookies.txt
+**/cookies.txt
 
 # Lock files (uncomment if using different package managers)
 # yarn.lock

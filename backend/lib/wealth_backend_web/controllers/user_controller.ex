@@ -15,7 +15,7 @@ defmodule WealthBackendWeb.UserController do
     # Default name to email (username) if not provided
     user_params = Map.put_new(user_params, "name", user_params["email"])
 
-    with {:ok, %User{} = user} <- Accounts.create_user(user_params) do
+    with {:ok, %User{} = user} <- Accounts.register_user(user_params) do
       conn
       |> put_status(:created)
       |> WealthBackendWeb.UserAuth.log_in_user(user)

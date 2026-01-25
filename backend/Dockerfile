@@ -52,7 +52,8 @@ RUN apk add --no-cache \
     openssl \
     ncurses-libs \
     libstdc++ \
-    libgcc
+    libgcc \
+    postgresql-client
 
 # Create non-root user
 RUN addgroup -g 1000 app && \
@@ -63,6 +64,10 @@ WORKDIR /app
 
 # Copy release from build stage
 COPY --from=build --chown=app:app /app/_build/prod/rel/wealth_backend ./
+
+# Copy entrypoint script
+COPY --chown=app:app docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Switch to non-root user
 USER app
@@ -78,5 +83,5 @@ ENV MIX_ENV=prod
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD ["bin/wealth_backend", "rpc", "1 + 1"]
 
-# Start the application
-CMD ["bin/wealth_backend", "start"]
+# Use entrypoint script for automatic migrations
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

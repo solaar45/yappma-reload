@@ -1,48 +1,79 @@
-import {
-  Wallet,
-  Landmark,
-  PiggyBank,
-  Camera,
-  Receipt,
-  Settings,
-  LogOut,
-  Languages,
-} from 'lucide-react';
+import { Home, Database, TrendingUp, Receipt, ChevronUp, User2, Shield, Users, Languages } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { isAdmin } from '@/lib/permissions';
+import { cn } from '@/lib/utils';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { useUser } from '@/contexts/UserContext';
-import { NavUser } from '@/components/nav-user';
-import { useAuth } from '@/hooks/useAuth';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { getRoleDisplayName } from '@/lib/permissions';
+
+const mainItems = [
+  {
+    title: 'navigation.dashboard',
+    url: '/',
+    icon: Home,
+  },
+  {
+    title: 'navigation.accounts',
+    url: '/accounts',
+    icon: Database,
+  },
+  {
+    title: 'navigation.assets',
+    url: '/assets',
+    icon: TrendingUp,
+  },
+  {
+    title: 'navigation.snapshots',
+    url: '/snapshots',
+    icon: Database,
+  },
+  {
+    title: 'navigation.taxes',
+    url: '/taxes',
+    icon: Receipt,
+  },
+];
+
+const adminItems = [
+  {
+    title: 'admin.dashboard.title',
+    defaultTitle: 'Admin Dashboard',
+    url: '/admin',
+    icon: Shield,
+  },
+  {
+    title: 'admin.users.title',
+    defaultTitle: 'Benutzerverwaltung',
+    url: '/admin/users',
+    icon: Users,
+  },
+];
 
 export function AppSidebar() {
   const { t, i18n } = useTranslation();
-  const { user } = useUser();
-  const { logout } = useAuth();
-  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
   };
 
   const changeLanguage = (langCode: string) => {
@@ -57,68 +88,29 @@ export function AppSidebar() {
 
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
 
-  const mainItems = [
-    {
-      title: t('navigation.dashboard'),
-      url: '/',
-      icon: Landmark,
-    },
-    {
-      title: t('navigation.accounts'),
-      url: '/accounts',
-      icon: Wallet,
-    },
-    {
-      title: t('navigation.assets'),
-      url: '/assets',
-      icon: PiggyBank,
-    },
-    {
-      title: t('navigation.snapshots'),
-      url: '/snapshots',
-      icon: Camera,
-    },
-    {
-      title: t('taxes.title'),
-      url: '/taxes',
-      icon: Receipt,
-    },
-  ];
-
-  // User data for the static header display
-  const userData = {
-    name: user?.name || 'User',
-    email: user?.email || '',
-    avatar: '',
-  };
-
   return (
-    <Sidebar collapsible="icon">
-      {/* 1. Static User Info in Header */}
-      <SidebarHeader>
-        <NavUser user={userData} />
-      </SidebarHeader>
-
+    <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Platform</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('navigation.menu')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
+                  <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
                       className={({ isActive }) =>
                         cn(
-                          'flex items-center gap-3',
-                          isActive &&
-                            'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all',
+                          isActive
+                            ? 'bg-primary text-primary-foreground'
+                            : 'hover:bg-accent'
                         )
                       }
                     >
-                      <item.icon />
-                      <span>{item.title}</span>
+                      <item.icon className="h-4 w-4" />
+                      <span>{t(item.title as any)}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -126,36 +118,49 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Admin Section */}
+        {user && isAdmin(user) && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="flex items-center gap-2">
+              {t('navigation.admin', { defaultValue: 'Administration' })}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          cn(
+                            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all',
+                            isActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'hover:bg-accent'
+                          )
+                        }
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{t(item.title, { defaultValue: item.defaultTitle })}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
-      {/* 2. Footer with explicit Actions (Settings, Language, Logout) */}
       <SidebarFooter>
         <SidebarMenu>
-          {/* Settings Link */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={t('settings.title')}>
-              <NavLink
-                to="/settings"
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3',
-                    isActive &&
-                      'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                  )
-                }
-              >
-                <Settings />
-                <span>{t('settings.title')}</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
           {/* Language Switcher */}
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton tooltip={t('settings.language')}>
-                  <Languages />
+                  <Languages className="h-4 w-4" />
                   <span>{currentLanguage.name}</span>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -179,20 +184,43 @@ export function AppSidebar() {
             </DropdownMenu>
           </SidebarMenuItem>
 
-          {/* Logout Button */}
+          {/* User Menu */}
           <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={handleLogout}
-              tooltip={t('common.logout')}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-            >
-              <LogOut />
-              <span>{t('common.logout')}</span>
-            </SidebarMenuButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                  <User2 className="h-4 w-4" />
+                  <div className="flex flex-col items-start flex-1">
+                    <span className="text-sm font-medium">{user?.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{user?.email}</span>
+                      {user && isAdmin(user) && (
+                        <Badge variant="secondary" className="text-xs px-1 py-0">
+                          {t(getRoleDisplayName(user.role) as any)}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronUp className="ml-auto h-4 w-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                className="w-[--radix-popper-anchor-width]"
+              >
+                <DropdownMenuItem>
+                  <User2 className="mr-2 h-4 w-4" />
+                  <span>{t('navigation.profile')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <span>{t('navigation.logout')}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 }

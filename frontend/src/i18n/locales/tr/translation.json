@@ -50,6 +50,7 @@
     "balance": "Bakiye"
   },
   "navigation": {
+    "menu": "Menü",
     "dashboard": "Panel",
     "accounts": "Hesaplar",
     "assets": "Varlıklar",
@@ -57,7 +58,10 @@
     "snapshots": "Anlık Görüntüler",
     "taxes": "Vergiler",
     "settings": "Ayarlar",
-    "portfolio": "Portföy"
+    "portfolio": "Portföy",
+    "admin": "Yönetim",
+    "profile": "Profil",
+    "logout": "Çıkış Yap"
   },
   "languages": {
     "en": "İngilizce",
@@ -309,7 +313,7 @@
     "insurance": {
       "details": "Sigorta Detayları",
       "insurerName": "Sigorta Şirketi",
-      "policyNumber": "Poliçe Numarası",
+      "policyNumber": "Poliçe Numaraı",
       "type": "Sigorta Türü",
       "typePlaceholder": "orn. Hayat Sigortası, Sorumluluk",
       "policyStartDate": "Poliçe Başlangıcı",
@@ -345,7 +349,7 @@
       "purchaseDate": "Alım Tarihi",
       "constructionYear": "İnşaat Yılı",
       "renovationYear": "Renovasyon Yılı",
-      "cadastralNumber": "Kadastro Numarası",
+      "cadastralNumber": "Kadastro Numaraı",
       "financials": "Finansal Veriler",
       "rentalIncome": "Kira Geliri (aylık)",
       "operatingExpenses": "İşletme Giderleri (aylık)",
@@ -488,6 +492,109 @@
       "realEstate": "Gayrimenkul",
       "cash": "Nakit",
       "crypto": "Kripto"
+    }
+  },
+  "admin": {
+    "accessDenied": {
+      "title": "Erişim Reddedildi",
+      "description": "Bu sayfayı görüntülemek için yönetici yetkilerine ihtiyacınız var.",
+      "backToDashboard": "Panele Geri Dön"
+    },
+    "users": {
+      "title": "Kullanıcı Yönetimi",
+      "usersTotal": "Kullanıcı",
+      "createUser": "Yeni Kullanıcı",
+      "searchPlaceholder": "İsim veya e-posta ile ara...",
+      "allRoles": "Tüm Roller",
+      "allStatus": "Tüm Durumlar",
+      "active": "Aktif",
+      "inactive": "Pasif",
+      "user": "Kullanıcı",
+      "role": "Rol",
+      "status": "Durum",
+      "portfolio": "Portföy",
+      "lastLogin": "Son Giriş",
+      "actions": "İşlemler",
+      "you": "Sen",
+      "never": "Hiç",
+      "logins": "Giriş",
+      "edit": "Düzenle",
+      "resetPassword": "Şifreyi Sıfırla",
+      "promoteToAdmin": "Admin Yap",
+      "demoteToUser": "Kullanıcıya İndir",
+      "deactivate": "Devre Dışı Bırak",
+      "reactivate": "Yeniden Etkinleştir",
+      "delete": "Sil",
+      "noUsers": "Kullanıcı bulunamadı",
+      "loadError": "Yükleme hatası",
+      "loadErrorDescription": "Kullanıcı listesi yüklenemedi",
+      "updateSuccess": "Başarıyla güncellendi",
+      "updateSuccessDescription": "Kullanıcı başarıyla güncellendi",
+      "updateError": "Güncelleme hatası",
+      "passwordResetSuccess": "Şifre sıfırlandı",
+      "passwordResetSuccessDescription": "Yeni şifre belirlendi",
+      "passwordResetError": "Şifre sıfırlama hatası",
+      "deleteSuccess": "Kullanıcı silindi",
+      "deleteSuccessDescription": "Kullanıcı başarıyla silindi",
+      "deleteError": "Silme hatası",
+      "deactivateSuccess": "Kullanıcı devre dışı bırakıldı",
+      "reactivateSuccess": "Kullanıcı yeniden etkinleştirildi",
+      "toggleStatusError": "Durum değiştirme hatası",
+      "promoteSuccess": "Kullanıcı admin yapıldı",
+      "promoteError": "Yükseltme hatası",
+      "demoteSuccess": "Kullanıcı indirildi",
+      "demoteError": "İndirme hatası",
+      "createSuccess": "Kullanıcı başarıyla oluşturuldu",
+      "createError": "Oluşturma hatası",
+      "errors": {
+        "nameRequired": "İsim gerekli",
+        "emailRequired": "E-posta gerekli",
+        "emailInvalid": "Geçersiz e-posta adresi",
+        "passwordRequired": "Şifre gerekli",
+        "passwordTooShort": "Şifre en az 16 karakter olmalıdır",
+        "passwordNoLowercase": "Şifre bir küçük harf içermelidir",
+        "passwordNoUppercase": "Şifre bir büyük harf içermelidir",
+        "passwordNoNumber": "Şifre bir rakam içermelidir",
+        "passwordNoSpecial": "Şifre bir özel karakter içermelidir"
+      }
+    },
+    "roles": {
+      "user": "Kullanıcı",
+      "admin": "Yönetici",
+      "super_admin": "Süper Yönetici",
+      "read_only": "Salt Okunur"
+    },
+    "actions": {
+      "create_user": "Kullanıcı oluşturuldu",
+      "update_user": "Kullanıcı güncellendi",
+      "delete_user": "Kullanıcı silindi",
+      "reset_password": "Şifre sıfırlandı",
+      "change_role": "Rol değiştirildi",
+      "deactivate_user": "Kullanıcı devre dışı bırakıldı",
+      "reactivate_user": "Kullanıcı yeniden etkinleştirildi",
+      "promote_to_admin": "Yönetici yapıldı",
+      "demote_to_user": "Kullanıcıya indirildi"
+    },
+    "dashboard": {
+      "title": "Yönetim Paneli",
+      "welcome": "Hoş geldiniz, {{name}}",
+      "manageUsers": "Kullanıcıları Yönet",
+      "totalUsers": "Toplam Kullanıcı",
+      "activeUsers": "Aktif Kullanıcılar",
+      "inactiveUsers": "Pasif Kullanıcılar",
+      "admins": "Yöneticiler",
+      "recentLogins": "Girişler (7 gün)",
+      "ofTotal": "toplamdan",
+      "auditLog": "Denetim Günlüğü",
+      "auditLogDescription": "Son 20 yönetim işlemi",
+      "timestamp": "Zaman Damgası",
+      "admin": "Yönetici",
+      "action": "İşlem",
+      "target": "Hedef",
+      "details": "Detaylar",
+      "noAuditLogs": "Aktivite bulunamadı",
+      "loadError": "Yükleme hatası",
+      "loadErrorDescription": "Panel verileri yüklenemedi"
     }
   }
 }
