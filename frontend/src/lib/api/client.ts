@@ -1,16 +1,20 @@
 import { logger } from '@/lib/logger';
 import { sanitizeEndpoint, rateLimiter } from './sanitizer';
+import { config } from '@/config';
 
 /**
  * API Error Class
  */
 export class ApiError extends Error {
-  constructor(
-    public status: number,
-    public statusText: string,
-    public data?: unknown
-  ) {
+  public status: number;
+  public statusText: string;
+  public data?: unknown;
+
+  constructor(status: number, statusText: string, data?: unknown) {
     super(`API Error ${status}: ${statusText}`);
+    this.status = status;
+    this.statusText = statusText;
+    this.data = data;
     this.name = 'ApiError';
   }
 }
@@ -37,7 +41,7 @@ class ApiClient {
   };
 
   constructor() {
-    this.baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
+    this.baseURL = config.VITE_API_BASE_URL || '/api';
     logger.info('ApiClient initialized', { baseURL: this.baseURL });
   }
 
@@ -91,7 +95,6 @@ class ApiClient {
         logger.debug('Request deduplicated', { endpoint: sanitizedEndpoint });
         // Return existing promise instead of rejecting
         // Wait for the original request to complete
-        const controller = this.activeRequests.get(requestKey)!;
         return new Promise((resolve, reject) => {
           const checkInterval = setInterval(() => {
             if (!this.activeRequests.has(requestKey)) {
@@ -102,7 +105,7 @@ class ApiClient {
                 .catch(reject);
             }
           }, 50);
-          
+
           // Cleanup after 5 seconds
           setTimeout(() => {
             clearInterval(checkInterval);
@@ -118,12 +121,12 @@ class ApiClient {
 
     // Add CSRF token for state-changing requests
     const csrfToken = this.getCsrfToken();
-    
+
     // Determine headers
     // If body is FormData, we must NOT set Content-Type (let browser set it with boundary)
     const isFormData = options.body instanceof FormData;
     const baseHeaders = isFormData ? {} : this.defaultHeaders;
-    
+
     const headers: HeadersInit = {
       ...baseHeaders,
       ...options.headers,

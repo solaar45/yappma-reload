@@ -23,7 +23,6 @@ import { useLocation } from 'react-router-dom';
 import DashboardPage from '@/pages/DashboardPage';
 import AccountsPage from '@/pages/AccountsPage';
 import AssetsPage from '@/pages/AssetsPage';
-import InstitutionsPage from '@/pages/InstitutionsPage';
 import SnapshotsPage from '@/pages/SnapshotsPage';
 import TaxesPage from '@/pages/TaxesPage';
 import LoginPage from '@/pages/LoginPage';
@@ -41,7 +40,6 @@ function AppContent() {
       '/accounts': t('navigation.accounts'),
       '/assets': t('navigation.assets'),
       '/snapshots': t('navigation.snapshots'),
-      '/institutions': t('navigation.institutions'),
       '/taxes': t('taxes.title'),
       '/admin': t('admin.dashboard.title', { defaultValue: 'Admin Dashboard' }),
       '/admin/users': t('admin.users.title', { defaultValue: 'Benutzerverwaltung' }),
@@ -115,14 +113,6 @@ function AppContent() {
               }
             />
             <Route
-              path="/institutions"
-              element={
-                <ProtectedRoute>
-                  <InstitutionsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/taxes"
               element={
                 <ProtectedRoute>
@@ -130,7 +120,7 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-            
+
             {/* Admin Routes */}
             <Route
               path="/admin"

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building } from 'lucide-react';
+import { config } from '@/config';
 
 type SizeKey = 'small' | 'medium' | 'large';
 
@@ -27,8 +28,8 @@ function initialsFromName(name: string) {
 }
 
 export const InstitutionLogo: React.FC<Props> = ({ name, domain, ticker, isin, size = 'medium', className }) => {
-  const logoDevToken = import.meta.env.VITE_LOGO_DEV_TOKEN;
-  const logokitToken = import.meta.env.VITE_LOGOKIT_TOKEN || logoDevToken; // Fallback to dev token if logokit not set
+  const logoDevToken = config.VITE_LOGO_DEV_TOKEN;
+  const logokitToken = config.VITE_LOGOKIT_TOKEN || logoDevToken; // Fallback to dev token if logokit not set
   const px = SIZE_MAP[size];
 
   // Build URL priority: isin -> ticker -> domain -> name

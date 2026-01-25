@@ -1,4 +1,4 @@
-import { Home, Database, TrendingUp, Building2, Receipt, ChevronUp, User2, Shield, Users, Languages } from 'lucide-react';
+import { Home, Database, TrendingUp, Receipt, ChevronUp, User2, Shield, Users, Languages } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -45,11 +45,6 @@ const mainItems = [
     title: 'navigation.snapshots',
     url: '/snapshots',
     icon: Database,
-  },
-  {
-    title: 'navigation.institutions',
-    url: '/institutions',
-    icon: Building2,
   },
   {
     title: 'navigation.taxes',
@@ -128,7 +123,6 @@ export function AppSidebar() {
         {user && isAdmin(user) && (
           <SidebarGroup>
             <SidebarGroupLabel className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
               {t('navigation.admin', { defaultValue: 'Administration' })}
             </SidebarGroupLabel>
             <SidebarGroupContent>

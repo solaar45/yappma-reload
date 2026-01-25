@@ -65,181 +65,183 @@ export default function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
-          <p className="mt-4 text-sm text-muted-foreground">{t('common.loading')}</p>
+      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            {t('admin.dashboard.title')}
+          </h1>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="h-24 animate-pulse bg-muted rounded" />
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Shield className="h-8 w-8" />
-              {t('admin.dashboard.title')}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              {t('admin.dashboard.welcome', { name: currentUser?.name })}
-            </p>
-          </div>
-          <Link to="/admin/users">
-            <Button>
-              <Users className="mr-2 h-4 w-4" />
-              {t('admin.dashboard.manageUsers')}
-            </Button>
-          </Link>
+    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            {t('admin.dashboard.title')}
+          </h1>
+          <p className="text-muted-foreground">
+            {t('admin.dashboard.welcome', { name: currentUser?.name })}
+          </p>
         </div>
+        <Link to="/admin/users">
+          <Button>
+            <Users className="mr-2 h-4 w-4" />
+            {t('admin.dashboard.manageUsers')}
+          </Button>
+        </Link>
+      </div>
 
-        {/* Statistics Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {t('admin.dashboard.totalUsers')}
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.total_users || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {t('admin.dashboard.activeUsers')}
-              </CardTitle>
-              <UserCheck className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.active_users || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats && stats.total_users > 0
-                  ? `${Math.round((stats.active_users / stats.total_users) * 100)}%`
-                  : '0%'}{' '}
-                {t('admin.dashboard.ofTotal')}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {t('admin.dashboard.inactiveUsers')}
-              </CardTitle>
-              <UserX className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.inactive_users || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {t('admin.dashboard.admins')}
-              </CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.admin_users || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {t('admin.dashboard.recentLogins')}
-              </CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.recent_logins || 0}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Audit Log */}
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ScrollText className="h-5 w-5" />
-              {t('admin.dashboard.auditLog')}
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {t('admin.dashboard.totalUsers')}
             </CardTitle>
-            <CardDescription>
-              {t('admin.dashboard.auditLogDescription')}
-            </CardDescription>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('admin.dashboard.timestamp')}</TableHead>
-                    <TableHead>{t('admin.dashboard.admin')}</TableHead>
-                    <TableHead>{t('admin.dashboard.action')}</TableHead>
-                    <TableHead>{t('admin.dashboard.target')}</TableHead>
-                    <TableHead>{t('admin.dashboard.details')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {auditLog.length > 0 ? (
-                    auditLog.map((log) => (
-                      <TableRow key={log.id}>
-                        <TableCell className="text-sm">
-                          {new Date(log.inserted_at).toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div className="font-medium">{log.admin_user.name}</div>
-                            <div className="text-xs text-muted-foreground">{log.admin_user.email}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getActionBadgeVariant(log.action)}>
-                            {getActionDisplayName(log.action)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {log.target_user ? (
-                            <div className="text-sm">
-                              <div className="font-medium">{log.target_user.name}</div>
-                              <div className="text-xs text-muted-foreground">{log.target_user.email}</div>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {Object.keys(log.details).length > 0 ? (
-                            <div className="text-xs text-muted-foreground max-w-xs truncate">
-                              {JSON.stringify(log.details)}
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        {t('admin.dashboard.noAuditLogs')}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+            <div className="text-2xl font-bold">{stats?.total_users || 0}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {t('admin.dashboard.activeUsers')}
+            </CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.active_users || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats && stats.total_users > 0
+                ? `${Math.round((stats.active_users / stats.total_users) * 100)}%`
+                : '0%'}{' '}
+              {t('admin.dashboard.ofTotal')}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {t('admin.dashboard.inactiveUsers')}
+            </CardTitle>
+            <UserX className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.inactive_users || 0}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {t('admin.dashboard.admins')}
+            </CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.admin_users || 0}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {t('admin.dashboard.recentLogins')}
+            </CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.recent_logins || 0}</div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Audit Log */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ScrollText className="h-5 w-5" />
+            {t('admin.dashboard.auditLog')}
+          </CardTitle>
+          <CardDescription>
+            {t('admin.dashboard.auditLogDescription')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('admin.dashboard.timestamp')}</TableHead>
+                  <TableHead>{t('admin.dashboard.admin')}</TableHead>
+                  <TableHead>{t('admin.dashboard.action')}</TableHead>
+                  <TableHead>{t('admin.dashboard.target')}</TableHead>
+                  <TableHead>{t('admin.dashboard.details')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {auditLog.length > 0 ? (
+                  auditLog.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="text-sm">
+                        {new Date(log.inserted_at).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium">{log.admin_user.name}</div>
+                          <div className="text-xs text-muted-foreground">{log.admin_user.email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getActionBadgeVariant(log.action)}>
+                          {getActionDisplayName(log.action)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {log.target_user ? (
+                          <div className="text-sm">
+                            <div className="font-medium">{log.target_user.name}</div>
+                            <div className="text-xs text-muted-foreground">{log.target_user.email}</div>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {Object.keys(log.details).length > 0 ? (
+                          <div className="text-xs text-muted-foreground max-w-xs truncate">
+                            {JSON.stringify(log.details)}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      {t('admin.dashboard.noAuditLogs')}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
