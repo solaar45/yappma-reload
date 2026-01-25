@@ -53,18 +53,7 @@ export default function AdminDashboardPage() {
   };
 
   const getActionDisplayName = (action: string) => {
-    const actionNames: Record<string, string> = {
-      create_user: 'Benutzer erstellt',
-      update_user: 'Benutzer aktualisiert',
-      delete_user: 'Benutzer gelöscht',
-      reset_password: 'Passwort zurückgesetzt',
-      change_role: 'Rolle geändert',
-      deactivate_user: 'Benutzer deaktiviert',
-      reactivate_user: 'Benutzer reaktiviert',
-      promote_to_admin: 'Zu Admin befördert',
-      demote_to_user: 'Zu Benutzer zurückgestuft',
-    };
-    return actionNames[action] || action;
+    return t(`admin.actions.${action}` as any, { defaultValue: action });
   };
 
   const getActionBadgeVariant = (action: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
@@ -93,16 +82,16 @@ export default function AdminDashboardPage() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Shield className="h-8 w-8" />
-              {t('admin.dashboard.title', { defaultValue: 'Admin Dashboard' })}
+              {t('admin.dashboard.title')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              {t('admin.dashboard.welcome', { name: currentUser?.name, defaultValue: `Willkommen, ${currentUser?.name}` })}
+              {t('admin.dashboard.welcome', { name: currentUser?.name })}
             </p>
           </div>
           <Link to="/admin/users">
             <Button>
               <Users className="mr-2 h-4 w-4" />
-              {t('admin.dashboard.manageUsers', { defaultValue: 'Benutzer verwalten' })}
+              {t('admin.dashboard.manageUsers')}
             </Button>
           </Link>
         </div>
@@ -112,7 +101,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t('admin.dashboard.totalUsers', { defaultValue: 'Benutzer gesamt' })}
+                {t('admin.dashboard.totalUsers')}
               </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -124,7 +113,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t('admin.dashboard.activeUsers', { defaultValue: 'Aktive Benutzer' })}
+                {t('admin.dashboard.activeUsers')}
               </CardTitle>
               <UserCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -134,7 +123,7 @@ export default function AdminDashboardPage() {
                 {stats && stats.total_users > 0
                   ? `${Math.round((stats.active_users / stats.total_users) * 100)}%`
                   : '0%'}{' '}
-                {t('admin.dashboard.ofTotal', { defaultValue: 'von gesamt' })}
+                {t('admin.dashboard.ofTotal')}
               </p>
             </CardContent>
           </Card>
@@ -142,7 +131,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t('admin.dashboard.inactiveUsers', { defaultValue: 'Inaktive Benutzer' })}
+                {t('admin.dashboard.inactiveUsers')}
               </CardTitle>
               <UserX className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -154,7 +143,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t('admin.dashboard.admins', { defaultValue: 'Administratoren' })}
+                {t('admin.dashboard.admins')}
               </CardTitle>
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -166,7 +155,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t('admin.dashboard.recentLogins', { defaultValue: 'Anmeldungen (7 Tage)' })}
+                {t('admin.dashboard.recentLogins')}
               </CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -181,12 +170,10 @@ export default function AdminDashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ScrollText className="h-5 w-5" />
-              {t('admin.dashboard.auditLog', { defaultValue: 'Aktivitätsprotokoll' })}
+              {t('admin.dashboard.auditLog')}
             </CardTitle>
             <CardDescription>
-              {t('admin.dashboard.auditLogDescription', {
-                defaultValue: 'Letzte 20 Admin-Aktionen'
-              })}
+              {t('admin.dashboard.auditLogDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -194,11 +181,11 @@ export default function AdminDashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t('admin.dashboard.timestamp', { defaultValue: 'Zeitstempel' })}</TableHead>
-                    <TableHead>{t('admin.dashboard.admin', { defaultValue: 'Administrator' })}</TableHead>
-                    <TableHead>{t('admin.dashboard.action', { defaultValue: 'Aktion' })}</TableHead>
-                    <TableHead>{t('admin.dashboard.target', { defaultValue: 'Ziel' })}</TableHead>
-                    <TableHead>{t('admin.dashboard.details', { defaultValue: 'Details' })}</TableHead>
+                    <TableHead>{t('admin.dashboard.timestamp')}</TableHead>
+                    <TableHead>{t('admin.dashboard.admin')}</TableHead>
+                    <TableHead>{t('admin.dashboard.action')}</TableHead>
+                    <TableHead>{t('admin.dashboard.target')}</TableHead>
+                    <TableHead>{t('admin.dashboard.details')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -206,10 +193,7 @@ export default function AdminDashboardPage() {
                     auditLog.map((log) => (
                       <TableRow key={log.id}>
                         <TableCell className="text-sm">
-                          {new Date(log.inserted_at).toLocaleString('de-DE', {
-                            dateStyle: 'short',
-                            timeStyle: 'short'
-                          })}
+                          {new Date(log.inserted_at).toLocaleString()}
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
@@ -246,7 +230,7 @@ export default function AdminDashboardPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        {t('admin.dashboard.noAuditLogs', { defaultValue: 'Keine Aktivitäten vorhanden' })}
+                        {t('admin.dashboard.noAuditLogs')}
                       </TableCell>
                     </TableRow>
                   )}

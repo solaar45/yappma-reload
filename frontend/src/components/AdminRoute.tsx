@@ -1,4 +1,5 @@
 import { Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdmin } from '@/lib/permissions';
 
@@ -7,9 +8,10 @@ interface AdminRouteProps {
 }
 
 export function AdminRoute({ children }: AdminRouteProps) {
-  const { user, loading } = useAuth();
+  const { t } = useTranslation();
+  const { user, isLoading } = useAuth();
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
@@ -25,9 +27,15 @@ export function AdminRoute({ children }: AdminRouteProps) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-destructive">Zugriff verweigert</h1>
-          <p className="text-muted-foreground">Du benötigst Administrator-Rechte, um diese Seite zu sehen.</p>
-          <a href="/" className="text-primary hover:underline">Zurück zum Dashboard</a>
+          <h1 className="text-2xl font-bold text-destructive">
+            {t('admin.accessDenied.title')}
+          </h1>
+          <p className="text-muted-foreground">
+            {t('admin.accessDenied.description')}
+          </p>
+          <a href="/" className="text-primary hover:underline">
+            {t('admin.accessDenied.backToDashboard')}
+          </a>
         </div>
       </div>
     );

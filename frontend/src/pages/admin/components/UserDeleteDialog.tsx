@@ -45,10 +45,10 @@ export function UserDeleteDialog({ user, onDelete, onClose }: UserDeleteDialogPr
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
-            {t('admin.users.deleteUser', { defaultValue: 'Benutzer löschen' })}
+            {t('admin.users.deleteUser' as any)}
           </DialogTitle>
           <DialogDescription>
-            {t('admin.users.deleteUserFor', { name: user.name, defaultValue: `${user.name} löschen` })}
+            {t('admin.users.deleteUserFor' as any, { name: user.name })}
           </DialogDescription>
         </DialogHeader>
 
@@ -56,11 +56,9 @@ export function UserDeleteDialog({ user, onDelete, onClose }: UserDeleteDialogPr
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              <strong>{t('admin.users.deleteWarning', { defaultValue: 'Warnung: Diese Aktion kann NICHT rückgängig gemacht werden!' })}</strong>
+              <strong>{t('admin.users.deleteWarning' as any)}</strong>
               <div className="mt-2 text-sm">
-                {t('admin.users.deleteWarningDetails', {
-                  defaultValue: 'Alle Daten dieses Benutzers werden permanent gelöscht:'
-                })}
+                {t('admin.users.deleteWarningDetails' as any)}
               </div>
             </AlertDescription>
           </Alert>
@@ -68,19 +66,19 @@ export function UserDeleteDialog({ user, onDelete, onClose }: UserDeleteDialogPr
           <div className="space-y-2 text-sm">
             <div className="flex justify-between py-1">
               <span className="text-muted-foreground">
-                {t('admin.users.accounts', { defaultValue: 'Konten' })}:
+                {t('common.accounts')}:
               </span>
               <span className="font-medium">{user.stats?.accounts_count || 0}</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-muted-foreground">
-                {t('admin.users.assets', { defaultValue: 'Assets' })}:
+                {t('common.assets')}:
               </span>
               <span className="font-medium">{user.stats?.assets_count || 0}</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-muted-foreground">
-                {t('admin.users.institutions', { defaultValue: 'Institutionen' })}:
+                {t('common.institutions')}:
               </span>
               <span className="font-medium">{user.stats?.institutions_count || 0}</span>
             </div>
@@ -88,7 +86,7 @@ export function UserDeleteDialog({ user, onDelete, onClose }: UserDeleteDialogPr
 
           <div className="space-y-2">
             <Label htmlFor="confirm">
-              {t('admin.users.confirmDelete', { defaultValue: 'Gib zur Bestätigung die E-Mail-Adresse ein' })}:
+              {t('admin.users.confirmDelete' as any)}:
             </Label>
             <div className="space-y-1">
               <code className="block px-3 py-2 bg-muted rounded text-sm">{user.email}</code>
@@ -104,9 +102,7 @@ export function UserDeleteDialog({ user, onDelete, onClose }: UserDeleteDialogPr
 
           <Alert>
             <AlertDescription className="text-sm">
-              {t('admin.users.deleteAlternative', {
-                defaultValue: 'Hinweis: Du kannst den Benutzer auch deaktivieren statt zu löschen. Dabei bleiben alle Daten erhalten.'
-              })}
+              {t('admin.users.deleteAlternative' as any)}
             </AlertDescription>
           </Alert>
         </div>
@@ -122,11 +118,11 @@ export function UserDeleteDialog({ user, onDelete, onClose }: UserDeleteDialogPr
             disabled={!isConfirmed || deleting}
           >
             {deleting ? (
-              t('admin.users.deleting', { defaultValue: 'Löschen...' })
+              t('admin.users.deleting' as any)
             ) : (
               <>
                 <Trash2 className="mr-2 h-4 w-4" />
-                {t('admin.users.deleteButton', { defaultValue: 'Permanent löschen' })}
+                {t('admin.users.deleteButton' as any)}
               </>
             )}
           </Button>

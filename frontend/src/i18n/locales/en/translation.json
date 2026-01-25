@@ -488,6 +488,11 @@
     }
   },
   "admin": {
+    "accessDenied": {
+      "title": "Access Denied",
+      "description": "You need administrator rights to view this page.",
+      "backToDashboard": "Back to Dashboard"
+    },
     "users": {
       "title": "User Management",
       "usersTotal": "Users",
@@ -533,7 +538,56 @@
       "demoteSuccess": "User demoted",
       "demoteError": "Error demoting",
       "createSuccess": "User created successfully",
-      "createError": "Error creating"
+      "createError": "Error creating",
+      "errors": {
+        "nameRequired": "Name is required",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Invalid email address",
+        "passwordRequired": "Password is required",
+        "passwordTooShort": "Password must be at least 16 characters long",
+        "passwordNoLowercase": "Password must contain a lowercase letter",
+        "passwordNoUppercase": "Password must contain an uppercase letter",
+        "passwordNoNumber": "Password must contain a number",
+        "passwordNoSpecial": "Password must contain a special character"
+      }
+    },
+    "roles": {
+      "user": "User",
+      "admin": "Administrator",
+      "super_admin": "Super Administrator",
+      "read_only": "Read Only"
+    },
+    "actions": {
+      "create_user": "User created",
+      "update_user": "User updated",
+      "delete_user": "User deleted",
+      "reset_password": "Password reset",
+      "change_role": "Role changed",
+      "deactivate_user": "User deactivated",
+      "reactivate_user": "User reactivated",
+      "promote_to_admin": "Promoted to admin",
+      "demote_to_user": "Demoted to user"
+    },
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "welcome": "Welcome, {{name}}",
+      "manageUsers": "Manage Users",
+      "totalUsers": "Total Users",
+      "activeUsers": "Active Users",
+      "inactiveUsers": "Inactive Users",
+      "admins": "Administrators",
+      "recentLogins": "Logins (7 days)",
+      "ofTotal": "of total",
+      "auditLog": "Audit Log",
+      "auditLogDescription": "Last 20 admin actions",
+      "timestamp": "Timestamp",
+      "admin": "Administrator",
+      "action": "Action",
+      "target": "Target",
+      "details": "Details",
+      "noAuditLogs": "No activities available",
+      "loadError": "Error loading",
+      "loadErrorDescription": "Failed to load dashboard data"
     }
   }
 }

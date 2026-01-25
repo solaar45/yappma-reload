@@ -493,6 +493,11 @@
     }
   },
   "admin": {
+    "accessDenied": {
+      "title": "Zugriff verweigert",
+      "description": "Du benötigst Administrator-Rechte, um diese Seite zu sehen.",
+      "backToDashboard": "Zurück zum Dashboard"
+    },
     "users": {
       "title": "Benutzerverwaltung",
       "usersTotal": "Benutzer",
@@ -538,7 +543,56 @@
       "demoteSuccess": "Benutzer wurde zurückgestuft",
       "demoteError": "Fehler beim Zurückstufen",
       "createSuccess": "Benutzer erfolgreich erstellt",
-      "createError": "Fehler beim Erstellen"
+      "createError": "Fehler beim Erstellen",
+      "errors": {
+        "nameRequired": "Name ist erforderlich",
+        "emailRequired": "E-Mail ist erforderlich",
+        "emailInvalid": "Ungültige E-Mail-Adresse",
+        "passwordRequired": "Passwort ist erforderlich",
+        "passwordTooShort": "Passwort muss mindestens 16 Zeichen lang sein",
+        "passwordNoLowercase": "Passwort muss einen Kleinbuchstaben enthalten",
+        "passwordNoUppercase": "Passwort muss einen Großbuchstaben enthalten",
+        "passwordNoNumber": "Passwort muss eine Zahl enthalten",
+        "passwordNoSpecial": "Passwort muss ein Sonderzeichen enthalten"
+      }
+    },
+    "roles": {
+      "user": "Benutzer",
+      "admin": "Administrator",
+      "super_admin": "Super Administrator",
+      "read_only": "Nur Lesen"
+    },
+    "actions": {
+      "create_user": "Benutzer erstellt",
+      "update_user": "Benutzer aktualisiert",
+      "delete_user": "Benutzer gelöscht",
+      "reset_password": "Passwort zurückgesetzt",
+      "change_role": "Rolle geändert",
+      "deactivate_user": "Benutzer deaktiviert",
+      "reactivate_user": "Benutzer reaktiviert",
+      "promote_to_admin": "Zu Admin befördert",
+      "demote_to_user": "Zu Benutzer zurückgestuft"
+    },
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "welcome": "Willkommen, {{name}}",
+      "manageUsers": "Benutzer verwalten",
+      "totalUsers": "Benutzer gesamt",
+      "activeUsers": "Aktive Benutzer",
+      "inactiveUsers": "Inaktive Benutzer",
+      "admins": "Administratoren",
+      "recentLogins": "Anmeldungen (7 Tage)",
+      "ofTotal": "von gesamt",
+      "auditLog": "Aktivitätsprotokoll",
+      "auditLogDescription": "Letzte 20 Admin-Aktionen",
+      "timestamp": "Zeitstempel",
+      "admin": "Administrator",
+      "action": "Aktion",
+      "target": "Ziel",
+      "details": "Details",
+      "noAuditLogs": "Keine Aktivitäten vorhanden",
+      "loadError": "Fehler beim Laden",
+      "loadErrorDescription": "Die Dashboard-Daten konnten nicht geladen werden"
     }
   }
 }

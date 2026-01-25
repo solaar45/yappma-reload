@@ -254,10 +254,10 @@ export default function UserManagementPage() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Shield className="h-8 w-8" />
-              {t('admin.users.title', { defaultValue: 'Benutzerverwaltung' })}
+              {t('admin.users.title')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              {filteredUsers.length} {t('admin.users.usersTotal', { defaultValue: 'Benutzer' })}
+              {filteredUsers.length} {t('admin.users.usersTotal')}
             </p>
           </div>
           <Button
@@ -267,7 +267,7 @@ export default function UserManagementPage() {
             }}
           >
             <UserPlus className="mr-2 h-4 w-4" />
-            {t('admin.users.createUser', { defaultValue: 'Neuer Benutzer' })}
+            {t('admin.users.createUser')}
           </Button>
         </div>
 
@@ -276,7 +276,7 @@ export default function UserManagementPage() {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t('admin.users.searchPlaceholder', { defaultValue: 'Name oder E-Mail suchen...' })}
+              placeholder={t('admin.users.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -288,9 +288,9 @@ export default function UserManagementPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('admin.users.allRoles', { defaultValue: 'Alle Rollen' })}</SelectItem>
-              <SelectItem value="user">{getRoleDisplayName('user')}</SelectItem>
-              <SelectItem value="admin">{getRoleDisplayName('admin')}</SelectItem>
-              <SelectItem value="super_admin">{getRoleDisplayName('super_admin')}</SelectItem>
+              <SelectItem value="user">{t(getRoleDisplayName('user') as any)}</SelectItem>
+              <SelectItem value="admin">{t(getRoleDisplayName('admin') as any)}</SelectItem>
+              <SelectItem value="super_admin">{t(getRoleDisplayName('super_admin') as any)}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -310,12 +310,12 @@ export default function UserManagementPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('admin.users.user', { defaultValue: 'Benutzer' })}</TableHead>
-                <TableHead>{t('admin.users.role', { defaultValue: 'Rolle' })}</TableHead>
-                <TableHead>{t('admin.users.status', { defaultValue: 'Status' })}</TableHead>
-                <TableHead>{t('admin.users.portfolio', { defaultValue: 'Portfolio' })}</TableHead>
-                <TableHead>{t('admin.users.lastLogin', { defaultValue: 'Letzte Anmeldung' })}</TableHead>
-                <TableHead className="text-right">{t('admin.users.actions', { defaultValue: 'Aktionen' })}</TableHead>
+                <TableHead>{t('admin.users.user')}</TableHead>
+                <TableHead>{t('admin.users.role')}</TableHead>
+                <TableHead>{t('admin.users.status')}</TableHead>
+                <TableHead>{t('admin.users.portfolio')}</TableHead>
+                <TableHead>{t('admin.users.lastLogin')}</TableHead>
+                <TableHead className="text-right">{t('admin.users.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -327,7 +327,7 @@ export default function UserManagementPage() {
                         {user.name}
                         {user.id === currentUser?.id && (
                           <Badge variant="outline" className="text-xs">
-                            {t('admin.users.you', { defaultValue: 'Du' })}
+                            {t('admin.users.you')}
                           </Badge>
                         )}
                       </div>
@@ -338,7 +338,7 @@ export default function UserManagementPage() {
                     <Badge variant={getRoleBadgeVariant(user.role)}>
                       {user.role === 'super_admin' && <ShieldCheck className="mr-1 h-3 w-3" />}
                       {user.role === 'admin' && <Shield className="mr-1 h-3 w-3" />}
-                      {getRoleDisplayName(user.role)}
+                      {t(getRoleDisplayName(user.role) as any)}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -348,19 +348,19 @@ export default function UserManagementPage() {
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      <div>{user.stats?.accounts_count || 0} Konten</div>
-                      <div>{user.stats?.assets_count || 0} Assets</div>
+                      <div>{user.stats?.accounts_count || 0} {t('common.accounts')}</div>
+                      <div>{user.stats?.assets_count || 0} {t('common.assets')}</div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
                       {user.last_login_at
-                        ? new Date(user.last_login_at).toLocaleString('de-DE')
-                        : t('admin.users.never', { defaultValue: 'Nie' })}
+                        ? new Date(user.last_login_at).toLocaleString()
+                        : t('admin.users.never')}
                     </div>
                     {user.login_count > 0 && (
                       <div className="text-xs text-muted-foreground">
-                        {user.login_count}× {t('admin.users.logins', { defaultValue: 'Anmeldungen' })}
+                        {user.login_count}× {t('admin.users.logins')}
                       </div>
                     )}
                   </TableCell>
@@ -374,7 +374,7 @@ export default function UserManagementPage() {
                             setSelectedUser(user);
                             setDialogType('edit');
                           }}
-                          title={t('admin.users.edit', { defaultValue: 'Bearbeiten' })}
+                          title={t('admin.users.edit')}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -388,7 +388,7 @@ export default function UserManagementPage() {
                             setSelectedUser(user);
                             setDialogType('password');
                           }}
-                          title={t('admin.users.resetPassword', { defaultValue: 'Passwort zurücksetzen' })}
+                          title={t('admin.users.resetPassword')}
                         >
                           <Key className="h-4 w-4" />
                         </Button>
@@ -399,7 +399,7 @@ export default function UserManagementPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handlePromoteToAdmin(user)}
-                          title={t('admin.users.promoteToAdmin', { defaultValue: 'Zu Admin befördern' })}
+                          title={t('admin.users.promoteToAdmin')}
                         >
                           <ArrowUpCircle className="h-4 w-4" />
                         </Button>
@@ -410,7 +410,7 @@ export default function UserManagementPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDemoteToUser(user)}
-                          title={t('admin.users.demoteToUser', { defaultValue: 'Zu Benutzer zurückstufen' })}
+                          title={t('admin.users.demoteToUser')}
                         >
                           <ArrowDownCircle className="h-4 w-4" />
                         </Button>
@@ -423,8 +423,8 @@ export default function UserManagementPage() {
                           onClick={() => handleToggleActive(user)}
                           title={
                             user.is_active
-                              ? t('admin.users.deactivate', { defaultValue: 'Deaktivieren' })
-                              : t('admin.users.reactivate', { defaultValue: 'Reaktivieren' })
+                              ? t('admin.users.deactivate')
+                              : t('admin.users.reactivate')
                           }
                         >
                           {user.is_active ? (
@@ -443,7 +443,7 @@ export default function UserManagementPage() {
                             setSelectedUser(user);
                             setDialogType('delete');
                           }}
-                          title={t('admin.users.delete', { defaultValue: 'Löschen' })}
+                          title={t('admin.users.delete')}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -457,7 +457,7 @@ export default function UserManagementPage() {
 
           {filteredUsers.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
-              {t('admin.users.noUsers', { defaultValue: 'Keine Benutzer gefunden' })}
+              {t('admin.users.noUsers')}
             </div>
           )}
         </div>

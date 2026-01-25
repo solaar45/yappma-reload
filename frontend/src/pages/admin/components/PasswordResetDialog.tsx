@@ -34,21 +34,21 @@ export function PasswordResetDialog({ user, onReset, onClose }: PasswordResetDia
     const length = 20;
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
     let password = '';
-    
+
     // Ensure at least one of each required character type
     password += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
     password += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
     password += '0123456789'[Math.floor(Math.random() * 10)];
     password += '!@#$%^&*'[Math.floor(Math.random() * 8)];
-    
+
     // Fill the rest randomly
     for (let i = password.length; i < length; i++) {
       password += charset[Math.floor(Math.random() * charset.length)];
     }
-    
+
     // Shuffle the password
     password = password.split('').sort(() => Math.random() - 0.5).join('');
-    
+
     setGeneratedPassword(password);
     setMode('generate');
   };
@@ -63,33 +63,23 @@ export function PasswordResetDialog({ user, onReset, onClose }: PasswordResetDia
     const newErrors: Record<string, string> = {};
 
     if (password.length < 16) {
-      newErrors.password = t('admin.users.errors.passwordTooShort', {
-        defaultValue: 'Passwort muss mindestens 16 Zeichen lang sein'
-      });
+      newErrors.password = t('admin.users.errors.passwordTooShort');
     }
 
     if (!/[a-z]/.test(password)) {
-      newErrors.password = t('admin.users.errors.passwordNoLowercase', {
-        defaultValue: 'Passwort muss einen Kleinbuchstaben enthalten'
-      });
+      newErrors.password = t('admin.users.errors.passwordNoLowercase');
     }
 
     if (!/[A-Z]/.test(password)) {
-      newErrors.password = t('admin.users.errors.passwordNoUppercase', {
-        defaultValue: 'Passwort muss einen Großbuchstaben enthalten'
-      });
+      newErrors.password = t('admin.users.errors.passwordNoUppercase');
     }
 
     if (!/[0-9]/.test(password)) {
-      newErrors.password = t('admin.users.errors.passwordNoNumber', {
-        defaultValue: 'Passwort muss eine Zahl enthalten'
-      });
+      newErrors.password = t('admin.users.errors.passwordNoNumber');
     }
 
     if (!/[!?@#$%^&*_0-9]/.test(password)) {
-      newErrors.password = t('admin.users.errors.passwordNoSpecial', {
-        defaultValue: 'Passwort muss ein Sonderzeichen enthalten'
-      });
+      newErrors.password = t('admin.users.errors.passwordNoSpecial');
     }
 
     setErrors(newErrors);
@@ -100,7 +90,7 @@ export function PasswordResetDialog({ user, onReset, onClose }: PasswordResetDia
     const password = mode === 'generate' ? generatedPassword : manualPassword;
 
     if (!password) {
-      setErrors({ password: t('admin.users.errors.passwordRequired', { defaultValue: 'Passwort ist erforderlich' }) });
+      setErrors({ password: t('admin.users.errors.passwordRequired') });
       return;
     }
 
@@ -124,19 +114,17 @@ export function PasswordResetDialog({ user, onReset, onClose }: PasswordResetDia
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" />
-            {t('admin.users.resetPassword', { defaultValue: 'Passwort zurücksetzen' })}
+            {t('admin.users.resetPassword')}
           </DialogTitle>
           <DialogDescription>
-            {t('admin.users.resetPasswordFor', { name: user.name, defaultValue: `Passwort für ${user.name} zurücksetzen` })}
+            {t('admin.users.resetPasswordFor' as any, { name: user.name })}
           </DialogDescription>
         </DialogHeader>
 
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            {t('admin.users.resetPasswordWarning', {
-              defaultValue: 'Der Benutzer muss das Passwort bei der nächsten Anmeldung ändern.'
-            })}
+            {t('admin.users.resetPasswordWarning' as any)}
           </AlertDescription>
         </Alert>
 
@@ -148,7 +136,7 @@ export function PasswordResetDialog({ user, onReset, onClose }: PasswordResetDia
               onClick={() => setMode('generate')}
               className="flex-1"
             >
-              {t('admin.users.generatePassword', { defaultValue: 'Passwort generieren' })}
+              {t('admin.users.generatePassword' as any)}
             </Button>
             <Button
               type="button"
@@ -156,7 +144,7 @@ export function PasswordResetDialog({ user, onReset, onClose }: PasswordResetDia
               onClick={() => setMode('manual')}
               className="flex-1"
             >
-              {t('admin.users.manualPassword', { defaultValue: 'Manuell eingeben' })}
+              {t('admin.users.manualPassword' as any)}
             </Button>
           </div>
 
@@ -164,11 +152,11 @@ export function PasswordResetDialog({ user, onReset, onClose }: PasswordResetDia
             <div className="space-y-3">
               {!generatedPassword ? (
                 <Button type="button" onClick={generateSecurePassword} className="w-full">
-                  {t('admin.users.generateSecurePassword', { defaultValue: 'Sicheres Passwort generieren' })}
+                  {t('admin.users.generateSecurePassword' as any)}
                 </Button>
               ) : (
                 <div className="space-y-2">
-                  <Label>{t('admin.users.generatedPassword', { defaultValue: 'Generiertes Passwort' })}</Label>
+                  <Label>{t('admin.users.generatedPassword' as any)}</Label>
                   <div className="flex gap-2">
                     <Input value={generatedPassword} readOnly className="font-mono" />
                     <Button
@@ -176,16 +164,14 @@ export function PasswordResetDialog({ user, onReset, onClose }: PasswordResetDia
                       size="icon"
                       variant="outline"
                       onClick={copyToClipboard}
-                      title={t('common.copy', { defaultValue: 'Kopieren' })}
+                      title={t('common.copy' as any)}
                     >
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
                   <Alert>
                     <AlertDescription className="text-sm">
-                      {t('admin.users.copyPasswordWarning', {
-                        defaultValue: 'Kopiere dieses Passwort jetzt! Es wird nach dem Schließen nicht mehr angezeigt.'
-                      })}
+                      {t('admin.users.copyPasswordWarning' as any)}
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -196,19 +182,17 @@ export function PasswordResetDialog({ user, onReset, onClose }: PasswordResetDia
           {mode === 'manual' && (
             <div className="space-y-2">
               <Label htmlFor="manual-password">
-                {t('admin.users.newPassword', { defaultValue: 'Neues Passwort' })}
+                {t('admin.users.newPassword' as any)}
               </Label>
               <Input
                 id="manual-password"
                 type="password"
                 value={manualPassword}
                 onChange={(e) => setManualPassword(e.target.value)}
-                placeholder={t('admin.users.passwordPlaceholder', { defaultValue: 'Mindestens 16 Zeichen' })}
+                placeholder={t('admin.users.passwordPlaceholder' as any)}
               />
               <p className="text-xs text-muted-foreground">
-                {t('admin.users.passwordRequirements', {
-                  defaultValue: 'Mind. 16 Zeichen, Groß-/Kleinbuchstaben, Zahlen und Sonderzeichen'
-                })}
+                {t('admin.users.passwordRequirements' as any)}
               </p>
               {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
             </div>
@@ -225,8 +209,8 @@ export function PasswordResetDialog({ user, onReset, onClose }: PasswordResetDia
             disabled={resetting || (mode === 'generate' && !generatedPassword)}
           >
             {resetting
-              ? t('admin.users.resetting', { defaultValue: 'Zurücksetzen...' })
-              : t('admin.users.resetPasswordButton', { defaultValue: 'Passwort zurücksetzen' })}
+              ? t('admin.users.resetting' as any)
+              : t('admin.users.resetPasswordButton' as any)}
           </Button>
         </DialogFooter>
       </DialogContent>

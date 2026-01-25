@@ -23,19 +23,19 @@ export function isSuperAdmin(user: User | null): boolean {
  */
 export function canEditUser(currentUser: User | null, targetUser: { id: number; role: Role }): boolean {
   if (!currentUser) return false;
-  
+
   // Cannot edit yourself through admin panel
   if (currentUser.id === targetUser.id) return false;
-  
+
   // Super admin cannot be edited by anyone
   if (targetUser.role === 'super_admin') return false;
-  
+
   // Super admin can edit anyone
   if (currentUser.role === 'super_admin') return true;
-  
+
   // Admin can edit regular users
   if (currentUser.role === 'admin' && targetUser.role === 'user') return true;
-  
+
   return false;
 }
 
@@ -44,19 +44,19 @@ export function canEditUser(currentUser: User | null, targetUser: { id: number; 
  */
 export function canDeleteUser(currentUser: User | null, targetUser: { id: number; role: Role }): boolean {
   if (!currentUser) return false;
-  
+
   // Cannot delete yourself
   if (currentUser.id === targetUser.id) return false;
-  
+
   // Super admin cannot be deleted
   if (targetUser.role === 'super_admin') return false;
-  
+
   // Super admin can delete anyone
   if (currentUser.role === 'super_admin') return true;
-  
+
   // Admin can delete regular users
   if (currentUser.role === 'admin' && targetUser.role === 'user') return true;
-  
+
   return false;
 }
 
@@ -65,19 +65,19 @@ export function canDeleteUser(currentUser: User | null, targetUser: { id: number
  */
 export function canResetPassword(currentUser: User | null, targetUser: { id: number; role: Role }): boolean {
   if (!currentUser) return false;
-  
+
   // Cannot reset your own password through admin panel
   if (currentUser.id === targetUser.id) return false;
-  
+
   // Super admin cannot have password reset by admin
   if (targetUser.role === 'super_admin') return false;
-  
+
   // Super admin can reset anyone's password
   if (currentUser.role === 'super_admin') return true;
-  
+
   // Admin can reset regular user passwords
   if (currentUser.role === 'admin' && targetUser.role === 'user') return true;
-  
+
   return false;
 }
 
@@ -92,13 +92,13 @@ export function canManageRoles(currentUser: User | null): boolean {
  * Gets the display name for a role
  */
 export function getRoleDisplayName(role: Role): string {
-  const roleNames: Record<Role, string> = {
-    user: 'Benutzer',
-    admin: 'Administrator',
-    super_admin: 'Super Administrator',
-    read_only: 'Nur Lesen'
+  const roleKeys: Record<Role, string> = {
+    user: 'admin.roles.user',
+    admin: 'admin.roles.admin',
+    super_admin: 'admin.roles.super_admin',
+    read_only: 'admin.roles.read_only'
   };
-  return roleNames[role] || role;
+  return roleKeys[role] || role;
 }
 
 /**

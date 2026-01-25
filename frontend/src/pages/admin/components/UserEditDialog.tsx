@@ -25,7 +25,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface UserEditDialogProps {
   user: AdminUser | null;
-  onSave: (userId: number, updates: any) => Promise<void> | ((userData: any) => Promise<void>);
+  onSave: ((userId: number, updates: any) => Promise<void>) | ((userData: any) => Promise<void>);
   onClose: () => void;
 }
 
@@ -61,21 +61,21 @@ export function UserEditDialog({ user, onSave, onClose }: UserEditDialogProps) {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = t('admin.users.errors.nameRequired', { defaultValue: 'Name ist erforderlich' });
+      newErrors.name = t('admin.users.errors.nameRequired' as any);
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = t('admin.users.errors.emailRequired', { defaultValue: 'E-Mail ist erforderlich' });
+      newErrors.email = t('admin.users.errors.emailRequired' as any);
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = t('admin.users.errors.emailInvalid', { defaultValue: 'Ungültige E-Mail-Adresse' });
+      newErrors.email = t('admin.users.errors.emailInvalid' as any);
     }
 
     if (isCreate && !formData.password) {
-      newErrors.password = t('admin.users.errors.passwordRequired', { defaultValue: 'Passwort ist erforderlich' });
+      newErrors.password = t('admin.users.errors.passwordRequired' as any);
     }
 
     if (isCreate && formData.password && formData.password.length < 16) {
-      newErrors.password = t('admin.users.errors.passwordTooShort', { defaultValue: 'Passwort muss mindestens 16 Zeichen lang sein' });
+      newErrors.password = t('admin.users.errors.passwordTooShort' as any);
     }
 
     setErrors(newErrors);
@@ -90,14 +90,14 @@ export function UserEditDialog({ user, onSave, onClose }: UserEditDialogProps) {
     setSaving(true);
     try {
       if (isCreate) {
-        await onSave({
+        await (onSave as (userData: any) => Promise<void>)({
           name: formData.name,
           email: formData.email,
           password: formData.password,
           role: formData.role,
         });
       } else if (user) {
-        await onSave(user.id, {
+        await (onSave as (userId: number, updates: any) => Promise<void>)(user.id, {
           name: formData.name,
           email: formData.email,
           role: formData.role,
@@ -118,33 +118,33 @@ export function UserEditDialog({ user, onSave, onClose }: UserEditDialogProps) {
           <DialogHeader>
             <DialogTitle>
               {isCreate
-                ? t('admin.users.createUser', { defaultValue: 'Neuer Benutzer' })
-                : t('admin.users.editUser', { defaultValue: 'Benutzer bearbeiten' })}
+                ? t('admin.users.createUser')
+                : t('admin.users.editUser' as any)}
             </DialogTitle>
             <DialogDescription>
               {isCreate
-                ? t('admin.users.createUserDescription', { defaultValue: 'Erstelle einen neuen Benutzer-Account' })
-                : t('admin.users.editUserDescription', { defaultValue: 'Bearbeite die Benutzer-Informationen' })}
+                ? t('admin.users.createUserDescription' as any)
+                : t('admin.users.editUserDescription' as any)}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">
-                {t('admin.users.name', { defaultValue: 'Name' })} *
+                {t('admin.users.name' as any)} *
               </Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder={t('admin.users.namePlaceholder', { defaultValue: 'Max Mustermann' })}
+                placeholder={t('admin.users.namePlaceholder' as any)}
               />
               {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="email">
-                {t('admin.users.email', { defaultValue: 'E-Mail' })} *
+                {t('admin.users.email' as any)} *
               </Label>
               <Input
                 id="email"
@@ -159,19 +159,17 @@ export function UserEditDialog({ user, onSave, onClose }: UserEditDialogProps) {
             {isCreate && (
               <div className="grid gap-2">
                 <Label htmlFor="password">
-                  {t('admin.users.password', { defaultValue: 'Passwort' })} *
+                  {t('admin.users.password' as any)} *
                 </Label>
                 <Input
                   id="password"
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder={t('admin.users.passwordPlaceholder', { defaultValue: 'Mindestens 16 Zeichen' })}
+                  placeholder={t('admin.users.passwordPlaceholder' as any)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {t('admin.users.passwordRequirements', {
-                    defaultValue: 'Mind. 16 Zeichen, Groß-/Kleinbuchstaben, Zahlen und Sonderzeichen'
-                  })}
+                  {t('admin.users.passwordRequirements' as any)}
                 </p>
                 {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
               </div>
@@ -179,7 +177,7 @@ export function UserEditDialog({ user, onSave, onClose }: UserEditDialogProps) {
 
             <div className="grid gap-2">
               <Label htmlFor="role">
-                {t('admin.users.role', { defaultValue: 'Rolle' })}
+                {t('admin.users.role' as any)}
               </Label>
               <Select
                 value={formData.role}
@@ -189,11 +187,11 @@ export function UserEditDialog({ user, onSave, onClose }: UserEditDialogProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">{getRoleDisplayName('user')}</SelectItem>
+                  <SelectItem value="user">{t(getRoleDisplayName('user') as any)}</SelectItem>
                   {currentUser?.role === 'super_admin' && (
-                    <SelectItem value="admin">{getRoleDisplayName('admin')}</SelectItem>
+                    <SelectItem value="admin">{t(getRoleDisplayName('admin') as any)}</SelectItem>
                   )}
-                  <SelectItem value="read_only">{getRoleDisplayName('read_only')}</SelectItem>
+                  <SelectItem value="read_only">{t(getRoleDisplayName('read_only') as any)}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -202,10 +200,10 @@ export function UserEditDialog({ user, onSave, onClose }: UserEditDialogProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="is_active">
-                    {t('admin.users.active', { defaultValue: 'Aktiv' })}
+                    {t('admin.users.active' as any)}
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    {t('admin.users.activeDescription', { defaultValue: 'Benutzer kann sich anmelden' })}
+                    {t('admin.users.activeDescription' as any)}
                   </p>
                 </div>
                 <Switch
@@ -219,12 +217,12 @@ export function UserEditDialog({ user, onSave, onClose }: UserEditDialogProps) {
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
-              {t('common.cancel', { defaultValue: 'Abbrechen' })}
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={saving}>
               {saving
-                ? t('common.saving', { defaultValue: 'Speichern...' })
-                : t('common.save', { defaultValue: 'Speichern' })}
+                ? t('common.saving')
+                : t('common.save')}
             </Button>
           </DialogFooter>
         </form>

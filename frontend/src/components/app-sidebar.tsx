@@ -115,7 +115,7 @@ export function AppSidebar() {
                       }
                     >
                       <item.icon className="h-4 w-4" />
-                      <span>{t(item.title)}</span>
+                      <span>{t(item.title as any)}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -202,7 +202,7 @@ export function AppSidebar() {
                       <span className="text-xs text-muted-foreground">{user?.email}</span>
                       {user && isAdmin(user) && (
                         <Badge variant="secondary" className="text-xs px-1 py-0">
-                          {getRoleDisplayName(user.role)}
+                          {t(getRoleDisplayName(user.role) as any)}
                         </Badge>
                       )}
                     </div>

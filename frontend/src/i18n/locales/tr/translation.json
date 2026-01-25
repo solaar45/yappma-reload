@@ -495,6 +495,11 @@
     }
   },
   "admin": {
+    "accessDenied": {
+      "title": "Erişim Reddedildi",
+      "description": "Bu sayfayı görüntülemek için yönetici yetkilerine ihtiyacınız var.",
+      "backToDashboard": "Panele Geri Dön"
+    },
     "users": {
       "title": "Kullanıcı Yönetimi",
       "usersTotal": "Kullanıcı",
@@ -540,7 +545,56 @@
       "demoteSuccess": "Kullanıcı indirildi",
       "demoteError": "İndirme hatası",
       "createSuccess": "Kullanıcı başarıyla oluşturuldu",
-      "createError": "Oluşturma hatası"
+      "createError": "Oluşturma hatası",
+      "errors": {
+        "nameRequired": "İsim gerekli",
+        "emailRequired": "E-posta gerekli",
+        "emailInvalid": "Geçersiz e-posta adresi",
+        "passwordRequired": "Şifre gerekli",
+        "passwordTooShort": "Şifre en az 16 karakter olmalıdır",
+        "passwordNoLowercase": "Şifre bir küçük harf içermelidir",
+        "passwordNoUppercase": "Şifre bir büyük harf içermelidir",
+        "passwordNoNumber": "Şifre bir rakam içermelidir",
+        "passwordNoSpecial": "Şifre bir özel karakter içermelidir"
+      }
+    },
+    "roles": {
+      "user": "Kullanıcı",
+      "admin": "Yönetici",
+      "super_admin": "Süper Yönetici",
+      "read_only": "Salt Okunur"
+    },
+    "actions": {
+      "create_user": "Kullanıcı oluşturuldu",
+      "update_user": "Kullanıcı güncellendi",
+      "delete_user": "Kullanıcı silindi",
+      "reset_password": "Şifre sıfırlandı",
+      "change_role": "Rol değiştirildi",
+      "deactivate_user": "Kullanıcı devre dışı bırakıldı",
+      "reactivate_user": "Kullanıcı yeniden etkinleştirildi",
+      "promote_to_admin": "Yönetici yapıldı",
+      "demote_to_user": "Kullanıcıya indirildi"
+    },
+    "dashboard": {
+      "title": "Yönetim Paneli",
+      "welcome": "Hoş geldiniz, {{name}}",
+      "manageUsers": "Kullanıcıları Yönet",
+      "totalUsers": "Toplam Kullanıcı",
+      "activeUsers": "Aktif Kullanıcılar",
+      "inactiveUsers": "Pasif Kullanıcılar",
+      "admins": "Yöneticiler",
+      "recentLogins": "Girişler (7 gün)",
+      "ofTotal": "toplamdan",
+      "auditLog": "Denetim Günlüğü",
+      "auditLogDescription": "Son 20 yönetim işlemi",
+      "timestamp": "Zaman Damgası",
+      "admin": "Yönetici",
+      "action": "İşlem",
+      "target": "Hedef",
+      "details": "Detaylar",
+      "noAuditLogs": "Aktivite bulunamadı",
+      "loadError": "Yükleme hatası",
+      "loadErrorDescription": "Panel verileri yüklenemedi"
     }
   }
 }
